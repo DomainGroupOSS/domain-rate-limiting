@@ -1,13 +1,9 @@
 ﻿using System;
 using System.Threading.Tasks;
 
-namespace Domain.RateLimiting.Redis
+namespace Domain.RateLimiting.Core
 {
-    public interface ICircuitBreaker
-    {
-        Task<TResult> ExecuteAsync<TResult>(Func<Task<TResult>> action, TResult defaultResult);
-    }
-    public class CircuitBreaker :ICircuitBreaker
+    public class CircuitBreaker : ICircuitBreaker
     {
         private readonly int _faultThreshholdPerWindowDuration;
         private readonly int _faultWindowDurationInMilliseconds;

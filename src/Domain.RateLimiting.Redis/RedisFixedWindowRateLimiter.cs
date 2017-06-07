@@ -19,7 +19,7 @@ namespace Domain.RateLimiting.Redis
             {RateLimitUnit.PerDay, dateTime => dateTime.ToString("yyyyMMdd")},
         };
 
-        
+
         /// <summary>
         /// 
         /// </summary>
@@ -28,30 +28,21 @@ namespace Domain.RateLimiting.Redis
         /// <param name="onThrottled"></param>
         /// <param name="connectionTimeout"></param>
         /// <param name="syncTimeout"></param>
-        /// <param name="faultThreshholdPerWindowDuration"></param>
-        /// <param name="faultWindowDurationInMilliseconds"></param>
-        /// <param name="circuitOpenDurationInSecs"></param>
-        /// <param name="onCircuitOpened"></param>
-        /// <param name="onCircuitClosed"></param>
+        /// <param name="countThrottledRequests"></param>
+        /// <param name="circuitBreaker"></param>
         public RedisFixedWindowRateLimiter(string redisEndpoint,
             Action<Exception> onException = null,
             Action<RateLimitingResult> onThrottled = null,
             int connectionTimeout = 2000,
             int syncTimeout = 1000,
-            int faultThreshholdPerWindowDuration = 3,
-            int faultWindowDurationInMilliseconds = 10000,
-            int circuitOpenDurationInSecs = 60,
-            Action onCircuitOpened = null,
-            Action onCircuitClosed = null) : base(redisEndpoint,
+            bool countThrottledRequests = false,
+            ICircuitBreaker circuitBreaker = null) : base(redisEndpoint,
             onException,
             onThrottled,
             connectionTimeout,
             syncTimeout,
-            faultThreshholdPerWindowDuration,
-            faultWindowDurationInMilliseconds,
-            circuitOpenDurationInSecs,
-            onCircuitOpened,
-            onCircuitClosed)
+            countThrottledRequests,
+            circuitBreaker)
         {
         }
 

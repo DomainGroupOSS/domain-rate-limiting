@@ -60,6 +60,7 @@ namespace Domain.AspDotNetCore.RateLimiting
         /// <returns></returns>
         public override async Task OnActionExecutionAsync(ActionExecutingContext actionContext, ActionExecutionDelegate next)
         {
+            var t = actionContext.ActionDescriptor.AttributeRouteInfo.Template;
             // ReSharper disable once PossibleNullReferenceException
             var rateLimitingPolicyParameters = await _policyManager?.GetPolicyParametersAsync(
                  new RateLimitingRequest(

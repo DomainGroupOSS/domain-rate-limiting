@@ -13,6 +13,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Domain.RateLimiting.Redis",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Domain.Owin.RateLimiting", "src\Domain.Owin.RateLimiting\Domain.Owin.RateLimiting.csproj", "{21B65B63-87D2-4472-B0B0-72F44405EBB8}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{D316720E-4E82-420D-93EA-68DB2E6F7A0C}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Domain.RateLimiting.Samples.AspNetCore", "samples\Domain.RateLimiting.Samples.AspNetCore\Domain.RateLimiting.Samples.AspNetCore.csproj", "{732F6C22-3786-41CE-B24B-CE8D978F6249}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -35,6 +39,10 @@ Global
 		{21B65B63-87D2-4472-B0B0-72F44405EBB8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{21B65B63-87D2-4472-B0B0-72F44405EBB8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{21B65B63-87D2-4472-B0B0-72F44405EBB8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{732F6C22-3786-41CE-B24B-CE8D978F6249}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{732F6C22-3786-41CE-B24B-CE8D978F6249}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{732F6C22-3786-41CE-B24B-CE8D978F6249}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{732F6C22-3786-41CE-B24B-CE8D978F6249}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -44,5 +52,6 @@ Global
 		{2D39359F-F226-4C65-AF3F-9662FE3709E8} = {266F7D08-EBA8-47D7-A3D6-6A88CE54E6EC}
 		{9DF7AB1D-7ADD-4D72-B5AC-BACF235EDCBD} = {266F7D08-EBA8-47D7-A3D6-6A88CE54E6EC}
 		{21B65B63-87D2-4472-B0B0-72F44405EBB8} = {266F7D08-EBA8-47D7-A3D6-6A88CE54E6EC}
+		{732F6C22-3786-41CE-B24B-CE8D978F6249} = {D316720E-4E82-420D-93EA-68DB2E6F7A0C}
 	EndGlobalSection
 EndGlobal

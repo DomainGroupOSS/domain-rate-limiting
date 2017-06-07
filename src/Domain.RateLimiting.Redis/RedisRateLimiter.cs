@@ -12,7 +12,7 @@ namespace Domain.RateLimiting.Redis
         private ConnectionMultiplexer _redisConnection;
         private ConfigurationOptions _redisConfigurationOptions;
         
-        private CircuitBreaker _circuitBreakerPolicy;
+        private readonly ICircuitBreaker _circuitBreakerPolicy;
         private readonly Action<RateLimitingResult> _onThrottled;
         private readonly bool _countThrottledRequests;
 
@@ -25,57 +25,50 @@ namespace Domain.RateLimiting.Redis
         /// <param name="onThrottled"></param>
         /// <param name="connectionTimeout"></param>
         /// <param name="syncTimeout"></param>
-        /// <param name="faultThreshholdPerWindowDuration"></param>
-        /// <param name="faultWindowDurationInMilliseconds"></param>
-        /// <param name="circuitOpenDurationInSecs"></param>
-        /// <param name="onCircuitOpened"></param>
-        /// <param name="onCircuitClosed"></param>
         /// <param name="countThrottledRequests"></param>
+        /// <param name="circuitBreaker"></param>
         protected RedisRateLimiter(string redisEndpoint,
             Action<Exception> onException = null,
             Action<RateLimitingResult> onThrottled = null,
             int connectionTimeout = 2000,
             int syncTimeout = 1000,
-            int faultThreshholdPerWindowDuration = 3,
-            int faultWindowDurationInMilliseconds = 10000,
-            int circuitOpenDurationInSecs = 60,
-            Action onCircuitOpened = null, 
-            Action onCircuitClosed = null,
-            bool countThrottledRequests = false)
+            bool countThrottledRequests = false,
+            ICircuitBreaker circuitBreaker = null)
         {
             if (redisEndpoint == null) throw new ArgumentNullException(nameof(redisEndpoint));
 
             _onThrottled = onThrottled;
             _countThrottledRequests = countThrottledRequests;
+            _circuitBreakerPolicy = circuitBreaker;
             SetupConnectionConfiguration(redisEndpoint, connectionTimeout, syncTimeout);
-            SetupCircuitBreaker(faultThreshholdPerWindowDuration, faultWindowDurationInMilliseconds, circuitOpenDurationInSecs, onException, onCircuitOpened, onCircuitClosed);
+            //SetupCircuitBreaker(faultThreshholdPerWindowDuration, faultWindowDurationInMilliseconds, circuitOpenDurationInSecs, onException, onCircuitOpened, onCircuitClosed);
             ConnectToRedis(onException);
         }
 
-        private void SetupCircuitBreaker(int faultThreshholdPerWindowDuration,
-            int faultWindowDurationInMilliseconds, int circuitOpenDurationInSecs, Action<Exception> onException,
-            Action onCircuitOpened, Action onCircuitClosed)
-        {
-            _circuitBreakerPolicy = new CircuitBreaker(faultThreshholdPerWindowDuration,
-                faultWindowDurationInMilliseconds, circuitOpenDurationInSecs,
-                () =>
-                {
-                    //CloseRedisConnection();
-                    onCircuitOpened?.Invoke();
-                },
-                () =>
-                {
-                    //ConnectToRedis(onException);
-                    onCircuitClosed?.Invoke();
-                },
-                onException);
-        }
+        //private void SetupCircuitBreaker(int faultThreshholdPerWindowDuration,
+        //    int faultWindowDurationInMilliseconds, int circuitOpenDurationInSecs, Action<Exception> onException,
+        //    Action onCircuitOpened, Action onCircuitClosed)
+        //{
+        //    _circuitBreakerPolicy = new CircuitBreaker(faultThreshholdPerWindowDuration,
+        //        faultWindowDurationInMilliseconds, circuitOpenDurationInSecs,
+        //        () =>
+        //        {
+        //            //CloseRedisConnection();
+        //            onCircuitOpened?.Invoke();
+        //        },
+        //        () =>
+        //        {
+        //            //ConnectToRedis(onException);
+        //            onCircuitClosed?.Invoke();
+        //        },
+        //        onException);
+        //}
 
         private void SetupConnectionConfiguration(string redisEndpoint, int connectionTimeout, int syncTimeout)
         {
             _redisConfigurationOptions = new ConfigurationOptions();
             _redisConfigurationOptions.EndPoints.Add(redisEndpoint);
-            _redisConfigurationOptions.ClientName = "DomainRedisRateLimiter";
+            _redisConfigurationOptions.ClientName = "RedisRateLimiter";
             _redisConfigurationOptions.ConnectTimeout = connectionTimeout;
             _redisConfigurationOptions.SyncTimeout = syncTimeout;
             _redisConfigurationOptions.AbortOnConnectFail = false;

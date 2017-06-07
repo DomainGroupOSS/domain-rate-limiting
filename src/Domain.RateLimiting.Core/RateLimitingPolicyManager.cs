@@ -291,17 +291,11 @@ namespace Domain.RateLimiting.Core
         /// <returns></returns>
         public bool IsWhiteListedRequest(string requestPath, string httpMethod)
         {
-            return WhiteListedPaths.Any(p =>
-            {
-                // var policy = GetPolicy(requestPath, httpMethod);
-
-                return requestPath.StartsWith(p); // && (policy == null || string.Compare(policy.Path, p, StringComparison.InvariantCultureIgnoreCase) != 0);
-            });
+            return WhiteListedPaths.Any(requestPath.StartsWith);
         }
 
         private static void AddPolicy(int limit, RateLimitUnit unit, string requestKey, string endpoint, string httpMethod)
         {
-            //var key = new RateLimitingPolicyEntryKey(requestKey, endpoint, httpMethod);
             var entry = new RateLimitPolicyParameters(requestKey, endpoint, httpMethod, new List<RateLimitPolicy>()
             {
                 new RateLimitPolicy(limit, unit)
@@ -309,10 +303,7 @@ namespace Domain.RateLimiting.Core
 
             if (Entries.ContainsKey(entry.Key)) throw new InvalidOperationException($"Rate limit policy for {entry.Key} requests has already been defined.");
 
-            Entries.Add(entry.Key, new RateLimitPolicyParameters(requestKey, endpoint, httpMethod, new List<RateLimitPolicy>()
-            {
-                new RateLimitPolicy(limit, unit)
-            }));
+            Entries.Add(entry.Key, entry);
         }
 
         private static void AddPolicies(string requestKey, string endpoint, string httpMethod, IList<RateLimitPolicy> policies)
