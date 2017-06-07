@@ -232,23 +232,24 @@ namespace Domain.RateLimiting.Core
             if (IsWhiteListedRequest(rateLimitingRequest.Path, rateLimitingRequest.Method))
                 return null;
 
-            RateLimitPolicyParameters providedPolicyEntry = await
-                // ReSharper disable once PossibleNullReferenceException
-                _policyProvider?.GetPolicyParametersAsync(rateLimitingRequest);
+            var providedPolicyEntry = await _policyProvider.GetPolicyParametersAsync(rateLimitingRequest);
 
-            //if(providedPolicyEntry == null)
-            //    return null;
+            if (providedPolicyEntry == null)
+                return null;
 
-            if (providedPolicyEntry.Policies != null && providedPolicyEntry.Policies.Any())
+            if ((providedPolicyEntry.Policies != null && providedPolicyEntry.Policies.Any()) 
+                || !providedPolicyEntry.CanOverrideIfNoPollicies)
                 return providedPolicyEntry;
 
             // Policy key matching the current request path for current HTTP method, e.g. GET /v1/example
-            var policyKey = new RateLimitingPolicyParametersKey(AllRequestKeys, rateLimitingRequest.Path, rateLimitingRequest.Method);
+            var policyKey = new RateLimitingPolicyParametersKey(AllRequestKeys, 
+                rateLimitingRequest.RouteTemplate, rateLimitingRequest.Method);
             
             if (!Entries.ContainsKey(policyKey))
             {
                 // Policy key for the current request path belonging to all HTTP methods, e.g. * /v1/example
-                policyKey = new RateLimitingPolicyParametersKey(AllRequestKeys, rateLimitingRequest.Path, AllHttpMethods);
+                policyKey = new RateLimitingPolicyParametersKey(AllRequestKeys, 
+                    rateLimitingRequest.RouteTemplate, AllHttpMethods);
             }
 
             if (!Entries.ContainsKey(policyKey))
@@ -264,8 +265,8 @@ namespace Domain.RateLimiting.Core
             }
 
             return Entries.ContainsKey(policyKey) ? 
-                new RateLimitPolicyParameters(Entries[policyKey].RequestKey, 
-                Entries[policyKey].Path, Entries[policyKey].HttpMethod,
+                new RateLimitPolicyParameters(providedPolicyEntry.RequestKey, 
+                Entries[policyKey].RouteTemplate, Entries[policyKey].HttpMethod,
                 Entries[policyKey].Policies) : null;
         }
 
@@ -292,18 +293,6 @@ namespace Domain.RateLimiting.Core
         public bool IsWhiteListedRequest(string requestPath, string httpMethod)
         {
             return WhiteListedPaths.Any(requestPath.StartsWith);
-        }
-
-        private static void AddPolicy(int limit, RateLimitUnit unit, string requestKey, string endpoint, string httpMethod)
-        {
-            var entry = new RateLimitPolicyParameters(requestKey, endpoint, httpMethod, new List<RateLimitPolicy>()
-            {
-                new RateLimitPolicy(limit, unit)
-            });
-
-            if (Entries.ContainsKey(entry.Key)) throw new InvalidOperationException($"Rate limit policy for {entry.Key} requests has already been defined.");
-
-            Entries.Add(entry.Key, entry);
         }
 
         private static void AddPolicies(string requestKey, string endpoint, string httpMethod, IList<RateLimitPolicy> policies)

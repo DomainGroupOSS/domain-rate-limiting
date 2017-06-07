@@ -46,10 +46,11 @@ namespace Domain.AspDotNetCore.RateLimiting
         /// <returns></returns>IRateLimitingCacheProvider
         public async Task Invoke(HttpContext context)
         {
-            var policyForCurrentRequest = await _policyManager.GetPolicyParametersAsync(new RateLimitingRequest(
-                context.Request.Path.Value, context.Request.Method, 
-                () => context.Request.Headers.ToDictionary((kv) => kv.Key, (kv) => kv.Value.ToArray()), 
-                context.User, context.Request.Body));
+            var policyForCurrentRequest = await _policyManager.GetPolicyParametersAsync(
+                new RateLimitingRequest(
+                    "*", context.Request.Path.Value, context.Request.Method, 
+                    () => context.Request.Headers.ToDictionary((kv) => kv.Key, (kv) => kv.Value.ToArray()), 
+                    context.User, context.Request.Body));
 
             if (policyForCurrentRequest == null)
             {
@@ -66,7 +67,7 @@ namespace Domain.AspDotNetCore.RateLimiting
             }
 
             var rateLimitingResult = await _rateLimitingCacheProvider.LimitRequestAsync(requestLimitId, policyForCurrentRequest.HttpMethod,
-                    context.Request.Host.Value, policyForCurrentRequest.Path, policyForCurrentRequest.Policies)
+                    context.Request.Host.Value, policyForCurrentRequest.RouteTemplate, policyForCurrentRequest.Policies)
                 .ConfigureAwait(false);
 
             if (!rateLimitingResult.Throttled)

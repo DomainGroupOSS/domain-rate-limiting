@@ -48,6 +48,12 @@ namespace Domain.RateLimiting.Samples.AspNetCore
                 .AddEndpointPolicies("/api/globallylimited", "*", new List<RateLimitPolicy>() {
                     new RateLimitPolicy(10, RateLimitUnit.PerMinute)
                 })
+                .AddEndpointPolicies("/api/globallylimited/{id}", "*", new List<RateLimitPolicy>() {
+                    new RateLimitPolicy(5, RateLimitUnit.PerMinute)
+                })
+                .AddEndpointPolicies("/api/globallylimited/{id}/sub/{subid}", "*", new List<RateLimitPolicy>() {
+                    new RateLimitPolicy(2, RateLimitUnit.PerMinute)
+                })
                 .AddEndpointPolicies("/api/attributelimited", "*", new List<RateLimitPolicy>() {
                     new RateLimitPolicy(20, RateLimitUnit.PerMinute)
                 });
@@ -55,7 +61,6 @@ namespace Domain.RateLimiting.Samples.AspNetCore
             services.AddMvc(options =>
             {
                 options.Filters.Add(new RateLimitingActionFilter(rateLimitCacheProvider, globalRateLimitingPolicy));
-
             });
         }
 

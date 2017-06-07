@@ -22,6 +22,12 @@ namespace Domain.RateLimiting.Samples.AspNetCore.Controllers
             return "value";
         }
 
+        [HttpGet("{id}/sub/{subid}")]
+        public string Get(int id, int subid)
+        {
+            return "value from sub";
+        }
+
         // POST api/values
         [HttpPost]
         public void Post([FromBody]string value)

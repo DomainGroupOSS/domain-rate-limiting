@@ -60,10 +60,9 @@ namespace Domain.AspDotNetCore.RateLimiting
         /// <returns></returns>
         public override async Task OnActionExecutionAsync(ActionExecutingContext actionContext, ActionExecutionDelegate next)
         {
-            var t = actionContext.ActionDescriptor.AttributeRouteInfo.Template;
-            // ReSharper disable once PossibleNullReferenceException
-            var rateLimitingPolicyParameters = await _policyManager?.GetPolicyParametersAsync(
+            var rateLimitingPolicyParameters = await _policyManager.GetPolicyParametersAsync(
                  new RateLimitingRequest(
+                        actionContext.ActionDescriptor.AttributeRouteInfo.Template,
                         actionContext.HttpContext.Request.Path,
                         actionContext.HttpContext.Request.Method,
                         () => actionContext.HttpContext.Request.Headers.ToDictionary((kv) => kv.Key, (kv) => kv.Value.ToArray()),
@@ -103,8 +102,8 @@ namespace Domain.AspDotNetCore.RateLimiting
                 return;
             }
 
-            var result = await _rateLimitingCacheProvider.LimitRequestAsync(requestKey, context.Request.Method,
-                context.Request.Host.Value, context.Request.Path.Value, rateLimits).ConfigureAwait(false);
+            var result = await _rateLimitingCacheProvider.LimitRequestAsync(requestKey, rateLimitingPolicyParameters.HttpMethod,
+                context.Request.Host.Value, rateLimitingPolicyParameters.RouteTemplate, rateLimits).ConfigureAwait(false);
             if (result.Throttled)
                 TooManyRequests(actionContext, rateLimits, result.WaitingIntervalInTicks);
             else

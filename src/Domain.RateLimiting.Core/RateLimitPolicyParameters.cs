@@ -16,32 +16,38 @@ namespace Domain.RateLimiting.Core
         /// </summary>
         /// <param name="requestKey"></param> 
         /// <param name="policies"></param>
-        public RateLimitPolicyParameters(string requestKey, IList<RateLimitPolicy> policies) : 
-            this(requestKey, AllRequestPaths, AllHttpMethods, policies)
+        /// <param name="canOverrideIfNoPollicies"></param>
+        public RateLimitPolicyParameters(string requestKey, IList<RateLimitPolicy> policies, 
+            bool canOverrideIfNoPollicies = true) : 
+            this(requestKey, AllRequestPaths, AllHttpMethods, policies, canOverrideIfNoPollicies)
         { }
-        public RateLimitPolicyParameters(string requestKey) :
-            this(requestKey, AllRequestPaths, AllHttpMethods, new List<RateLimitPolicy>())
-        { }
-
-        public RateLimitPolicyParameters(string requestKey, string httpMethod, IList<RateLimitPolicy> policies) :
-            this(requestKey, AllRequestPaths, httpMethod, policies)
+        public RateLimitPolicyParameters(string requestKey, bool canOverrideIfNoPollicies = true) :
+            this(requestKey, AllRequestPaths, AllHttpMethods, new List<RateLimitPolicy>(), canOverrideIfNoPollicies)
         { }
 
-        public RateLimitPolicyParameters(string requestKey, IList<RateLimitPolicy> policies, string path) :
-            this(requestKey, path, AllHttpMethods, policies)
+        public RateLimitPolicyParameters(string requestKey, string httpMethod, IList<RateLimitPolicy> policies, 
+            bool canOverrideIfNoPollicies = true) :
+            this(requestKey, AllRequestPaths, httpMethod, policies, canOverrideIfNoPollicies)
+        { }
+
+        public RateLimitPolicyParameters(string requestKey, IList<RateLimitPolicy> policies, string path,
+            bool canOverrideIfNoPollicies = true) :
+            this(requestKey, path, AllHttpMethods, policies, canOverrideIfNoPollicies)
         { }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="T:System.Object" /> class.
         /// </summary>
         /// <param name="requestKey">The requestKey provided by the client.</param>
-        /// <param name="path">The path.</param>
+        /// <param name="routeTemplate">The route template.</param>
         /// <param name="policies">The policies.</param>
         /// <param name="httpMethod">The HTTP method.</param>
+        /// <param name="canOverrideIfNoPollicies"></param>
         /// <exception cref="ArgumentOutOfRangeException">limit</exception>
-        /// <exception cref="ArgumentNullException"><paramref name="path" /> is <see langword="null" />.</exception>
+        /// <exception cref="ArgumentNullException"><paramref name="routeTemplate" /> is <see langword="null" />.</exception>
         /// <exception cref="ArgumentOutOfRangeException">limit</exception>
-        public RateLimitPolicyParameters(string requestKey, string path, string httpMethod, IList<RateLimitPolicy> policies)
+        public RateLimitPolicyParameters(string requestKey, string routeTemplate, string httpMethod, 
+            IList<RateLimitPolicy> policies, bool canOverrideIfNoPollicies = true)
         {
             if (string.IsNullOrWhiteSpace(requestKey)) throw new ArgumentNullException(nameof(requestKey), 
                 "requestKey cannot be null or whitespace");
@@ -49,15 +55,22 @@ namespace Domain.RateLimiting.Core
             if (requestKey.Length == 0) throw new ArgumentOutOfRangeException(nameof(requestKey), 
                 "requestKey cannot be empty");
 
-            if (path == null) throw new ArgumentNullException(nameof(path));
-            if (path.Length == 0) throw new ArgumentOutOfRangeException(nameof(path), "the path to rate limit cannot be empty");
-            if (string.IsNullOrWhiteSpace(httpMethod)) httpMethod = AllHttpMethods;
+            //if (routeTemplate == null) throw new ArgumentNullException(nameof(routeTemplate));
+            //if (routeTemplate.Length == 0) throw new ArgumentOutOfRangeException(nameof(routeTemplate), 
+            //    "the routeTemplate to rate limit cannot be empty");
+
+            if (string.IsNullOrWhiteSpace(routeTemplate) || routeTemplate.Length == 0)
+                routeTemplate = AllRequestPaths;
+
+            if (string.IsNullOrWhiteSpace(httpMethod))
+                httpMethod = AllHttpMethods;
 
             RequestKey = requestKey;
-            Path = path;
+            RouteTemplate = routeTemplate;
             HttpMethod = httpMethod;
             Policies = policies;
-            Key = new RateLimitingPolicyParametersKey(RequestKey, path, httpMethod);
+            CanOverrideIfNoPollicies = canOverrideIfNoPollicies;
+            Key = new RateLimitingPolicyParametersKey(RequestKey, routeTemplate, httpMethod);
         }
 
         /// <summary>
@@ -73,10 +86,12 @@ namespace Domain.RateLimiting.Core
         /// <value>The policies to apply</value>
         public IList<RateLimitPolicy> Policies { get; }
 
+        public bool CanOverrideIfNoPollicies { get; }
+
         /// <summary>
         /// Gets the path the path to apply the specified rate limit</summary>
         /// <value>The path to rate limit.</value>
-        public string Path { get; }
+        public string RouteTemplate { get; }
 
         /// <summary>
         /// Get the http method to limit on for the specified path
@@ -84,6 +99,9 @@ namespace Domain.RateLimiting.Core
         /// <value>The HTTP method.</value>
         public string HttpMethod { get; }
 
+        /// <summary>
+        /// 
+        /// </summary>
         public string RequestKey { get; }
     }
 }
