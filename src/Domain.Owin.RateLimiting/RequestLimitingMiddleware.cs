@@ -47,10 +47,13 @@ namespace Domain.Owin.RateLimiting
         public override async Task Invoke(IOwinContext context)
         {
             var policyParametersForCurrentRequest = await _policyManager.GetPolicyParametersAsync(
-                new RateLimitingRequest(context.Request.Path.Value, context.Request.Method, 
-                                        () => context.Request.Headers.ToDictionary((kv)=>kv.Key, (kv)=>kv.Value?.ToArray()), 
-                                        context.Authentication.User, 
-                                        context.Request.Body));
+                new RateLimitingRequest(
+                    context.Request.Path.Value, 
+                    context.Request.Path.Value, 
+                    context.Request.Method, 
+                    () => context.Request.Headers.ToDictionary((kv)=>kv.Key, (kv)=>kv.Value?.ToArray()), 
+                    context.Authentication.User, 
+                    context.Request.Body));
 
             if (policyParametersForCurrentRequest == null)
             {
@@ -66,8 +69,10 @@ namespace Domain.Owin.RateLimiting
             }
 
             var rateLimitingResult =
-                await _rateLimitingCacheProvider.LimitRequestAsync(policyParametersForCurrentRequest.RequestKey, policyParametersForCurrentRequest.HttpMethod,
-                        context.Request.Host.Value, policyParametersForCurrentRequest.Path, policyParametersForCurrentRequest.Policies)
+                await _rateLimitingCacheProvider.LimitRequestAsync(policyParametersForCurrentRequest.RequestKey, 
+                    policyParametersForCurrentRequest.HttpMethod,
+                    context.Request.Host.Value, policyParametersForCurrentRequest.RouteTemplate, 
+                    policyParametersForCurrentRequest.Policies)
                     .ConfigureAwait(false);
 
             if (!rateLimitingResult.Throttled)
@@ -87,7 +92,8 @@ namespace Domain.Owin.RateLimiting
             var rateLimitedResponseParameters =
                 RateLimitingHelper.GetRateLimitedResponseParameters(waitingIntervalInTicks);
             context.Response.StatusCode = RateLimitedResponseParameters.StatusCode;
-            context.Response.Headers.Add(rateLimitedResponseParameters.RetryAfterHeader, new string[] { rateLimitedResponseParameters.RetryAfterInSecs });
+            context.Response.Headers.Add(rateLimitedResponseParameters.RetryAfterHeader, 
+                new string[] { rateLimitedResponseParameters.RetryAfterInSecs });
             await context.Response.WriteAsync(rateLimitedResponseParameters.Message).ConfigureAwait(false);
         }
     }

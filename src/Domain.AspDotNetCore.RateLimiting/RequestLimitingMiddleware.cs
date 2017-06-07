@@ -48,7 +48,7 @@ namespace Domain.AspDotNetCore.RateLimiting
         {
             var policyForCurrentRequest = await _policyManager.GetPolicyParametersAsync(
                 new RateLimitingRequest(
-                    "*", context.Request.Path.Value, context.Request.Method, 
+                    context.Request.Path.Value, context.Request.Path.Value, context.Request.Method, 
                     () => context.Request.Headers.ToDictionary((kv) => kv.Key, (kv) => kv.Value.ToArray()), 
                     context.User, context.Request.Body));
 
