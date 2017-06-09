@@ -43,11 +43,12 @@ namespace Domain.RateLimiting.Core
         /// <param name="policies">The policies.</param>
         /// <param name="httpMethod">The HTTP method.</param>
         /// <param name="canOverrideIfNoPollicies"></param>
+        /// <param name="name"></param>
         /// <exception cref="ArgumentOutOfRangeException">limit</exception>
         /// <exception cref="ArgumentNullException"><paramref name="routeTemplate" /> is <see langword="null" />.</exception>
         /// <exception cref="ArgumentOutOfRangeException">limit</exception>
         public RateLimitPolicyParameters(string requestKey, string routeTemplate, string httpMethod, 
-            IList<RateLimitPolicy> policies, bool canOverrideIfNoPollicies = true)
+            IList<RateLimitPolicy> policies, bool canOverrideIfNoPollicies = true, string name = "")
         {
             if (string.IsNullOrWhiteSpace(requestKey)) throw new ArgumentNullException(nameof(requestKey), 
                 "requestKey cannot be null or whitespace");
@@ -70,6 +71,7 @@ namespace Domain.RateLimiting.Core
             HttpMethod = httpMethod;
             Policies = policies;
             CanOverrideIfNoPollicies = canOverrideIfNoPollicies;
+            Name = name;
             Key = new RateLimitingPolicyParametersKey(RequestKey, routeTemplate, httpMethod);
         }
 
@@ -87,6 +89,7 @@ namespace Domain.RateLimiting.Core
         public IList<RateLimitPolicy> Policies { get; }
 
         public bool CanOverrideIfNoPollicies { get; }
+        public string Name { get; }
 
         /// <summary>
         /// Gets the path the path to apply the specified rate limit</summary>
