@@ -18,7 +18,7 @@ namespace Domain.AspDotNetCore.RateLimiting
     public class RequestLimitingMiddleware
     {
         private readonly RequestDelegate _next;
-        private readonly IRateLimitingPolicyParametersProvider _policyManager;
+        private readonly IRateLimitingPolicyProvider _policyManager;
         private readonly IRateLimitingCacheProvider _rateLimitingCacheProvider;
 
 
@@ -32,7 +32,7 @@ namespace Domain.AspDotNetCore.RateLimiting
         /// <exception cref="System.ArgumentNullException">policy</exception>
         public RequestLimitingMiddleware(RequestDelegate next, 
             IRateLimitingCacheProvider rateLimitingCacheProvider,
-            IRateLimitingPolicyParametersProvider policyManager)
+            IRateLimitingPolicyProvider policyManager)
         {
             _next = next;
             _rateLimitingCacheProvider = rateLimitingCacheProvider ?? throw new ArgumentNullException(nameof(rateLimitingCacheProvider));
@@ -46,7 +46,7 @@ namespace Domain.AspDotNetCore.RateLimiting
         /// <returns></returns>IRateLimitingCacheProvider
         public async Task Invoke(HttpContext context)
         {
-            var policyForCurrentRequest = await _policyManager.GetPolicyParametersAsync(
+            var policyForCurrentRequest = await _policyManager.GetPolicyAsync(
                 new RateLimitingRequest(
                     context.Request.Path.Value, context.Request.Path.Value, context.Request.Method, 
                     () => context.Request.Headers.ToDictionary((kv) => kv.Key, (kv) => kv.Value.ToArray()), 
@@ -67,13 +67,13 @@ namespace Domain.AspDotNetCore.RateLimiting
             }
 
             var rateLimitingResult = await _rateLimitingCacheProvider.LimitRequestAsync(requestLimitId, policyForCurrentRequest.HttpMethod,
-                    context.Request.Host.Value, policyForCurrentRequest.RouteTemplate, policyForCurrentRequest.Policies)
+                    context.Request.Host.Value, policyForCurrentRequest.RouteTemplate, policyForCurrentRequest.AllowedCallRates)
                 .ConfigureAwait(false);
 
             if (!rateLimitingResult.Throttled)
                 await _next.Invoke(context).ConfigureAwait(false);
             else
-                await TooManyRequests(context, policyForCurrentRequest.Policies, rateLimitingResult.WaitingIntervalInTicks).ConfigureAwait(false);
+                await TooManyRequests(context, policyForCurrentRequest.AllowedCallRates, rateLimitingResult.WaitingIntervalInTicks).ConfigureAwait(false);
         }
 
         private async Task InvalidRequestId(HttpContext context)
@@ -82,7 +82,7 @@ namespace Domain.AspDotNetCore.RateLimiting
             await context.Response.WriteAsync("An invalid request identifier was specified.").ConfigureAwait(false);
         }
 
-        private async Task TooManyRequests(HttpContext context, IEnumerable<RateLimitPolicy> rateLimits, long waitingIntervalInTicks)
+        private async Task TooManyRequests(HttpContext context, IEnumerable<AllowedCallRate> rateLimits, long waitingIntervalInTicks)
         {
             var rateLimitedResponseParameters =
                 RateLimitingHelper.GetRateLimitedResponseParameters(waitingIntervalInTicks);

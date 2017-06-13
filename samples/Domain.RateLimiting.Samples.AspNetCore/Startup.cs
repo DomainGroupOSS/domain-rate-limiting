@@ -11,11 +11,11 @@ using Domain.AspDotNetCore.RateLimiting;
 
 namespace Domain.RateLimiting.Samples.AspNetCore
 {
-    public class TestRateLimitingPolicyParametersProvider : IRateLimitingPolicyParametersProvider
+    public class TestRateLimitingPolicyParametersProvider : IRateLimitingPolicyProvider
     {
-        public Task<RateLimitPolicyParameters> GetPolicyParametersAsync(RateLimitingRequest rateLimitingRequest)
+        public Task<RateLimitPolicy> GetPolicyAsync(RateLimitingRequest rateLimitingRequest)
         {
-            return Task.FromResult(new RateLimitPolicyParameters("test_client"));
+            return Task.FromResult(new RateLimitPolicy("test_client"));
         }
     }
     public class Startup
@@ -41,21 +41,21 @@ namespace Domain.RateLimiting.Samples.AspNetCore
 
             var globalRateLimitingPolicy = new RateLimitingPolicyManager(rateLimitingPolicyParametersProvider)
                 .AddPathToWhiteList("/api/unlimited")
-                .AddPoliciesForAllEndpoints(new List<RateLimitPolicy>()
+                .AddPoliciesForAllEndpoints(new List<AllowedCallRate>()
                 {
-                    new RateLimitPolicy(1000, RateLimitUnit.PerMinute)
+                    new AllowedCallRate(1000, RateLimitUnit.PerMinute)
                 })
-                .AddEndpointPolicies("/api/globallylimited", "*", new List<RateLimitPolicy>() {
-                    new RateLimitPolicy(10, RateLimitUnit.PerMinute)
+                .AddEndpointPolicies("/api/globallylimited", "*", new List<AllowedCallRate>() {
+                    new AllowedCallRate(10, RateLimitUnit.PerMinute)
                 })
-                .AddEndpointPolicies("/api/globallylimited/{id}", "*", new List<RateLimitPolicy>() {
-                    new RateLimitPolicy(5, RateLimitUnit.PerMinute)
+                .AddEndpointPolicies("/api/globallylimited/{id}", "*", new List<AllowedCallRate>() {
+                    new AllowedCallRate(5, RateLimitUnit.PerMinute)
                 })
-                .AddEndpointPolicies("/api/globallylimited/{id}/sub/{subid}", "*", new List<RateLimitPolicy>() {
-                    new RateLimitPolicy(2, RateLimitUnit.PerMinute)
+                .AddEndpointPolicies("/api/globallylimited/{id}/sub/{subid}", "*", new List<AllowedCallRate>() {
+                    new AllowedCallRate(2, RateLimitUnit.PerMinute)
                 })
-                .AddEndpointPolicies("/api/attributelimited", "*", new List<RateLimitPolicy>() {
-                    new RateLimitPolicy(20, RateLimitUnit.PerMinute)
+                .AddEndpointPolicies("/api/attributelimited", "*", new List<AllowedCallRate>() {
+                    new AllowedCallRate(20, RateLimitUnit.PerMinute)
                 });
             // Add framework services.
             services.AddMvc(options =>

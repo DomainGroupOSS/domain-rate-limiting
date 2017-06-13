@@ -18,7 +18,7 @@ namespace Domain.AspDotNetCore.RateLimiting
     public class RateLimitingActionFilter : ActionFilterAttribute
     {
         private readonly IRateLimitingCacheProvider _rateLimitingCacheProvider;
-        private readonly IRateLimitingPolicyParametersProvider _policyManager;
+        private readonly IRateLimitingPolicyProvider _policyManager;
         private readonly IEnumerable<string> _whitelistedRequestKeys;
 
         /// <summary>
@@ -32,7 +32,7 @@ namespace Domain.AspDotNetCore.RateLimiting
         ///     whitelistedRequestKeys
         /// </exception>
         public RateLimitingActionFilter(IRateLimitingCacheProvider rateLimitingCacheProvider,
-            IRateLimitingPolicyParametersProvider policyManager,
+            IRateLimitingPolicyProvider policyManager,
             IEnumerable<string> whitelistedRequestKeys)
         {
             _rateLimitingCacheProvider = rateLimitingCacheProvider ?? throw new ArgumentNullException(nameof(rateLimitingCacheProvider));
@@ -47,7 +47,7 @@ namespace Domain.AspDotNetCore.RateLimiting
         /// <param name="policyManager"></param>
         /// <exception cref="System.ArgumentNullException">rateLimitingCacheProvider or rateLimitRequestKeyService</exception>
         public RateLimitingActionFilter(IRateLimitingCacheProvider rateLimitingCacheProvider,
-            IRateLimitingPolicyParametersProvider policyManager) : 
+            IRateLimitingPolicyProvider policyManager) : 
             this(rateLimitingCacheProvider, policyManager, Enumerable.Empty<string>())
         {
         }
@@ -60,7 +60,7 @@ namespace Domain.AspDotNetCore.RateLimiting
         /// <returns></returns>
         public override async Task OnActionExecutionAsync(ActionExecutingContext actionContext, ActionExecutionDelegate next)
         {
-            var rateLimitingPolicyParameters = await _policyManager.GetPolicyParametersAsync(
+            var rateLimitingPolicys = await _policyManager.GetPolicyAsync(
                  new RateLimitingRequest(
                         actionContext.ActionDescriptor.AttributeRouteInfo.Template,
                         actionContext.HttpContext.Request.Path,
@@ -69,19 +69,23 @@ namespace Domain.AspDotNetCore.RateLimiting
                         actionContext.HttpContext.User,
                         actionContext.HttpContext.Request.Body));
 
-            if (rateLimitingPolicyParameters == null)
+            if (rateLimitingPolicys == null)
+            {
+                await base.OnActionExecutionAsync(actionContext, next);
                 return;
+            }
 
-            var rateLimits = rateLimitingPolicyParameters.Policies;
+            var allowedCallRates = rateLimitingPolicys.AllowedCallRates;
 
-            if (rateLimits == null || !rateLimits.Any())
-                rateLimits = GetCustomAttributes(actionContext.ActionDescriptor);
+            if ((allowedCallRates == null || !allowedCallRates.Any()) && 
+                rateLimitingPolicys.CanOverrideIfNoAllowedCallRates)
+                allowedCallRates = GetCustomAttributes(actionContext.ActionDescriptor);
 
-            if (rateLimits == null || rateLimits.Count == 0)
+            if (allowedCallRates == null || allowedCallRates.Count == 0)
                 return;
 
             var context = actionContext.HttpContext;
-            var requestKey = rateLimitingPolicyParameters.RequestKey;
+            var requestKey = rateLimitingPolicys.RequestKey;
 
             if (string.IsNullOrWhiteSpace(requestKey))
             {
@@ -95,17 +99,17 @@ namespace Domain.AspDotNetCore.RateLimiting
                 return;
             }
 
-            if (rateLimits.Any(
+            if (allowedCallRates.Any(
                 rl => rl.WhiteListRequestKeys.Any(
                     k => string.Compare(requestKey, k, StringComparison.CurrentCultureIgnoreCase) == 0)))
             {
                 return;
             }
 
-            var result = await _rateLimitingCacheProvider.LimitRequestAsync(requestKey, rateLimitingPolicyParameters.HttpMethod,
-                context.Request.Host.Value, rateLimitingPolicyParameters.RouteTemplate, rateLimits).ConfigureAwait(false);
+            var result = await _rateLimitingCacheProvider.LimitRequestAsync(requestKey, rateLimitingPolicys.HttpMethod,
+                context.Request.Host.Value, rateLimitingPolicys.RouteTemplate, allowedCallRates).ConfigureAwait(false);
             if (result.Throttled)
-                TooManyRequests(actionContext, rateLimits, result.WaitingIntervalInTicks);
+                TooManyRequests(actionContext, allowedCallRates, result.WaitingIntervalInTicks);
             else
                 await base.OnActionExecutionAsync(actionContext, next);
 
@@ -123,7 +127,7 @@ namespace Domain.AspDotNetCore.RateLimiting
             };
         }
 
-        private void TooManyRequests(ActionExecutingContext context, IEnumerable<RateLimitPolicy> rateLimits, long waitingIntervalInTicks)
+        private void TooManyRequests(ActionExecutingContext context, IEnumerable<AllowedCallRate> rateLimits, long waitingIntervalInTicks)
         {
             var rateLimitedResponseParameters =
                 RateLimitingHelper.GetRateLimitedResponseParameters(waitingIntervalInTicks);
@@ -135,16 +139,16 @@ namespace Domain.AspDotNetCore.RateLimiting
             };
         }
         
-        private IList<RateLimitPolicy> GetCustomAttributes(ActionDescriptor actionDescriptor)
+        private IList<AllowedCallRate> GetCustomAttributes(ActionDescriptor actionDescriptor)
         {
             var controllerActionDescriptor = actionDescriptor as ControllerActionDescriptor;
             if (controllerActionDescriptor == null)
                 return null;
 
-            var policies = controllerActionDescriptor.MethodInfo.GetCustomAttributes<RateLimitPolicy>(true)?.ToList();
+            var policies = controllerActionDescriptor.MethodInfo.GetCustomAttributes<AllowedCallRate>(true)?.ToList();
             if (policies == null || !policies.Any())
                 policies = controllerActionDescriptor.ControllerTypeInfo.
-                    GetCustomAttributes<RateLimitPolicy>(true)?.ToList();
+                    GetCustomAttributes<AllowedCallRate>(true)?.ToList();
 
             return policies;
         }

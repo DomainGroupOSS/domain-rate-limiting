@@ -43,7 +43,7 @@ namespace Domain.RateLimiting.Core
         /// <exception cref="ArgumentNullException">requestId or host or pathToLimit or expirationKey or httpMethod</exception>
         /// <exception cref="ArgumentOutOfRangeException">requestId;requestId cannot be empty or host;host cannot be empty or pathToLimit;requestId cannot be empty or  expirationKey;expirationKey cannot be empty or httpMethod;httpMethod cannot be empty</exception>
         public RateLimitCacheKey(string requestId, string method, string host, string routeTemplate, 
-            RateLimitPolicy rateLimitPolicy, Func<DateTime, string> getSuffix)
+            AllowedCallRate rateLimitPolicy, Func<DateTime, string> getSuffix)
         {
             if (requestId == null) throw new ArgumentNullException(nameof(requestId));
             if (requestId.Length == 0) throw new ArgumentOutOfRangeException(nameof(requestId), "requestId cannot be empty");
@@ -85,7 +85,7 @@ namespace Domain.RateLimiting.Core
         /// <summary>
         /// The rate limiting policy for this key
         /// </summary>
-        public readonly RateLimitPolicy RateLimitPolicy;
+        public readonly AllowedCallRate RateLimitPolicy;
 
         /// <summary>
         /// Returns a string that represents the current object.

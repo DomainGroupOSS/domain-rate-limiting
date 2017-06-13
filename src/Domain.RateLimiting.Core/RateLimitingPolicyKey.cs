@@ -5,18 +5,18 @@ namespace Domain.RateLimiting.Core
     /// <summary>
     /// The hash key of a rate limit policy entry
     /// </summary>
-    public struct RateLimitingPolicyParametersKey
+    public struct RateLimitingPolicyKey
     {
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="RateLimitingPolicyParametersKey"/> struct.
+        /// Initializes a new instance of the <see cref="RateLimitingPolicyKey"/> struct.
         /// </summary>
         /// <param name="requestKey">The request path.</param>
         /// <param name="requestPath">The request path.</param>
         /// <param name="httpMethod">The HTTP method.</param>
         /// <exception cref="ArgumentNullException">requestPath or httpMethod</exception>
         /// <exception cref="ArgumentOutOfRangeException">requestPath;requestPath cannot be empty or httpMethod;httpMethod cannot be empty</exception>
-        public RateLimitingPolicyParametersKey(string requestKey, string requestPath, string httpMethod)
+        public RateLimitingPolicyKey(string requestKey, string requestPath, string httpMethod)
         {
             if (string.IsNullOrWhiteSpace(requestKey)) throw new ArgumentNullException(nameof(requestKey),
                 $"{nameof(requestKey)} cannot be null or whitespace");
@@ -79,7 +79,7 @@ namespace Domain.RateLimiting.Core
         {
             if (obj == null || GetType() != obj.GetType()) return false;
 
-            var compareObj = (RateLimitingPolicyParametersKey)obj;
+            var compareObj = (RateLimitingPolicyKey)obj;
 
             return compareObj.ToString() == ToString();
         }

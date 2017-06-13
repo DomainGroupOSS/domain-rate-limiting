@@ -100,7 +100,7 @@ namespace Domain.RateLimiting.Redis
 
         public async Task<RateLimitingResult> LimitRequestAsync(string requestId, string method, string host,
             string routeTemplate,
-            IList<RateLimitPolicy> rateLimitPolicies)
+            IList<AllowedCallRate> rateLimitPolicies)
         {
             return await _circuitBreakerPolicy.ExecuteAsync(async () =>
             {
@@ -196,7 +196,7 @@ namespace Domain.RateLimiting.Redis
         public Task<RateLimitingResult> LimitRequestAsync(RateLimitCacheKey cacheKey)
         {
             return LimitRequestAsync(cacheKey.RequestId, cacheKey.Method, cacheKey.Host, cacheKey.RouteTemplate,
-                new List<RateLimitPolicy>() { new RateLimitPolicy(cacheKey.Limit, cacheKey.Unit) });
+                new List<AllowedCallRate>() { new AllowedCallRate(cacheKey.Limit, cacheKey.Unit) });
         }
 
         protected abstract Task<long> GetNumberOfRequestsAsync(
@@ -204,7 +204,7 @@ namespace Domain.RateLimiting.Redis
             string method,
             string host,
             string routeTemplate,
-            RateLimitPolicy policy,
+            AllowedCallRate policy,
             IList<RateLimitCacheKey> cacheKeys,
             ITransaction redisTransaction,
             long utcNowTicks);

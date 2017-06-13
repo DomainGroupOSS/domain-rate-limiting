@@ -13,7 +13,7 @@ namespace Domain.Owin.RateLimiting
     /// </summary>
     public class RequestLimitingMiddleware : OwinMiddleware
     {
-        private readonly IRateLimitingPolicyParametersProvider _policyManager;
+        private readonly IRateLimitingPolicyProvider _policyManager;
         private readonly IRateLimitingCacheProvider _rateLimitingCacheProvider;
 
         /// <summary>
@@ -32,7 +32,7 @@ namespace Domain.Owin.RateLimiting
         /// <exception cref="System.ArgumentNullException">policy</exception>
         public RequestLimitingMiddleware(OwinMiddleware next, 
             IRateLimitingCacheProvider rateLimitingCacheProvider,
-            IRateLimitingPolicyParametersProvider policyManager)
+            IRateLimitingPolicyProvider policyManager)
             : base(next)
         {
             _rateLimitingCacheProvider = rateLimitingCacheProvider ?? throw new ArgumentNullException(nameof(rateLimitingCacheProvider));
@@ -46,7 +46,7 @@ namespace Domain.Owin.RateLimiting
         /// <returns></returns>IRateLimitingCacheProvider
         public override async Task Invoke(IOwinContext context)
         {
-            var policyParametersForCurrentRequest = await _policyManager.GetPolicyParametersAsync(
+            var policyParametersForCurrentRequest = await _policyManager.GetPolicyAsync(
                 new RateLimitingRequest(
                     context.Request.Path.Value, 
                     context.Request.Path.Value, 
@@ -72,7 +72,7 @@ namespace Domain.Owin.RateLimiting
                 await _rateLimitingCacheProvider.LimitRequestAsync(policyParametersForCurrentRequest.RequestKey, 
                     policyParametersForCurrentRequest.HttpMethod,
                     context.Request.Host.Value, policyParametersForCurrentRequest.RouteTemplate, 
-                    policyParametersForCurrentRequest.Policies)
+                    policyParametersForCurrentRequest.AllowedCallRates)
                     .ConfigureAwait(false);
 
             if (!rateLimitingResult.Throttled)

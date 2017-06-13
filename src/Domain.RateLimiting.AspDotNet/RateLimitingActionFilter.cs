@@ -18,7 +18,7 @@ namespace Domain.RateLimiting.AspDotNet
     public class RateLimitingActionFilter : ActionFilterAttribute
     {
         private readonly IRateLimitingCacheProvider _rateLimitingCacheProvider;
-        private readonly IRateLimitingPolicyParametersProvider _globalRateLimitingPolicy;
+        private readonly IRateLimitingPolicyProvider _globalRateLimitingPolicy;
         private readonly IEnumerable<string> _whitelistedRequestKeys;
 
         /// <summary>
@@ -32,7 +32,7 @@ namespace Domain.RateLimiting.AspDotNet
         ///     whitelistedRequestKeys
         /// </exception>
         public RateLimitingActionFilter(IRateLimitingCacheProvider rateLimitingCacheProvider,
-            IRateLimitingPolicyParametersProvider policyManager,
+            IRateLimitingPolicyProvider policyManager,
             IEnumerable<string> whitelistedRequestKeys)
         {
             _rateLimitingCacheProvider = rateLimitingCacheProvider ?? throw new ArgumentNullException(nameof(rateLimitingCacheProvider));
@@ -50,7 +50,7 @@ namespace Domain.RateLimiting.AspDotNet
         ///     whitelistedRequestKeys
         /// </exception>
         public RateLimitingActionFilter(IRateLimitingCacheProvider rateLimitingCacheProvider,
-            IRateLimitingPolicyParametersProvider policyManager) : this(rateLimitingCacheProvider,
+            IRateLimitingPolicyProvider policyManager) : this(rateLimitingCacheProvider,
             policyManager, Enumerable.Empty<string>())
         {
         }
@@ -65,7 +65,7 @@ namespace Domain.RateLimiting.AspDotNet
         {
             var contentStream = await actionContext.Request.Content.ReadAsStreamAsync();
             // ReSharper disable once PossibleNullReferenceException
-            var rateLimitingPolicyParameters = await _globalRateLimitingPolicy?.GetPolicyParametersAsync(
+            var rateLimitingPolicyParameters = await _globalRateLimitingPolicy?.GetPolicyAsync(
                 new RateLimitingRequest(
                     actionContext.RequestContext.RouteData.Route.RouteTemplate, 
                     actionContext.Request.RequestUri.PathAndQuery,
@@ -77,7 +77,7 @@ namespace Domain.RateLimiting.AspDotNet
             if (rateLimitingPolicyParameters == null)
                 return;
 
-            var rateLimits = rateLimitingPolicyParameters.Policies;
+            var rateLimits = rateLimitingPolicyParameters.AllowedCallRates;
 
             if (rateLimits == null || !rateLimits.Any())
                 rateLimits = GetRateLimitAttributes(actionContext);
@@ -136,12 +136,12 @@ namespace Domain.RateLimiting.AspDotNet
                 rateLimitedResponseParameters.RetryAfterInSecs);
         }
 
-        private IList<RateLimitPolicy> GetRateLimitAttributes(HttpActionContext actionContext)
+        private IList<AllowedCallRate> GetRateLimitAttributes(HttpActionContext actionContext)
         {
-            var rateLimits = actionContext.ActionDescriptor.GetCustomAttributes<RateLimitPolicy>(true);
+            var rateLimits = actionContext.ActionDescriptor.GetCustomAttributes<AllowedCallRate>(true);
             if (rateLimits == null || !rateLimits.Any())
                 rateLimits = actionContext.ActionDescriptor.ControllerDescriptor.
-                    GetCustomAttributes<RateLimitPolicy>(true);
+                    GetCustomAttributes<AllowedCallRate>(true);
 
             return rateLimits;
         }

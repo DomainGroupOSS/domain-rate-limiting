@@ -2,13 +2,13 @@
 
 namespace Domain.RateLimiting.Core
 {
-    public interface IRateLimitingPolicyParametersProvider
+    public interface IRateLimitingPolicyProvider
     {
         /// <summary>
         /// 
         /// </summary>
         /// <param name="rateLimitingRequest"></param>
         /// <returns>RateLimitPolicyEntry</returns>
-        Task<RateLimitPolicyParameters> GetPolicyParametersAsync(RateLimitingRequest rateLimitingRequest);
+        Task<RateLimitPolicy> GetPolicyAsync(RateLimitingRequest rateLimitingRequest);
     }
 }

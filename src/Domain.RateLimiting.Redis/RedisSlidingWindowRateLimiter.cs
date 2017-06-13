@@ -48,7 +48,7 @@ namespace Domain.RateLimiting.Redis
         }
 
         protected override Task<long> GetNumberOfRequestsAsync(string requestId, string method, string host, string routeTemplate,
-             RateLimitPolicy policy, IList<RateLimitCacheKey> cacheKeys, 
+             AllowedCallRate policy, IList<RateLimitCacheKey> cacheKeys, 
              ITransaction redisTransaction, long utcNowTicks)
         {
             RateLimitCacheKey cacheKey =

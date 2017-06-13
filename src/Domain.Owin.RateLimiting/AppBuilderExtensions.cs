@@ -18,7 +18,7 @@ namespace Domain.Owin.RateLimiting
         /// <returns></returns>
         /// <exception cref="System.ArgumentNullException">app</exception>
         public static IAppBuilder UseRateLimiting(this IAppBuilder app, IRateLimitingCacheProvider rateLimitingCacheProvider,
-            IRateLimitingPolicyParametersProvider policyManager)
+            IRateLimitingPolicyProvider policyManager)
         {
             if (app == null) throw new ArgumentNullException(nameof(app));
             if (rateLimitingCacheProvider == null) throw new ArgumentNullException(nameof(rateLimitingCacheProvider));

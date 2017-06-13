@@ -19,7 +19,7 @@ namespace Domain.AspDotNetCore.RateLimiting
         /// <exception cref="System.ArgumentNullException">app</exception>
         public static IApplicationBuilder UseRateLimiting(this IApplicationBuilder builder,
             IRateLimitingCacheProvider rateLimitingCacheProvider, 
-            IRateLimitingPolicyParametersProvider policyManager)
+            IRateLimitingPolicyProvider policyManager)
         {
             if (rateLimitingCacheProvider == null) throw new ArgumentNullException(nameof(rateLimitingCacheProvider));
             if (policyManager == null) throw new ArgumentNullException(nameof(policyManager));
