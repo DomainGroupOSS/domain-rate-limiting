@@ -16,23 +16,23 @@ namespace Domain.RateLimiting.Core
         /// </summary>
         /// <param name="requestKey"></param> 
         /// <param name="policies"></param>
-        /// <param name="canOverrideIfNoAllowedCallRates"></param>
+        /// <param name="allowAttributeOverride"></param>
         public RateLimitPolicy(string requestKey, IList<AllowedCallRate> policies, 
-            bool canOverrideIfNoAllowedCallRates = true) : 
-            this(requestKey, AllRequestPaths, AllHttpMethods, policies, canOverrideIfNoAllowedCallRates)
+            bool allowAttributeOverride = false) : 
+            this(requestKey, AllRequestPaths, AllHttpMethods, policies, allowAttributeOverride)
         { }
-        public RateLimitPolicy(string requestKey, bool canOverrideIfNoAllowedCallRates = true) :
-            this(requestKey, AllRequestPaths, AllHttpMethods, new List<AllowedCallRate>(), canOverrideIfNoAllowedCallRates)
+        public RateLimitPolicy(string requestKey, bool allowAttributeOverride = false) :
+            this(requestKey, AllRequestPaths, AllHttpMethods, new List<AllowedCallRate>(), allowAttributeOverride)
         { }
 
         public RateLimitPolicy(string requestKey, string httpMethod, IList<AllowedCallRate> policies, 
-            bool canOverrideIfNoAllowedCallRates = true) :
-            this(requestKey, AllRequestPaths, httpMethod, policies, canOverrideIfNoAllowedCallRates)
+            bool allowAttributeOverride = false) :
+            this(requestKey, AllRequestPaths, httpMethod, policies, allowAttributeOverride)
         { }
 
         public RateLimitPolicy(string requestKey, IList<AllowedCallRate> policies, string path,
-            bool canOverrideIfNoAllowedCallRates = true) :
-            this(requestKey, path, AllHttpMethods, policies, canOverrideIfNoAllowedCallRates)
+            bool allowAttributeOverride = false) :
+            this(requestKey, path, AllHttpMethods, policies, allowAttributeOverride)
         { }
 
         /// <summary>
@@ -42,13 +42,13 @@ namespace Domain.RateLimiting.Core
         /// <param name="routeTemplate">The route template.</param>
         /// <param name="allowedCallRates">The policies.</param>
         /// <param name="httpMethod">The HTTP method.</param>
-        /// <param name="canOverrideIfNoAllowedCallRates"></param>
+        /// <param name="allowAttributeOverride"></param>
         /// <param name="name"></param>
         /// <exception cref="ArgumentOutOfRangeException">limit</exception>
         /// <exception cref="ArgumentNullException"><paramref name="routeTemplate" /> is <see langword="null" />.</exception>
         /// <exception cref="ArgumentOutOfRangeException">limit</exception>
         public RateLimitPolicy(string requestKey, string routeTemplate, string httpMethod, 
-            IList<AllowedCallRate> allowedCallRates, bool canOverrideIfNoAllowedCallRates = true, string name = "")
+            IList<AllowedCallRate> allowedCallRates, bool allowAttributeOverride = false, string name = "")
         {
             if (string.IsNullOrWhiteSpace(requestKey)) throw new ArgumentNullException(nameof(requestKey), 
                 "requestKey cannot be null or whitespace");
@@ -56,9 +56,9 @@ namespace Domain.RateLimiting.Core
             if (requestKey.Length == 0) throw new ArgumentOutOfRangeException(nameof(requestKey), 
                 "requestKey cannot be empty");
 
-            //if (routeTemplate == null) throw new ArgumentNullException(nameof(routeTemplate));
-            //if (routeTemplate.Length == 0) throw new ArgumentOutOfRangeException(nameof(routeTemplate), 
-            //    "the routeTemplate to rate limit cannot be empty");
+            if (routeTemplate == null) throw new ArgumentNullException(nameof(routeTemplate));
+            if (routeTemplate.Length == 0) throw new ArgumentOutOfRangeException(nameof(routeTemplate),
+                "the routeTemplate to rate limit cannot be empty");
 
             if (string.IsNullOrWhiteSpace(routeTemplate) || routeTemplate.Length == 0)
                 routeTemplate = AllRequestPaths;
@@ -70,7 +70,7 @@ namespace Domain.RateLimiting.Core
             RouteTemplate = routeTemplate;
             HttpMethod = httpMethod;
             AllowedCallRates = allowedCallRates;
-            CanOverrideIfNoAllowedCallRates = canOverrideIfNoAllowedCallRates;
+            AllowAttributeOverride = allowAttributeOverride;
             Name = name;
             Key = new RateLimitingPolicyKey(RequestKey, routeTemplate, httpMethod);
         }
@@ -88,7 +88,7 @@ namespace Domain.RateLimiting.Core
         /// <value>The policies to apply</value>
         public IList<AllowedCallRate> AllowedCallRates { get; }
 
-        public bool CanOverrideIfNoAllowedCallRates { get; }
+        public bool AllowAttributeOverride { get; }
         public string Name { get; }
 
         /// <summary>

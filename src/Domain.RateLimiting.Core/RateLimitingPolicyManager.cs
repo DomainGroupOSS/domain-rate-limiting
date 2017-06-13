@@ -19,7 +19,9 @@ namespace Domain.RateLimiting.Core
         private readonly IRateLimitingPolicyProvider _policyProvider;
 
         private static readonly IDictionary<RateLimitingPolicyKey, RateLimitPolicy> Entries = new Dictionary<RateLimitingPolicyKey, RateLimitPolicy>();
-        private static readonly ICollection<string> WhiteListedPaths = new Collection<string>();//new[] { "/" };
+        private static readonly ICollection<string> WhiteListedPaths = new Collection<string>();
+        private static readonly ICollection<string> WhiteListedRequestKeys = new Collection<string>();
+
         private static readonly RateLimitingPolicyKey AllRequestsKey = new RateLimitingPolicyKey(AllRequestKeys, AllRequestPaths, AllHttpMethods);
         private static readonly RateLimitingPolicyKey AllGetRequestsKey = new RateLimitingPolicyKey(AllRequestKeys, AllRequestPaths, HttpMethod.Get.Method.ToUpperInvariant());
         private static readonly RateLimitingPolicyKey AllPutRequestsKey = new RateLimitingPolicyKey(AllRequestKeys, AllRequestPaths, HttpMethod.Put.Method.ToUpperInvariant());
@@ -212,6 +214,16 @@ namespace Domain.RateLimiting.Core
             return this;
         }
 
+        public RateLimitingPolicyManager AddRequestKeysToWhiteList(IEnumerable<string> requestKeys)
+        {
+            foreach (var e in requestKeys)
+            {
+                WhiteListedRequestKeys.Add(e);
+            }
+
+            return this;
+        }
+
         /// <summary>
         /// Gets the rate limiting policy entry for the current request.
         /// </summary>
@@ -229,16 +241,16 @@ namespace Domain.RateLimiting.Core
         /// </returns>
         public async Task<RateLimitPolicy> GetPolicyAsync(RateLimitingRequest rateLimitingRequest)
         {
-            if (IsWhiteListedRequest(rateLimitingRequest.Path, rateLimitingRequest.Method))
+            if (IsWhiteListedPath(rateLimitingRequest.Path, rateLimitingRequest.Method))
                 return null;
 
             var providedPolicyEntry = await _policyProvider.GetPolicyAsync(rateLimitingRequest);
 
-            if (providedPolicyEntry == null)
+            if (providedPolicyEntry == null || 
+                IsWhiteListedRequestKey(providedPolicyEntry.RequestKey))
                 return null;
 
-            if ((providedPolicyEntry.AllowedCallRates != null && providedPolicyEntry.AllowedCallRates.Any()) 
-                || !providedPolicyEntry.CanOverrideIfNoAllowedCallRates)
+            if (providedPolicyEntry.AllowedCallRates != null && providedPolicyEntry.AllowedCallRates.Any())
                 return providedPolicyEntry;
 
             // Policy key matching the current request path for current HTTP method, e.g. GET /v1/example
@@ -267,7 +279,8 @@ namespace Domain.RateLimiting.Core
             return Entries.ContainsKey(policyKey) ? 
                 new RateLimitPolicy(providedPolicyEntry.RequestKey, 
                 Entries[policyKey].RouteTemplate, Entries[policyKey].HttpMethod,
-                Entries[policyKey].AllowedCallRates) : null;
+                Entries[policyKey].AllowedCallRates,true,"Static Global Policy") : 
+                providedPolicyEntry;
         }
 
         /// <summary>
@@ -290,9 +303,15 @@ namespace Domain.RateLimiting.Core
         /// <param name="requestPath">The request path.</param>
         /// <param name="httpMethod">The http method.</param>
         /// <returns></returns>
-        public bool IsWhiteListedRequest(string requestPath, string httpMethod)
+        public bool IsWhiteListedPath(string requestPath, string httpMethod)
         {
             return WhiteListedPaths.Any(requestPath.StartsWith);
+        }
+
+        public bool IsWhiteListedRequestKey(string requestKey)
+        {
+            return WhiteListedRequestKeys.Any(rk =>
+                string.Equals(rk, requestKey, StringComparison.CurrentCultureIgnoreCase));
         }
 
         private static void AddPolicies(string requestKey, string endpoint, string httpMethod, IList<AllowedCallRate> policies)

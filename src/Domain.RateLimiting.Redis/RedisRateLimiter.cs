@@ -39,7 +39,7 @@ namespace Domain.RateLimiting.Redis
 
             _onThrottled = onThrottled;
             _countThrottledRequests = countThrottledRequests;
-            _circuitBreakerPolicy = circuitBreaker;
+            _circuitBreakerPolicy = circuitBreaker ?? new CircuitBreaker(3, 10000, 300);
             SetupConnectionConfiguration(redisEndpoint, connectionTimeout, syncTimeout);
             //SetupCircuitBreaker(faultThreshholdPerWindowDuration, faultWindowDurationInMilliseconds, circuitOpenDurationInSecs, onException, onCircuitOpened, onCircuitClosed);
             ConnectToRedis(onException);

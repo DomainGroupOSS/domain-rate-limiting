@@ -60,7 +60,7 @@ namespace Domain.AspDotNetCore.RateLimiting
         /// <returns></returns>
         public override async Task OnActionExecutionAsync(ActionExecutingContext actionContext, ActionExecutionDelegate next)
         {
-            var rateLimitingPolicys = await _policyManager.GetPolicyAsync(
+            var rateLimitingPolicy = await _policyManager.GetPolicyAsync(
                  new RateLimitingRequest(
                         actionContext.ActionDescriptor.AttributeRouteInfo.Template,
                         actionContext.HttpContext.Request.Path,
@@ -69,23 +69,32 @@ namespace Domain.AspDotNetCore.RateLimiting
                         actionContext.HttpContext.User,
                         actionContext.HttpContext.Request.Body));
 
-            if (rateLimitingPolicys == null)
+            if (rateLimitingPolicy == null)
             {
                 await base.OnActionExecutionAsync(actionContext, next);
                 return;
             }
 
-            var allowedCallRates = rateLimitingPolicys.AllowedCallRates;
+            var allowedCallRates = rateLimitingPolicy.AllowedCallRates;
+            var routeTemplate = rateLimitingPolicy.RouteTemplate;
+            var httpMethod = rateLimitingPolicy.HttpMethod;
 
-            if ((allowedCallRates == null || !allowedCallRates.Any()) && 
-                rateLimitingPolicys.CanOverrideIfNoAllowedCallRates)
-                allowedCallRates = GetCustomAttributes(actionContext.ActionDescriptor);
+            if(rateLimitingPolicy.AllowAttributeOverride)
+            {
+                var attributeRates = GetCustomAttributes(actionContext.ActionDescriptor);
+                if (attributeRates != null && attributeRates.Any())
+                {
+                    allowedCallRates = attributeRates;
+                    routeTemplate = actionContext.ActionDescriptor.AttributeRouteInfo.Template;
+                    httpMethod = actionContext.HttpContext.Request.Method;
+                }
+            }
 
-            if (allowedCallRates == null || allowedCallRates.Count == 0)
+            if (allowedCallRates == null || !allowedCallRates.Any())
                 return;
 
             var context = actionContext.HttpContext;
-            var requestKey = rateLimitingPolicys.RequestKey;
+            var requestKey = rateLimitingPolicy.RequestKey;
 
             if (string.IsNullOrWhiteSpace(requestKey))
             {
@@ -106,8 +115,9 @@ namespace Domain.AspDotNetCore.RateLimiting
                 return;
             }
 
-            var result = await _rateLimitingCacheProvider.LimitRequestAsync(requestKey, rateLimitingPolicys.HttpMethod,
-                context.Request.Host.Value, rateLimitingPolicys.RouteTemplate, allowedCallRates).ConfigureAwait(false);
+            var result = await _rateLimitingCacheProvider.LimitRequestAsync(requestKey, httpMethod,
+                context.Request.Host.Value, routeTemplate, allowedCallRates).ConfigureAwait(false);
+
             if (result.Throttled)
                 TooManyRequests(actionContext, allowedCallRates, result.WaitingIntervalInTicks);
             else
@@ -117,7 +127,6 @@ namespace Domain.AspDotNetCore.RateLimiting
 
         private void InvalidRequestId(ActionExecutingContext context)
         {
-
             context.HttpContext.Response.StatusCode = (int)HttpStatusCode.Forbidden;
             context.HttpContext.Response.Headers.Clear();
 

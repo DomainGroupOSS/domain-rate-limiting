@@ -36,14 +36,14 @@ namespace Domain.RateLimiting.Core
         /// <param name="method">The request method</param>
         /// <param name="host">The host</param>
         /// <param name="routeTemplate">The route template.</param>
-        /// <param name="rateLimitPolicy">The rate limit entry.</param>
+        /// <param name="allowedCallRate">The rate limit entry.</param>
         /// <param name="getSuffix">The suffix function based on the process</param>
         /// <exception cref="System.ArgumentNullException">requestId</exception>
         /// <exception cref="System.ArgumentOutOfRangeException">requestId;requestId cannot be empty</exception>
         /// <exception cref="ArgumentNullException">requestId or host or pathToLimit or expirationKey or httpMethod</exception>
         /// <exception cref="ArgumentOutOfRangeException">requestId;requestId cannot be empty or host;host cannot be empty or pathToLimit;requestId cannot be empty or  expirationKey;expirationKey cannot be empty or httpMethod;httpMethod cannot be empty</exception>
         public RateLimitCacheKey(string requestId, string method, string host, string routeTemplate, 
-            AllowedCallRate rateLimitPolicy, Func<DateTime, string> getSuffix)
+            AllowedCallRate allowedCallRate, Func<DateTime, string> getSuffix)
         {
             if (requestId == null) throw new ArgumentNullException(nameof(requestId));
             if (requestId.Length == 0) throw new ArgumentOutOfRangeException(nameof(requestId), "requestId cannot be empty");
@@ -56,9 +56,9 @@ namespace Domain.RateLimiting.Core
             _method = method;
             _host = host;
             _routeTemplate = routeTemplate.StartsWith(@"/") ? routeTemplate : @"/" + routeTemplate;
-            Expiration = RateLimitTypeExpirationMapping[rateLimitPolicy.Unit](rateLimitPolicy.Limit);
+            Expiration = RateLimitTypeExpirationMapping[allowedCallRate.Unit](allowedCallRate.Limit);
             RetryAfter = _dateTimeUtcNow.Add(Expiration).ToString("R");
-            RateLimitPolicy = rateLimitPolicy;
+            AllowedCallRate = allowedCallRate;
             _getSuffix = getSuffix ?? (_ => string.Empty); 
         }
 
@@ -75,17 +75,17 @@ namespace Domain.RateLimiting.Core
         /// <summary>
         /// The unit associated with the rate limit value
         /// </summary>
-        public RateLimitUnit Unit => RateLimitPolicy.Unit;
+        public RateLimitUnit Unit => AllowedCallRate.Unit;
 
         /// <summary>
         /// The request limit
         /// </summary>
-        public int Limit => RateLimitPolicy.Limit;
+        public int Limit => AllowedCallRate.Limit;
 
         /// <summary>
         /// The rate limiting policy for this key
         /// </summary>
-        public readonly AllowedCallRate RateLimitPolicy;
+        public readonly AllowedCallRate AllowedCallRate;
 
         /// <summary>
         /// Returns a string that represents the current object.

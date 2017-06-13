@@ -43,20 +43,23 @@ namespace Domain.RateLimiting.Samples.AspNetCore
                 .AddPathToWhiteList("/api/unlimited")
                 .AddPoliciesForAllEndpoints(new List<AllowedCallRate>()
                 {
-                    new AllowedCallRate(1000, RateLimitUnit.PerMinute)
+                    new AllowedCallRate(100, RateLimitUnit.PerMinute)
                 })
-                .AddEndpointPolicies("/api/globallylimited", "*", new List<AllowedCallRate>() {
+                .AddEndpointPolicies("/api/globallylimited", "*", new List<AllowedCallRate>()
+                {
                     new AllowedCallRate(10, RateLimitUnit.PerMinute)
                 })
-                .AddEndpointPolicies("/api/globallylimited/{id}", "*", new List<AllowedCallRate>() {
+                .AddEndpointPolicies("/api/globallylimited/{id}", "*", new List<AllowedCallRate>()
+                {
                     new AllowedCallRate(5, RateLimitUnit.PerMinute)
                 })
-                .AddEndpointPolicies("/api/globallylimited/{id}/sub/{subid}", "*", new List<AllowedCallRate>() {
+                .AddEndpointPolicies("/api/globallylimited/{id}/sub/{subid}", "*", new List<AllowedCallRate>()
+                {
                     new AllowedCallRate(2, RateLimitUnit.PerMinute)
-                })
-                .AddEndpointPolicies("/api/attributelimited", "*", new List<AllowedCallRate>() {
-                    new AllowedCallRate(20, RateLimitUnit.PerMinute)
                 });
+                //.AddEndpointPolicies("/api/attributelimited", "*", new List<AllowedCallRate>() {
+                //    new AllowedCallRate(20, RateLimitUnit.PerMinute)
+                //});
             // Add framework services.
             services.AddMvc(options =>
             {

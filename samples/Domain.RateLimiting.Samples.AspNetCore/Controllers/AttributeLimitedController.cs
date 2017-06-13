@@ -22,7 +22,7 @@ namespace Domain.RateLimiting.Samples.AspNetCore.Controllers
         // GET api/values/5
         [HttpGet("{id}")]
         //[RateLimitPolicy(10, RateLimitUnit.PerHour)]
-        [AllowedCallRate(1000, RateLimitUnit.PerMinute)]
+        [AllowedCallRate(5, RateLimitUnit.PerMinute)]
         //[RateLimitPolicy(2, RateLimitUnit.PerSecond)]
         public string Get(int id)
         {
