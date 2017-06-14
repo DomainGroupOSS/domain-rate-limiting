@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Domain.RateLimiting.Core
 {
-    public class RateLimitingPolicyParametersProvider : IRateLimitingPolicyProvider
+    public class DefaultRateLimitingPolicyProvider : IRateLimitingPolicyProvider
     {
         public async Task<RateLimitPolicy> GetPolicyAsync(RateLimitingRequest rateLimitingRequest)
         {
@@ -14,7 +14,7 @@ namespace Domain.RateLimiting.Core
 
             if (string.IsNullOrWhiteSpace(clientId?.Value)) return null;
 
-            return await Task.FromResult(new RateLimitPolicy(clientId.Value));
+            return await Task.FromResult(new RateLimitPolicy(clientId.Value, allowAttributeOverride: true));
         }
     }
 }

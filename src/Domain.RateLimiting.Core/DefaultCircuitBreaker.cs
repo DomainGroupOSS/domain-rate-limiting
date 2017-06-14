@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace Domain.RateLimiting.Core
 {
-    public class CircuitBreaker : ICircuitBreaker
+    public class DefaultCircuitBreaker : ICircuitBreaker
     {
         private readonly int _faultThreshholdPerWindowDuration;
         private readonly int _faultWindowDurationInMilliseconds;
@@ -21,7 +21,7 @@ namespace Domain.RateLimiting.Core
         private readonly Action _onCircuitClosed;
         private readonly Action<Exception> _onCircuitException;
 
-        public CircuitBreaker(int faultThreshholdPerWindowDuration, 
+        public DefaultCircuitBreaker(int faultThreshholdPerWindowDuration, 
             int faultWindowDurationInMilliseconds, 
             int circuitOpenIntervalInSecs,
             Action onCircuitOpened = null,

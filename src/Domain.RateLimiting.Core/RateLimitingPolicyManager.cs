@@ -174,6 +174,18 @@ namespace Domain.RateLimiting.Core
             return this;
         }
 
+        // KAZI revisit
+        public RateLimitingPolicyManager AddEndpointPolicy(RateLimitPolicy policy)
+        {
+            var entry = policy;
+
+            if (Entries.ContainsKey(entry.Key)) throw new InvalidOperationException($"Rate limit policy for {entry.Key} requests has already been defined.");
+
+            Entries.Add(entry.Key, entry);
+
+            return this;
+        }
+
         /// <summary>
         /// Adds the endpoint policy for all HTTP methods.
         /// </summary>
@@ -206,6 +218,9 @@ namespace Domain.RateLimiting.Core
         /// <returns></returns>
         public RateLimitingPolicyManager AddPathsToWhiteList(IEnumerable<string> endpoints)
         {
+            if (endpoints == null)
+                return this;
+
             foreach (var e in endpoints)
             {
                 WhiteListedPaths.Add(e);
@@ -216,6 +231,9 @@ namespace Domain.RateLimiting.Core
 
         public RateLimitingPolicyManager AddRequestKeysToWhiteList(IEnumerable<string> requestKeys)
         {
+            if (requestKeys == null)
+                return this;
+
             foreach (var e in requestKeys)
             {
                 WhiteListedRequestKeys.Add(e);
@@ -253,9 +271,17 @@ namespace Domain.RateLimiting.Core
             if (providedPolicyEntry.AllowedCallRates != null && providedPolicyEntry.AllowedCallRates.Any())
                 return providedPolicyEntry;
 
-            // Policy key matching the current request path for current HTTP method, e.g. GET /v1/example
-            var policyKey = new RateLimitingPolicyKey(AllRequestKeys, 
+
+            var policyKey = new RateLimitingPolicyKey(providedPolicyEntry.RequestKey,
                 rateLimitingRequest.RouteTemplate, rateLimitingRequest.Method);
+
+            if (!Entries.ContainsKey(policyKey))
+            {
+                // Policy key for the current request path belonging to all HTTP methods, e.g. * /v1/example
+                // Policy key matching the current request path for current HTTP method, e.g. GET /v1/example
+                policyKey = new RateLimitingPolicyKey(AllRequestKeys,
+                    rateLimitingRequest.RouteTemplate, rateLimitingRequest.Method);
+            }
             
             if (!Entries.ContainsKey(policyKey))
             {
@@ -279,8 +305,8 @@ namespace Domain.RateLimiting.Core
             return Entries.ContainsKey(policyKey) ? 
                 new RateLimitPolicy(providedPolicyEntry.RequestKey, 
                 Entries[policyKey].RouteTemplate, Entries[policyKey].HttpMethod,
-                Entries[policyKey].AllowedCallRates,true,"Static Global Policy") : 
-                providedPolicyEntry;
+                Entries[policyKey].AllowedCallRates, Entries[policyKey].AllowAttributeOverride,
+                Entries[policyKey].Name) : providedPolicyEntry;
         }
 
         /// <summary>

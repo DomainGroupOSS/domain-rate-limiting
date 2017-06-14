@@ -65,7 +65,7 @@ namespace Domain.RateLimiting.AspDotNet
         {
             var contentStream = await actionContext.Request.Content.ReadAsStreamAsync();
             // ReSharper disable once PossibleNullReferenceException
-            var rateLimitingPolicyParameters = await _globalRateLimitingPolicy?.GetPolicyAsync(
+            var rateLimitingPolicy = await _globalRateLimitingPolicy?.GetPolicyAsync(
                 new RateLimitingRequest(
                     actionContext.RequestContext.RouteData.Route.RouteTemplate, 
                     actionContext.Request.RequestUri.PathAndQuery,
@@ -74,18 +74,32 @@ namespace Domain.RateLimiting.AspDotNet
                     actionContext.RequestContext.Principal as ClaimsPrincipal, 
                     contentStream));
 
-            if (rateLimitingPolicyParameters == null)
+            if (rateLimitingPolicy == null)
+            {
+                return;
+            }
+
+            var allowedCallRates = rateLimitingPolicy.AllowedCallRates;
+            var routeTemplate = rateLimitingPolicy.RouteTemplate;
+            var httpMethod = rateLimitingPolicy.HttpMethod;
+
+            if (rateLimitingPolicy.AllowAttributeOverride)
+            {
+                var attributeRates = GetRateLimitAttributes(actionContext);
+                if (attributeRates != null && attributeRates.Any())
+                {
+                    allowedCallRates = attributeRates;
+                    routeTemplate = actionContext.RequestContext.RouteData.Route.RouteTemplate;
+                    httpMethod = actionContext.Request.Method.Method;
+                }
+            }
+
+            if (allowedCallRates == null || !allowedCallRates.Any())
                 return;
 
-            var rateLimits = rateLimitingPolicyParameters.AllowedCallRates;
-
-            if (rateLimits == null || !rateLimits.Any())
-                rateLimits = GetRateLimitAttributes(actionContext);
-
-            if (rateLimits == null || rateLimits.Count == 0)
-                return;
+            var requestKey = rateLimitingPolicy.RequestKey;
             
-            if (string.IsNullOrWhiteSpace(rateLimitingPolicyParameters.RequestKey))
+            if (string.IsNullOrWhiteSpace(rateLimitingPolicy.RequestKey))
             {
                 actionContext.Response = new HttpResponseMessage(HttpStatusCode.Forbidden)
                 {
@@ -94,25 +108,25 @@ namespace Domain.RateLimiting.AspDotNet
                 return;
             }
 
-            if (_whitelistedRequestKeys.Any(k => string.Compare(rateLimitingPolicyParameters.RequestKey,
+            if (_whitelistedRequestKeys.Any(k => string.Compare(requestKey,
                                                      k, StringComparison.InvariantCultureIgnoreCase) == 0))
             {
                 return;
             }
 
-            if (rateLimits.Any(
+            if (allowedCallRates.Any(
                 rl => rl.WhiteListRequestKeys.Any(
-                    k => string.Compare(rateLimitingPolicyParameters.RequestKey, k,
+                    k => string.Compare(requestKey, k,
                              StringComparison.InvariantCultureIgnoreCase) == 0)))
             {
                 return;
             }
 
             var rateLimitingResult = await _rateLimitingCacheProvider.LimitRequestAsync(
-                rateLimitingPolicyParameters.RequestKey,
-                rateLimitingPolicyParameters.HttpMethod,
+                requestKey,
+                httpMethod,
                 actionContext.Request.RequestUri.Host, 
-                rateLimitingPolicyParameters.RouteTemplate, rateLimits).ConfigureAwait(false);
+                routeTemplate, allowedCallRates).ConfigureAwait(false);
 
             if (rateLimitingResult.Throttled)
             {
