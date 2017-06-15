@@ -30,48 +30,5 @@ namespace Domain.RateLimiting.Redis
         public int SyncTimeout { get; set; }
         
         public bool CountThrottledRequests { get; set; }
-
-        public RateLimitingProcess RateLimitingProcess { get; set; }
-
-        public IRateLimitingCacheProvider GetRedisRateLimitingCacheProvider(
-            Action<Exception> onException = null,
-            Action<RateLimitingResult> onThrottled = null, 
-            Action onCircuitOpened = null,
-            Action onCircuitClosed = null,
-            Action<Exception> onCircuitException = null)
-        {
-            if (RateLimitingProcess == RateLimitingProcess.SlidingWindow)
-            {
-                return new RedisSlidingWindowRateLimiter(RateLimitRedisCacheConnectionString,
-                    onException,
-                    onThrottled,
-                    circuitBreaker: new DefaultCircuitBreaker(FaultThreshholdPerWindowDuration,
-                        FaultWindowDurationInMilliseconds,
-                        CircuitOpenIntervalInSecs,
-                        onCircuitOpened,
-                        onCircuitClosed),
-                    connectionTimeout: ConnectionTimeout,
-                    syncTimeout: SyncTimeout,
-                    countThrottledRequests: CountThrottledRequests);
-            }
-
-            return new RedisFixedWindowRateLimiter(RateLimitRedisCacheConnectionString,
-                onException,
-                onThrottled,
-                circuitBreaker: new DefaultCircuitBreaker(FaultThreshholdPerWindowDuration,
-                    FaultWindowDurationInMilliseconds,
-                    CircuitOpenIntervalInSecs,
-                    onCircuitOpened,
-                    onCircuitClosed),
-                connectionTimeout: ConnectionTimeout,
-                syncTimeout: SyncTimeout,
-                countThrottledRequests: CountThrottledRequests);
-        }
-    }
-
-    public enum RateLimitingProcess
-    {
-        FixedWindow,
-        SlidingWindow
     }
 }

@@ -18,9 +18,9 @@ namespace Domain.RateLimiting.Core
 
         private readonly IRateLimitingPolicyProvider _policyProvider;
 
-        private static readonly IDictionary<RateLimitingPolicyKey, RateLimitPolicy> Entries = new Dictionary<RateLimitingPolicyKey, RateLimitPolicy>();
-        private static readonly ICollection<string> WhiteListedPaths = new Collection<string>();
-        private static readonly ICollection<string> WhiteListedRequestKeys = new Collection<string>();
+        private readonly IDictionary<RateLimitingPolicyKey, RateLimitPolicy> _entries = new Dictionary<RateLimitingPolicyKey, RateLimitPolicy>();
+        private readonly ICollection<string> _whiteListedPaths = new Collection<string>();
+        private readonly ICollection<string> _whiteListedRequestKeys = new Collection<string>();
 
         private static readonly RateLimitingPolicyKey AllRequestsKey = new RateLimitingPolicyKey(AllRequestKeys, AllRequestPaths, AllHttpMethods);
         private static readonly RateLimitingPolicyKey AllGetRequestsKey = new RateLimitingPolicyKey(AllRequestKeys, AllRequestPaths, HttpMethod.Get.Method.ToUpperInvariant());
@@ -55,10 +55,15 @@ namespace Domain.RateLimiting.Core
         /// Adds the policy for all requests and all HTTP methods.
         /// </summary>
         /// <param name="policies">The policies.</param>
+        /// <param name="requestKey"></param>
+        /// <param name="allowAttributeOverride"></param>
+        /// <param name="name"></param>
         /// <returns></returns>
-        public RateLimitingPolicyManager AddPoliciesForAllEndpoints(IList<AllowedCallRate> policies)
+        public RateLimitingPolicyManager AddPoliciesForAllEndpoints(IList<AllowedCallRate> policies, 
+            string requestKey=AllRequestKeys, bool allowAttributeOverride = false, string name = "")
         {
-            AddPolicies(AllRequestKeys, AllRequestPaths, AllHttpMethods, policies);
+            AddEndpointPolicy(new RateLimitPolicy(requestKey, AllRequestPaths, AllHttpMethods, policies,
+                allowAttributeOverride, name));
 
             return this;
         }
@@ -68,10 +73,15 @@ namespace Domain.RateLimiting.Core
         /// </summary>
         /// <param name="policies">The policies.</param>
         /// <param name="httpMethod">The HTTP method.</param>
+        /// <param name="requestKey"></param>
+        /// <param name="allowAttributeOverride"></param>
+        /// <param name="name"></param>
         /// <returns></returns>
-        public RateLimitingPolicyManager AddPoliciesForAllEndpoints(IList<AllowedCallRate> policies, string httpMethod)
+        public RateLimitingPolicyManager AddPoliciesForAllEndpointsForSpecifiedMethod(IList<AllowedCallRate> policies, 
+            string httpMethod, string requestKey = AllRequestKeys, bool allowAttributeOverride = false, string name = "")
         {
-            AddPolicies(AllRequestKeys, AllRequestPaths, httpMethod, policies);
+            AddEndpointPolicy(new RateLimitPolicy(requestKey, AllRequestPaths, AllHttpMethods, policies,
+                allowAttributeOverride, name));
 
             return this;
         }
@@ -80,10 +90,15 @@ namespace Domain.RateLimiting.Core
         /// Adds the policy for all get requests.
         /// </summary>
         /// <param name="policies">The policies.</param>
+        /// <param name="requestKey"></param>
+        /// <param name="allowAttributeOverride"></param>
+        /// <param name="name"></param>
         /// <returns></returns>
-        public RateLimitingPolicyManager AddPoliciesForAllGetRequests(IList<AllowedCallRate> policies)
+        public RateLimitingPolicyManager AddPoliciesForAllGetRequests(IList<AllowedCallRate> policies, 
+            string requestKey = AllRequestKeys, bool allowAttributeOverride = false, string name = "")
         {
-            AddPolicies(AllRequestKeys, AllRequestPaths, HttpMethod.Get.Method.ToUpperInvariant(), policies);
+            AddEndpointPolicy(new RateLimitPolicy(requestKey, AllRequestPaths, AllHttpMethods, policies,
+                allowAttributeOverride, name));
 
             return this;
         }
@@ -92,10 +107,15 @@ namespace Domain.RateLimiting.Core
         /// Adds the policy for all put requests.
         /// </summary>
         /// <param name="policies">The policies.</param>
+        /// <param name="requestKey"></param>
+        /// <param name="allowAttributeOverride"></param>
+        /// <param name="name"></param>
         /// <returns></returns>
-        public RateLimitingPolicyManager AddPoliciesForAllPutRequests(IList<AllowedCallRate> policies)
+        public RateLimitingPolicyManager AddPoliciesForAllPutRequests(IList<AllowedCallRate> policies, 
+            string requestKey = AllRequestKeys, bool allowAttributeOverride = false, string name = "")
         {
-            AddPolicies(AllRequestKeys, AllRequestPaths, HttpMethod.Put.Method.ToUpperInvariant(), policies);
+            AddEndpointPolicy(new RateLimitPolicy(requestKey, AllRequestPaths, AllHttpMethods, policies,
+                allowAttributeOverride, name));
 
             return this;
         }
@@ -104,10 +124,15 @@ namespace Domain.RateLimiting.Core
         /// Adds the policy for all put requests.
         /// </summary>
         /// <param name="policies">The policies.</param>
+        /// <param name="requestKey"></param>
+        /// <param name="allowAttributeOverride"></param>
+        /// <param name="name"></param>
         /// <returns></returns>
-        public RateLimitingPolicyManager AddPoliciesForAllPostRequests(IList<AllowedCallRate> policies)
+        public RateLimitingPolicyManager AddPoliciesForAllPostRequests(IList<AllowedCallRate> policies, 
+            string requestKey = AllRequestKeys, bool allowAttributeOverride = false, string name = "")
         {
-            AddPolicies(AllRequestKeys, AllRequestPaths, HttpMethod.Post.Method.ToUpperInvariant(), policies);
+            AddEndpointPolicy(new RateLimitPolicy(requestKey, AllRequestPaths, AllHttpMethods, policies,
+                allowAttributeOverride, name));
 
             return this;
         }
@@ -116,10 +141,13 @@ namespace Domain.RateLimiting.Core
         /// Adds the policy for all delete requests.
         /// </summary>
         /// <param name="policies">The policies.</param>
+        /// <param name="requestKey"></param>
         /// <returns></returns>
-        public RateLimitingPolicyManager AddPoliciesForAllDeleteRequests(IList<AllowedCallRate> policies)
+        public RateLimitingPolicyManager AddPoliciesForAllDeleteRequests(IList<AllowedCallRate> policies, 
+            string requestKey = AllRequestKeys, bool allowAttributeOverride = false, string name = "")
         {
-            AddPolicies(AllRequestKeys, AllRequestPaths, HttpMethod.Delete.Method.ToUpperInvariant(), policies);
+            AddEndpointPolicy(new RateLimitPolicy(requestKey, AllRequestPaths, AllHttpMethods, policies,
+                allowAttributeOverride, name));
 
             return this;
         }
@@ -128,10 +156,15 @@ namespace Domain.RateLimiting.Core
         /// Adds the policy for all head requests.
         /// </summary>
         /// <param name="policies">The policies.</param>
+        /// <param name="requestKey"></param>
+        /// <param name="allowAttributeOverride"></param>
+        /// <param name="name"></param>
         /// <returns></returns>
-        public RateLimitingPolicyManager AddPoliciesForAllHeadRequests(IList<AllowedCallRate> policies)
+        public RateLimitingPolicyManager AddPoliciesForAllHeadRequests(IList<AllowedCallRate> policies, 
+            string requestKey = AllRequestKeys, bool allowAttributeOverride = false, string name = "")
         {
-            AddPolicies(AllRequestKeys, AllRequestPaths, HttpMethod.Head.Method.ToUpperInvariant(), policies);
+            AddEndpointPolicy(new RateLimitPolicy(requestKey, AllRequestPaths, AllHttpMethods, policies,
+                allowAttributeOverride, name));
 
             return this;
         }
@@ -140,10 +173,15 @@ namespace Domain.RateLimiting.Core
         /// Adds the policy for all options requests.
         /// </summary>
         /// <param name="policies">The policies.</param>
+        /// <param name="requestKey"></param>
+        /// <param name="allowAttributeOverride"></param>
+        /// <param name="name"></param>
         /// <returns></returns>
-        public RateLimitingPolicyManager AddPoliciesForAllOptionsRequests(IList<AllowedCallRate> policies)
+        public RateLimitingPolicyManager AddPoliciesForAllOptionsRequests(IList<AllowedCallRate> policies, 
+            string requestKey = AllRequestKeys, bool allowAttributeOverride = false, string name = "")
         {
-            AddPolicies(AllRequestKeys, AllRequestPaths, HttpMethod.Options.Method.ToUpperInvariant(), policies);
+            AddEndpointPolicy(new RateLimitPolicy(requestKey, AllRequestPaths, AllHttpMethods, policies,
+                allowAttributeOverride, name));
 
             return this;
         }
@@ -152,53 +190,19 @@ namespace Domain.RateLimiting.Core
         /// Adds the policy for all trace requests.
         /// </summary>
         /// <param name="policies">The policies.</param>
+        /// <param name="requestKey"></param>
+        /// <param name="allowAttributeOverride"></param>
+        /// <param name="name"></param>
         /// <returns></returns>
-        public RateLimitingPolicyManager AddPoliciesForAllTraceRequests(IList<AllowedCallRate> policies)
+        public RateLimitingPolicyManager AddPoliciesForAllTraceRequests(IList<AllowedCallRate> policies, 
+            string requestKey = AllRequestKeys, bool allowAttributeOverride = false, string name = "")
         {
-            AddPolicies(AllRequestKeys, AllRequestPaths, HttpMethod.Trace.Method.ToUpperInvariant(), policies);
+            AddEndpointPolicy(new RateLimitPolicy(requestKey, AllRequestPaths, AllHttpMethods, policies,
+                allowAttributeOverride, name));
 
             return this;
         }
-
-        /// <summary>
-        /// Adds the endpoint policy.
-        /// </summary>
-        /// <param name="endpoint">The endpoint.</param>
-        /// <param name="httpMethod">The HTTP method.</param>
-        /// <param name="policies">The policies.</param>
-        /// <returns></returns>
-        public RateLimitingPolicyManager AddEndpointPolicies(string endpoint, string httpMethod, IList<AllowedCallRate> policies)
-        {
-            AddPolicies(AllRequestKeys, endpoint.ToLowerInvariant(), httpMethod.ToUpperInvariant(), policies);
-
-            return this;
-        }
-
-        // KAZI revisit
-        public RateLimitingPolicyManager AddEndpointPolicy(RateLimitPolicy policy)
-        {
-            var entry = policy;
-
-            if (Entries.ContainsKey(entry.Key)) throw new InvalidOperationException($"Rate limit policy for {entry.Key} requests has already been defined.");
-
-            Entries.Add(entry.Key, entry);
-
-            return this;
-        }
-
-        /// <summary>
-        /// Adds the endpoint policy for all HTTP methods.
-        /// </summary>
-        /// <param name="endpoint">The endpoint.</param>
-        /// <param name="policies">The policies.</param>>
-        /// <returns></returns>
-        public RateLimitingPolicyManager AddEndpointPolicy(string endpoint, IList<AllowedCallRate> policies)
-        {
-            AddPolicies(AllRequestKeys, endpoint.ToLowerInvariant(), AllHttpMethods, policies);
-
-            return this;
-        }
-
+        
         /// <summary>
         /// Adds the specified path to white list, any request paths starting with the specified value will not be rate limited.
         /// </summary>
@@ -206,7 +210,7 @@ namespace Domain.RateLimiting.Core
         /// <returns></returns>
         public RateLimitingPolicyManager AddPathToWhiteList(string endpoint)
         {
-            WhiteListedPaths.Add(endpoint);
+            _whiteListedPaths.Add(endpoint);
 
             return this;
         }
@@ -223,7 +227,7 @@ namespace Domain.RateLimiting.Core
 
             foreach (var e in endpoints)
             {
-                WhiteListedPaths.Add(e);
+                _whiteListedPaths.Add(e);
             }
 
             return this;
@@ -236,7 +240,7 @@ namespace Domain.RateLimiting.Core
 
             foreach (var e in requestKeys)
             {
-                WhiteListedRequestKeys.Add(e);
+                _whiteListedRequestKeys.Add(e);
             }
 
             return this;
@@ -275,7 +279,7 @@ namespace Domain.RateLimiting.Core
             var policyKey = new RateLimitingPolicyKey(providedPolicyEntry.RequestKey,
                 rateLimitingRequest.RouteTemplate, rateLimitingRequest.Method);
 
-            if (!Entries.ContainsKey(policyKey))
+            if (!_entries.ContainsKey(policyKey))
             {
                 // Policy key for the current request path belonging to all HTTP methods, e.g. * /v1/example
                 // Policy key matching the current request path for current HTTP method, e.g. GET /v1/example
@@ -283,30 +287,30 @@ namespace Domain.RateLimiting.Core
                     rateLimitingRequest.RouteTemplate, rateLimitingRequest.Method);
             }
             
-            if (!Entries.ContainsKey(policyKey))
+            if (!_entries.ContainsKey(policyKey))
             {
                 // Policy key for the current request path belonging to all HTTP methods, e.g. * /v1/example
                 policyKey = new RateLimitingPolicyKey(AllRequestKeys, 
                     rateLimitingRequest.RouteTemplate, AllHttpMethods);
             }
 
-            if (!Entries.ContainsKey(policyKey))
+            if (!_entries.ContainsKey(policyKey))
             {
                 // Policy key for all requests paths matching the current HTTP method, e.g.. GET /*
                 policyKey = AllRequestsByHttpMethodKeyMapping[rateLimitingRequest.Method.ToUpperInvariant()];
             }
 
-            if (!Entries.ContainsKey(policyKey))
+            if (!_entries.ContainsKey(policyKey))
             {
                 // Policy key for all clients, all requests paths and all HTTP methods, i.e. * /*
                 policyKey = AllRequestsKey;
             }
 
-            return Entries.ContainsKey(policyKey) ? 
+            return _entries.ContainsKey(policyKey) ? 
                 new RateLimitPolicy(providedPolicyEntry.RequestKey, 
-                Entries[policyKey].RouteTemplate, Entries[policyKey].HttpMethod,
-                Entries[policyKey].AllowedCallRates, Entries[policyKey].AllowAttributeOverride,
-                Entries[policyKey].Name) : providedPolicyEntry;
+                _entries[policyKey].RouteTemplate, _entries[policyKey].HttpMethod,
+                _entries[policyKey].AllowedCallRates, _entries[policyKey].AllowAttributeOverride,
+                _entries[policyKey].Name) : providedPolicyEntry;
         }
 
         /// <summary>
@@ -320,7 +324,7 @@ namespace Domain.RateLimiting.Core
         {
             var key = new RateLimitingPolicyKey(requestKey, requestPath, httpMethod);
 
-            return Entries.ContainsKey(key) || Entries.ContainsKey(AllRequestsKey);
+            return _entries.ContainsKey(key) || _entries.ContainsKey(AllRequestsKey);
         }
 
         /// <summary>
@@ -331,22 +335,35 @@ namespace Domain.RateLimiting.Core
         /// <returns></returns>
         public bool IsWhiteListedPath(string requestPath, string httpMethod)
         {
-            return WhiteListedPaths.Any(requestPath.StartsWith);
+            return _whiteListedPaths.Any(requestPath.StartsWith);
         }
 
         public bool IsWhiteListedRequestKey(string requestKey)
         {
-            return WhiteListedRequestKeys.Any(rk =>
+            return _whiteListedRequestKeys.Any(rk =>
                 string.Equals(rk, requestKey, StringComparison.CurrentCultureIgnoreCase));
         }
 
-        private static void AddPolicies(string requestKey, string endpoint, string httpMethod, IList<AllowedCallRate> policies)
+        public RateLimitingPolicyManager AddEndpointPolicies(IEnumerable<RateLimitPolicy> policies)
         {
-            var entry = new RateLimitPolicy(requestKey, endpoint, httpMethod, policies);
+            foreach (var policy in policies)
+            {
+                AddEndpointPolicy(policy);
+            }
 
-            if (Entries.ContainsKey(entry.Key)) throw new InvalidOperationException($"Rate limit policy for {entry.Key} requests has already been defined.");
+            return this;
+        }
 
-            Entries.Add(entry.Key, entry);
+        public RateLimitingPolicyManager AddEndpointPolicy(RateLimitPolicy policy)
+        {
+            var entry = policy;
+
+            if (_entries.ContainsKey(entry.Key))
+                throw new InvalidOperationException($"Rate limit policy for {entry.Key} requests has already been defined.");
+
+            _entries.Add(entry.Key, entry);
+
+            return this;
         }
     }
 }
