@@ -65,7 +65,7 @@ namespace Domain.AspDotNetCore.RateLimiting
                         actionContext.ActionDescriptor.AttributeRouteInfo.Template,
                         actionContext.HttpContext.Request.Path,
                         actionContext.HttpContext.Request.Method,
-                        () => actionContext.HttpContext.Request.Headers.ToDictionary((kv) => kv.Key, (kv) => kv.Value.ToArray()),
+                        (header) => actionContext.HttpContext.Request.Headers[header],
                         actionContext.HttpContext.User,
                         actionContext.HttpContext.Request.Body));
 

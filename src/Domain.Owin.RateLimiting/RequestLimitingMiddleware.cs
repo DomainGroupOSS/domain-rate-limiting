@@ -51,7 +51,7 @@ namespace Domain.Owin.RateLimiting
                     context.Request.Path.Value, 
                     context.Request.Path.Value, 
                     context.Request.Method, 
-                    () => context.Request.Headers.ToDictionary((kv)=>kv.Key, (kv)=>kv.Value?.ToArray()), 
+                    (header) => context.Request.Headers.GetCommaSeparatedValues(header)?.ToArray(), 
                     context.Authentication.User, 
                     context.Request.Body));
 

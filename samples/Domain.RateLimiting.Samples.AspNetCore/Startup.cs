@@ -45,8 +45,7 @@ namespace Domain.RateLimiting.Samples.AspNetCore
         {
             // Adds services required for using options.
             services.AddOptions();
-
-
+            
             var rateLimitingOptions = new RateLimitingOptions();
             Configuration.GetSection(nameof(RateLimitingOptions)).Bind(rateLimitingOptions);
 

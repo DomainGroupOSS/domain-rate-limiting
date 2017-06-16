@@ -70,7 +70,7 @@ namespace Domain.RateLimiting.AspDotNet
                     actionContext.RequestContext.RouteData.Route.RouteTemplate, 
                     actionContext.Request.RequestUri.PathAndQuery,
                     actionContext.Request.Method.Method,
-                    () => actionContext.Request.Headers.ToDictionary((kv) => kv.Key, (kv) => kv.Value?.ToArray()),
+                    (header) => actionContext.Request.Headers.GetValues(header)?.ToArray(),
                     actionContext.RequestContext.Principal as ClaimsPrincipal, 
                     contentStream));
 
