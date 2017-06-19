@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Microsoft.Extensions.Primitives;
 
 namespace Domain.AspDotNetCore.RateLimiting
 {
@@ -124,8 +125,13 @@ namespace Domain.AspDotNetCore.RateLimiting
             if (result.Throttled)
                 TooManyRequests(actionContext, result, rateLimitingPolicy.Name);
             else
+            {
+                context.Response.Headers.Add(RateLimitHeaders.CallsRemaining, new StringValues(
+                    new string[] { result.CallsRemaining.ToString()}));
+                context.Response.Headers.Add(RateLimitHeaders.Limit, new StringValues(
+                    new string[] { result.CacheKey.AllowedCallRate.ToString() }));
                 await base.OnActionExecutionAsync(actionContext, next);
-
+            }
         }
 
         private void InvalidRequestId(ActionExecutingContext context)

@@ -114,26 +114,38 @@ namespace Domain.RateLimiting.Redis
                 IList<Task<long>> numberOfRequestsMadePerAllowedCallRateAsync = new List<Task<long>>();
 
                 IList<RateLimitCacheKey> cacheKeys = new List<RateLimitCacheKey>();
-                foreach (var policy in allowedCallRates)
+                foreach (var allowedCallRate in allowedCallRates)
                 {
                     numberOfRequestsMadePerAllowedCallRateAsync.Add(
-                        GetNumberOfRequestsAsync(requestId, method, host, routeTemplate, policy, cacheKeys,
+                        GetNumberOfRequestsAsync(requestId, method, host, routeTemplate, allowedCallRate, cacheKeys,
                             redisTransaction, utcNowTicks));
                 }
 
                 await ExecuteTransactionAsync(redisTransaction);
+                
                 var violatedCacheKeys = new SortedList<long, RateLimitCacheKey>();
 
+                int minCallsRemaining = int.MaxValue;
+                var minCallsCacheKey = default(RateLimitCacheKey);
                 for (int i = 0; i < allowedCallRates.Count; i++)
                 {
-                    RateLimitCacheKey cacheKey = cacheKeys[i];
+                    var cacheKey = cacheKeys[i];
 
-                    if (await numberOfRequestsMadePerAllowedCallRateAsync[i].ConfigureAwait(false) > cacheKey.Limit)
+                    var callsRemaining = cacheKey.Limit -
+                            await numberOfRequestsMadePerAllowedCallRateAsync[i].ConfigureAwait(false);
+
+                    if (minCallsRemaining > callsRemaining)
+                    {
+                        minCallsRemaining = callsRemaining > 0 ? (int)callsRemaining : 0;
+                        minCallsCacheKey = cacheKey;
+                    }
+
+                    if (callsRemaining < 0)
                         violatedCacheKeys.Add((long)allowedCallRates[i].Unit, cacheKey);
                 }
 
                 if (!violatedCacheKeys.Any())
-                    return new RateLimitingResult(false, 0);
+                    return new RateLimitingResult(false, 0, minCallsCacheKey, minCallsRemaining);
 
                 var postViolationTransaction = redisDb.CreateTransaction();
 
@@ -150,7 +162,7 @@ namespace Domain.RateLimiting.Redis
 
                 var rateLimitingResult = new RateLimitingResult(true,
                     await GetWaitingIntervalInTicks(setupGetOldestRequestTimestampInTicks, 
-                        violatedCacheKey, utcNowTicks), violatedCacheKey);
+                        violatedCacheKey, utcNowTicks), violatedCacheKey, 0);
 
                 _onThrottled?.Invoke(rateLimitingResult);
 
