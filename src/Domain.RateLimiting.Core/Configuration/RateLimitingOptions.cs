@@ -1,10 +1,18 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Text;
 
-namespace Domain.RateLimiting.Core
+namespace Domain.RateLimiting.Core.Configuration
 {
+    public class RateLimitPolicyOptions
+    {
+        public IDictionary<string, int> AllowedCallRates { get; set; } = new Dictionary<string, int>();
+        public bool AllowAttributeOverride { get; set; } = false;
+        public string Name { get; set; } = "";
+        public string RouteTemplate { get; set; } = "*";
+        public string HttpMethod { get; set; } = "*";
+        public string RequestKey { get; set; } = "*";
+    }
+
     public class RateLimitingOptions
     {
         /// <summary>
@@ -16,18 +24,19 @@ namespace Domain.RateLimiting.Core
 
         private IList<RateLimitPolicy> _rateLimitPolicies;
 
-        private IEnumerable<RateLimitPolicy> ParseRateLimitPolicyStrings()
+        private IEnumerable<RateLimitPolicy> ParseRateLimitPolicyStringsAndOptions()
         {
             _rateLimitPolicies = new List<RateLimitPolicy>();
             foreach (var policyString in RateLimitPolicyStrings)
             {
-                var policyStringParameters = policyString.Split(new char[] { ':' }, StringSplitOptions.RemoveEmptyEntries);
+                var policyStringParameters = policyString.Split(new char[] { ':' });
                 if (policyStringParameters.Length != 6)
                     throw new ArgumentException(
                         "The policy config is not valid...must be of form client_0:GET:api/values/{id}:60_m&200_h:false:StaticPolicy_0");
 
                 var allowedRatesStrings = policyStringParameters[3]
                     .Split(new char[] { '&' }, StringSplitOptions.RemoveEmptyEntries);
+
                 IList<AllowedCallRate> allowedRates = new List<AllowedCallRate>();
                 foreach (var allowedRateString in allowedRatesStrings)
                 {
@@ -47,7 +56,20 @@ namespace Domain.RateLimiting.Core
                     policyStringParameters[5]));
             }
 
-            return RateLimitPolicies;
+            foreach (var policyOption in RateLimitPolicyOptions)
+            {
+                IList<AllowedCallRate> allowedRates = new List<AllowedCallRate>();
+                foreach (var allowedCallRate in policyOption.AllowedCallRates)
+                {
+                    allowedRates.Add(new AllowedCallRate(allowedCallRate.Value, 
+                        (RateLimitUnit)Enum.Parse(typeof(RateLimitUnit), allowedCallRate.Key)));
+                }
+                _rateLimitPolicies.Add(new RateLimitPolicy(policyOption.RequestKey,
+                    policyOption.RouteTemplate, policyOption.HttpMethod, allowedRates, 
+                    policyOption.AllowAttributeOverride, policyOption.Name));
+            }
+
+            return _rateLimitPolicies;
         }
 
         public bool RateLimitingEnabled { get; set; }
@@ -55,23 +77,19 @@ namespace Domain.RateLimiting.Core
         /// <summary>
         /// 
         /// </summary>
-        public string ThrottledResponseMessageToAppend { get; set; }
+        public string ThrottledResponseMessageToAppend { get; set; } = "";
 
         /// <summary>
         /// 
         /// </summary>
-        public IEnumerable<string> RateLimitPolicyStrings { get; set; }
+        public IList<string> RateLimitPolicyStrings { get; set; } = 
+            new List<string>();
 
-
-        public IEnumerable<RateLimitPolicy> RateLimitPolicies => _rateLimitPolicies ?? ParseRateLimitPolicyStrings();
-
-        /// <summary>
-        ///     Gets the rate limiting white listed paths.
-        /// </summary>
-        /// <value>
-        ///     The rate limiting white listed paths.
-        /// </value>
-        public IEnumerable<string> RateLimitingWhiteListedPaths { get; set; }
+        public IList<RateLimitPolicyOptions> RateLimitPolicyOptions { get; set; } = 
+            new List<RateLimitPolicyOptions>();
+        
+        public IEnumerable<RateLimitPolicy> RateLimitPolicies => 
+            _rateLimitPolicies ?? ParseRateLimitPolicyStringsAndOptions();
 
         /// <summary>
         ///     Gets the rate limiting white listed paths.
@@ -79,6 +97,16 @@ namespace Domain.RateLimiting.Core
         /// <value>
         ///     The rate limiting white listed paths.
         /// </value>
-        public IEnumerable<string> RateLimitingWhiteListedRequestKeys { get; set; }
+        public IList<string> RateLimitingWhiteListedPaths { get; set; } = 
+            new List<string>();
+
+        /// <summary>
+        ///     Gets the rate limiting white listed paths.
+        /// </summary>
+        /// <value>
+        ///     The rate limiting white listed paths.
+        /// </value>
+        public IList<string> RateLimitingWhiteListedRequestKeys { get; set; } = 
+            new List<string>();
     }
 }

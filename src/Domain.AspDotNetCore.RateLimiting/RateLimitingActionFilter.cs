@@ -35,9 +35,12 @@ namespace Domain.AspDotNetCore.RateLimiting
             IRateLimitingPolicyProvider policyManager,
             IEnumerable<string> whitelistedRequestKeys)
         {
-            _rateLimitingCacheProvider = rateLimitingCacheProvider ?? throw new ArgumentNullException(nameof(rateLimitingCacheProvider));
-            _whitelistedRequestKeys = whitelistedRequestKeys ?? throw new ArgumentNullException(nameof(whitelistedRequestKeys));
-            _policyManager = policyManager ?? throw new ArgumentNullException(nameof(policyManager));
+            _rateLimitingCacheProvider = rateLimitingCacheProvider ?? 
+                throw new ArgumentNullException(nameof(rateLimitingCacheProvider));
+            _whitelistedRequestKeys = whitelistedRequestKeys ?? 
+                throw new ArgumentNullException(nameof(whitelistedRequestKeys));
+            _policyManager = policyManager ?? 
+                throw new ArgumentNullException(nameof(policyManager));
         }
 
         /// <summary>
@@ -119,7 +122,7 @@ namespace Domain.AspDotNetCore.RateLimiting
                 context.Request.Host.Value, routeTemplate, allowedCallRates).ConfigureAwait(false);
 
             if (result.Throttled)
-                TooManyRequests(actionContext, allowedCallRates, result.WaitingIntervalInTicks);
+                TooManyRequests(actionContext, result, rateLimitingPolicy.Name);
             else
                 await base.OnActionExecutionAsync(actionContext, next);
 
@@ -136,15 +139,23 @@ namespace Domain.AspDotNetCore.RateLimiting
             };
         }
 
-        private void TooManyRequests(ActionExecutingContext context, IEnumerable<AllowedCallRate> rateLimits, long waitingIntervalInTicks)
+        private void TooManyRequests(ActionExecutingContext context, 
+            RateLimitingResult result, string violatedPolicyName = "")
         {
-            var rateLimitedResponseParameters =
-                RateLimitingHelper.GetRateLimitedResponseParameters(waitingIntervalInTicks);
-            context.HttpContext.Response.StatusCode = RateLimitedResponseParameters.StatusCode;
-            context.HttpContext.Response.Headers.Add(rateLimitedResponseParameters.RetryAfterHeader, rateLimitedResponseParameters.RetryAfterInSecs);
+            var throttledResponseParameters =
+                RateLimitingHelper.GetThrottledResponseParameters(result, violatedPolicyName);
+            context.HttpContext.Response.StatusCode = ThrottledResponseParameters.StatusCode;
+
+            foreach (var header in throttledResponseParameters.RateLimitHeaders.Keys)
+            {
+                context.HttpContext.Response.Headers.Add(header, 
+                    throttledResponseParameters.RateLimitHeaders[header]);
+            }
+            
+
             context.Result = new ContentResult()
             {
-                Content = rateLimitedResponseParameters.Message
+                Content = throttledResponseParameters.Message
             };
         }
         

@@ -1,19 +1,20 @@
-﻿namespace Domain.RateLimiting.Core
+﻿using System.Collections.Generic;
+
+namespace Domain.RateLimiting.Core
 {
-    public class RateLimitedResponseParameters
+    public class ThrottledResponseParameters
     {
-        public readonly string Message;
-        public string RetryAfterHeader { get; set; }
+        public string Message { get; }
+        public IReadOnlyDictionary<string, string> RateLimitHeaders { get; }
         
-        public readonly string RetryAfterInSecs;
 
         public static readonly int StatusCode = 429;
 
-        public RateLimitedResponseParameters(string message, string retryAfterHeader, string retryAfterInSeconds)
+        public ThrottledResponseParameters(string message, 
+            IReadOnlyDictionary<string, string> rateLimitHeaders)
         {
             Message = message;
-            RetryAfterHeader = retryAfterHeader;
-            RetryAfterInSecs = retryAfterInSeconds;
+            RateLimitHeaders = rateLimitHeaders;
         }
     }
 }

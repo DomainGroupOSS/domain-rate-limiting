@@ -73,7 +73,7 @@ namespace Domain.AspDotNetCore.RateLimiting
             if (!rateLimitingResult.Throttled)
                 await _next.Invoke(context).ConfigureAwait(false);
             else
-                await TooManyRequests(context, policyForCurrentRequest.AllowedCallRates, rateLimitingResult.WaitingIntervalInTicks).ConfigureAwait(false);
+                await TooManyRequests(context, rateLimitingResult, policyForCurrentRequest.Name).ConfigureAwait(false);
         }
 
         private async Task InvalidRequestId(HttpContext context)
@@ -82,13 +82,18 @@ namespace Domain.AspDotNetCore.RateLimiting
             await context.Response.WriteAsync("An invalid request identifier was specified.").ConfigureAwait(false);
         }
 
-        private async Task TooManyRequests(HttpContext context, IEnumerable<AllowedCallRate> rateLimits, long waitingIntervalInTicks)
+        private async Task TooManyRequests(HttpContext context, RateLimitingResult result, string violatedPolicyName = "")
         {
-            var rateLimitedResponseParameters =
-                RateLimitingHelper.GetRateLimitedResponseParameters(waitingIntervalInTicks);
-            context.Response.StatusCode = RateLimitedResponseParameters.StatusCode;
-            context.Response.Headers.Add(rateLimitedResponseParameters.RetryAfterHeader, rateLimitedResponseParameters.RetryAfterInSecs);
-            await context.Response.WriteAsync(rateLimitedResponseParameters.Message).ConfigureAwait(false);
+            var throttledResponseParameters =
+                RateLimitingHelper.GetThrottledResponseParameters(result, violatedPolicyName);
+            context.Response.StatusCode = ThrottledResponseParameters.StatusCode;
+
+            foreach (var header in throttledResponseParameters.RateLimitHeaders.Keys)
+            {
+                context.Response.Headers.Add(header, throttledResponseParameters.RateLimitHeaders[header]);
+            }
+
+            await context.Response.WriteAsync(throttledResponseParameters.Message).ConfigureAwait(false);
         }
     }
 }

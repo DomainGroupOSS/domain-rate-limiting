@@ -57,8 +57,8 @@ namespace Domain.RateLimiting.Redis
 
             var cacheKeyString = cacheKey.ToString();
             cacheKeys.Add(cacheKey);
-            var getKeyTask = redisTransaction.StringGetAsync(cacheKeyString);
             var incrTask = redisTransaction.StringIncrementAsync(cacheKeyString);
+            var getKeyTask = redisTransaction.StringGetAsync(cacheKeyString);
             var expireTask = redisTransaction.KeyExpireAsync(cacheKeyString, cacheKey.Expiration);
             return incrTask;
         }

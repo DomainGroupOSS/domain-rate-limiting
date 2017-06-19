@@ -130,24 +130,29 @@ namespace Domain.RateLimiting.AspDotNet
 
             if (rateLimitingResult.Throttled)
             {
-                TooManyRequests(actionContext, rateLimitingResult.WaitingIntervalInTicks);
+                TooManyRequests(actionContext, rateLimitingResult, rateLimitingPolicy.Name);
             }
         }
 
-        private void TooManyRequests(HttpActionContext actionContext, long waitingIntervalInTicks)
+        private void TooManyRequests(HttpActionContext actionContext,
+            RateLimitingResult result, string violatedPolicyName = "")
         {
-            var rateLimitedResponseParameters =
-                RateLimitingHelper.GetRateLimitedResponseParameters(waitingIntervalInTicks);
+            var throttledResponseParameters =
+                RateLimitingHelper.GetThrottledResponseParameters(result, violatedPolicyName);
 
-            actionContext.Response = new HttpResponseMessage((HttpStatusCode)RateLimitedResponseParameters.StatusCode)
+            actionContext.Response = new HttpResponseMessage((HttpStatusCode)ThrottledResponseParameters.StatusCode)
             {
-                ReasonPhrase = rateLimitedResponseParameters.Message
+                ReasonPhrase = throttledResponseParameters.Message
             };
 
             // KAZI Revisit since there is an exception while adding the header complaining of
             // invalid format
-            actionContext.Response.Headers.Add(rateLimitedResponseParameters.RetryAfterHeader,
-                rateLimitedResponseParameters.RetryAfterInSecs);
+            foreach (var header in throttledResponseParameters.RateLimitHeaders.Keys)
+            {
+                actionContext.Response.Headers.Add(header,
+                    throttledResponseParameters.RateLimitHeaders[header]);
+            }
+           
         }
 
         private IList<AllowedCallRate> GetRateLimitAttributes(HttpActionContext actionContext)

@@ -35,7 +35,8 @@ namespace Domain.Owin.RateLimiting
             IRateLimitingPolicyProvider policyManager)
             : base(next)
         {
-            _rateLimitingCacheProvider = rateLimitingCacheProvider ?? throw new ArgumentNullException(nameof(rateLimitingCacheProvider));
+            _rateLimitingCacheProvider = rateLimitingCacheProvider ?? 
+                throw new ArgumentNullException(nameof(rateLimitingCacheProvider));
             _policyManager = policyManager ?? throw new ArgumentNullException(nameof(policyManager));
         }
 
@@ -78,7 +79,8 @@ namespace Domain.Owin.RateLimiting
             if (!rateLimitingResult.Throttled)
                 await Next.Invoke(context).ConfigureAwait(false);
             else
-                await TooManyRequests(context, rateLimitingResult.WaitingIntervalInTicks).ConfigureAwait(false);
+                await TooManyRequests(context, rateLimitingResult, 
+                    policyParametersForCurrentRequest.Name).ConfigureAwait(false);
         }
 
         private async Task InvalidRequestId(IOwinContext context)
@@ -87,14 +89,20 @@ namespace Domain.Owin.RateLimiting
             await context.Response.WriteAsync("An invalid request identifier was specified.").ConfigureAwait(false);
         }
 
-        private async Task TooManyRequests(IOwinContext context, long waitingIntervalInTicks)
+        private async Task TooManyRequests(IOwinContext context, RateLimitingResult result, string violatedPolicyName)
         {
-            var rateLimitedResponseParameters =
-                RateLimitingHelper.GetRateLimitedResponseParameters(waitingIntervalInTicks);
-            context.Response.StatusCode = RateLimitedResponseParameters.StatusCode;
-            context.Response.Headers.Add(rateLimitedResponseParameters.RetryAfterHeader, 
-                new string[] { rateLimitedResponseParameters.RetryAfterInSecs });
-            await context.Response.WriteAsync(rateLimitedResponseParameters.Message).ConfigureAwait(false);
+            var throttledResponseParameters =
+                RateLimitingHelper.GetThrottledResponseParameters(result, violatedPolicyName);
+            context.Response.StatusCode = ThrottledResponseParameters.StatusCode;
+
+            foreach (var header in throttledResponseParameters.RateLimitHeaders.Keys)
+            {
+                context.Response.Headers.Add(header,
+                    new string[] { throttledResponseParameters.RateLimitHeaders[header] });
+            }
+            
+
+            await context.Response.WriteAsync(throttledResponseParameters.Message).ConfigureAwait(false);
         }
     }
 }

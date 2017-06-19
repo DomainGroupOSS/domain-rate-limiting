@@ -9,19 +9,30 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Domain.AspDotNetCore.RateLimiting;
+using Domain.RateLimiting.Core.Configuration;
 using Microsoft.Extensions.Options;
 
 namespace Domain.RateLimiting.Samples.AspNetCore
 {
-    public class SampleRateLimitingPolicyProvider : IRateLimitingPolicyProvider
+    public class SampleRateLimitingClientPolicyProvider : IRateLimitingPolicyProvider
     {
         public Task<RateLimitPolicy> GetPolicyAsync(RateLimitingRequest rateLimitingRequest)
         {
             return Task.FromResult(new RateLimitPolicy("test_client"));
         }
     }
-    public class Startup
+
+    public class SampleRateLimitingUserPolicyProvider : IRateLimitingPolicyProvider
     {
+        private readonly Random _random = new Random();
+        public Task<RateLimitPolicy> GetPolicyAsync(RateLimitingRequest rateLimitingRequest)
+        {
+            string[] users = new[] {"test_user_0", "test_user_1"};
+            return Task.FromResult(new RateLimitPolicy(users[_random.Next(2)]));
+        }
+    }
+    public class Startup
+    { 
         private readonly ILogger<Startup> _logger;
         public Startup(IHostingEnvironment env, ILoggerFactory loggerFactory)
         {
@@ -67,32 +78,41 @@ namespace Domain.RateLimiting.Samples.AspNetCore
                     onCircuitOpened: () => _logger.LogWarning("Rate limiting circuit opened"),
                     onCircuitClosed: () => _logger.LogWarning("Rate limiting circuit closed")));
             
-            var globalRateLimitingPolicyManager = new RateLimitingPolicyManager(
-                new SampleRateLimitingPolicyProvider())
+            var globalRateLimitingClientPolicyManager = new RateLimitingPolicyManager(
+                new SampleRateLimitingClientPolicyProvider())
                 .AddEndpointPolicies(rateLimitingOptions.RateLimitPolicies)
                 .AddPathsToWhiteList(rateLimitingOptions.RateLimitingWhiteListedPaths)
                 .AddRequestKeysToWhiteList(rateLimitingOptions.RateLimitingWhiteListedRequestKeys);
 
-            //var globalRateLimitingPolicyManager = new RateLimitingPolicyManager(rateLimitingPolicyParametersProvider)
-            //    .AddPathToWhiteList("/api/unlimited")
-            //    .AddPoliciesForAllEndpoints(new List<AllowedCallRate>()
-            //    {
-            //        new AllowedCallRate(100, RateLimitUnit.PerMinute)
-            //    })
-            //    .AddEndpointPolicies("/api/globallylimited/{id}", "*", new List<AllowedCallRate>()
-            //    {
-            //        new AllowedCallRate(5, RateLimitUnit.PerMinute)
-            //    })
-            //    .AddEndpointPolicies("/api/globallylimited/{id}/sub/{subid}", "*", new List<AllowedCallRate>()
-            //    {
-            //        new AllowedCallRate(2, RateLimitUnit.PerMinute)
-            //    });
+            //var globalRateLimitingClientPolicyManager = new RateLimitingPolicyManager(
+            //        new SampleRateLimitingClientPolicyProvider())
+            //    .AddPoliciesForAllEndpoints(new List<AllowedCallRate>() {new AllowedCallRate(180, RateLimitUnit.PerMinute)},name:"ClientPolicy")
+            //    .AddPathsToWhiteList(rateLimitingOptions.RateLimitingWhiteListedPaths)
+            //    .AddRequestKeysToWhiteList(rateLimitingOptions.RateLimitingWhiteListedRequestKeys);
 
-            
+
+            /* The same above configuration done through code below. 
+            var globalRateLimitingPolicyManager = new RateLimitingPolicyManager(rateLimitingPolicyParametersProvider)
+                .AddPathToWhiteList("/api/unlimited")
+                .AddPoliciesForAllEndpoints(new List<AllowedCallRate>()
+                {
+                    new AllowedCallRate(100, RateLimitUnit.PerMinute)
+                })
+                .AddEndpointPolicies("/api/globallylimited/{id}", "*", new List<AllowedCallRate>()
+                {
+                    new AllowedCallRate(5, RateLimitUnit.PerMinute)
+                })
+                .AddEndpointPolicies("/api/globallylimited/{id}/sub/{subid}", "*", new List<AllowedCallRate>()
+                {
+                    new AllowedCallRate(2, RateLimitUnit.PerMinute)
+                });
+            */
+
             // Add framework services
             services.AddMvc(options =>
             {
-                options.Filters.Add(new RateLimitingActionFilter(rateLimitCacheProvider, globalRateLimitingPolicyManager));
+                //options.Filters.Add(new RateLimitingActionFilter(rateLimitCacheProvider, globalRateLimitingUserPolicyManager));
+                options.Filters.Add(new RateLimitingActionFilter(rateLimitCacheProvider, globalRateLimitingClientPolicyManager));
             });
         }
 

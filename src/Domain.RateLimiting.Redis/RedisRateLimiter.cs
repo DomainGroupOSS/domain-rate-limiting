@@ -39,7 +39,8 @@ namespace Domain.RateLimiting.Redis
 
             _onThrottled = onThrottled;
             _countThrottledRequests = countThrottledRequests;
-            _circuitBreakerPolicy = circuitBreaker ?? new DefaultCircuitBreaker(3, 10000, 300);
+            _circuitBreakerPolicy = circuitBreaker ?? 
+                new DefaultCircuitBreaker(3, 10000, 300);
             SetupConnectionConfiguration(redisEndpoint, connectionTimeout, syncTimeout);
             //SetupCircuitBreaker(faultThreshholdPerWindowDuration, faultWindowDurationInMilliseconds, circuitOpenDurationInSecs, onException, onCircuitOpened, onCircuitClosed);
             ConnectToRedis(onException);
@@ -95,12 +96,12 @@ namespace Domain.RateLimiting.Redis
         /// <param name="method">The request method</param>
         /// <param name="host">The host</param>
         /// <param name="routeTemplate">The route template.</param>
-        /// <param name="rateLimitPolicies">The rate limit entry.</param>
+        /// <param name="allowedCallRates">The rate limit entry.</param>
         /// <returns></returns>
 
         public async Task<RateLimitingResult> LimitRequestAsync(string requestId, string method, string host,
             string routeTemplate,
-            IList<AllowedCallRate> rateLimitPolicies)
+            IList<AllowedCallRate> allowedCallRates)
         {
             return await _circuitBreakerPolicy.ExecuteAsync(async () =>
             {
@@ -110,12 +111,12 @@ namespace Domain.RateLimiting.Redis
                 var redisDb = _redisConnection.GetDatabase();
                 var redisTransaction = redisDb.CreateTransaction();
                 var utcNowTicks = DateTime.UtcNow.Ticks;
-                IList<Task<long>> numberOfRequestsForPoliciesAsync = new List<Task<long>>();
+                IList<Task<long>> numberOfRequestsMadePerAllowedCallRateAsync = new List<Task<long>>();
 
                 IList<RateLimitCacheKey> cacheKeys = new List<RateLimitCacheKey>();
-                foreach (var policy in rateLimitPolicies)
+                foreach (var policy in allowedCallRates)
                 {
-                    numberOfRequestsForPoliciesAsync.Add(
+                    numberOfRequestsMadePerAllowedCallRateAsync.Add(
                         GetNumberOfRequestsAsync(requestId, method, host, routeTemplate, policy, cacheKeys,
                             redisTransaction, utcNowTicks));
                 }
@@ -123,12 +124,12 @@ namespace Domain.RateLimiting.Redis
                 await ExecuteTransactionAsync(redisTransaction);
                 var violatedCacheKeys = new SortedList<long, RateLimitCacheKey>();
 
-                for (int i = 0; i < rateLimitPolicies.Count; i++)
+                for (int i = 0; i < allowedCallRates.Count; i++)
                 {
                     RateLimitCacheKey cacheKey = cacheKeys[i];
 
-                    if (await numberOfRequestsForPoliciesAsync[i].ConfigureAwait(false) > cacheKey.Limit)
-                        violatedCacheKeys.Add((long)rateLimitPolicies[i].Unit, cacheKey);
+                    if (await numberOfRequestsMadePerAllowedCallRateAsync[i].ConfigureAwait(false) > cacheKey.Limit)
+                        violatedCacheKeys.Add((long)allowedCallRates[i].Unit, cacheKey);
                 }
 
                 if (!violatedCacheKeys.Any())
@@ -148,7 +149,8 @@ namespace Domain.RateLimiting.Redis
                 await ExecuteTransactionAsync(postViolationTransaction);
 
                 var rateLimitingResult = new RateLimitingResult(true,
-                    await GetWaitingIntervalInTicks(setupGetOldestRequestTimestampInTicks, violatedCacheKey, utcNowTicks), violatedCacheKey);
+                    await GetWaitingIntervalInTicks(setupGetOldestRequestTimestampInTicks, 
+                        violatedCacheKey, utcNowTicks), violatedCacheKey);
 
                 _onThrottled?.Invoke(rateLimitingResult);
 
