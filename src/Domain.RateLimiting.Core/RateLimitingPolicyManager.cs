@@ -274,10 +274,25 @@ namespace Domain.RateLimiting.Core
 
             if (providedPolicyEntry.AllowedCallRates != null && providedPolicyEntry.AllowedCallRates.Any())
                 return providedPolicyEntry;
-
-
+            
             var policyKey = new RateLimitingPolicyKey(providedPolicyEntry.RequestKey,
                 rateLimitingRequest.RouteTemplate, rateLimitingRequest.Method);
+
+            if (!_entries.ContainsKey(policyKey))
+            {
+                // Policy key for the current request path belonging to all HTTP methods, e.g. * /v1/example
+                // Policy key matching the current request path for current HTTP method, e.g. GET /v1/example
+                policyKey = new RateLimitingPolicyKey(providedPolicyEntry.RequestKey,
+                    rateLimitingRequest.RouteTemplate, AllHttpMethods);
+            }
+
+            if (!_entries.ContainsKey(policyKey))
+            {
+                // Policy key for the current request path belonging to all HTTP methods, e.g. * /v1/example
+                // Policy key matching the current request path for current HTTP method, e.g. GET /v1/example
+                policyKey = new RateLimitingPolicyKey(providedPolicyEntry.RequestKey,
+                    AllRequestPaths, AllHttpMethods);
+            }
 
             if (!_entries.ContainsKey(policyKey))
             {
@@ -310,7 +325,7 @@ namespace Domain.RateLimiting.Core
                 new RateLimitPolicy(providedPolicyEntry.RequestKey, 
                 _entries[policyKey].RouteTemplate, _entries[policyKey].HttpMethod,
                 _entries[policyKey].AllowedCallRates, _entries[policyKey].AllowAttributeOverride,
-                _entries[policyKey].Name) : providedPolicyEntry;
+                _entries[policyKey].Name) : null;
         }
 
         /// <summary>

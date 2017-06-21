@@ -17,7 +17,7 @@
     <DotNetCliToolReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Tools" Version="1.0.0" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Domain.AspDotNetCore.RateLimiting\Domain.AspDotNetCore.RateLimiting.csproj" />
+    <ProjectReference Include="..\..\src\Domain.AspDotNetCore.RateLimiting\Domain.RateLimiting.AspNetCore.csproj" />
     <ProjectReference Include="..\..\src\Domain.RateLimiting.Core\Domain.RateLimiting.Core.csproj" />
     <ProjectReference Include="..\..\src\Domain.RateLimiting.Redis\Domain.RateLimiting.Redis.csproj" />
   </ItemGroup>

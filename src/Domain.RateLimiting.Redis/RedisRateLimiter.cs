@@ -125,9 +125,9 @@ namespace Domain.RateLimiting.Redis
                 
                 var violatedCacheKeys = new SortedList<long, RateLimitCacheKey>();
 
-                int minCallsRemaining = int.MaxValue;
+                var minCallsRemaining = int.MaxValue;
                 var minCallsCacheKey = default(RateLimitCacheKey);
-                for (int i = 0; i < allowedCallRates.Count; i++)
+                for (var i = 0; i < allowedCallRates.Count; i++)
                 {
                     var cacheKey = cacheKeys[i];
 

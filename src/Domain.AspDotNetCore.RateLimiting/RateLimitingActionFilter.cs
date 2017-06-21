@@ -5,13 +5,14 @@ using System.Net;
 using System.Reflection;
 using System.Threading.Tasks;
 using Domain.RateLimiting.Core;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Abstractions;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Primitives;
 
-namespace Domain.AspDotNetCore.RateLimiting
+namespace Domain.RateLimiting.AspNetCore
 {
     /// <summary>
     ///     Action filter which rate limits requests using the action/controllers rate limit entry attribute.
@@ -126,12 +127,17 @@ namespace Domain.AspDotNetCore.RateLimiting
                 TooManyRequests(actionContext, result, rateLimitingPolicy.Name);
             else
             {
-                context.Response.Headers.Add(RateLimitHeaders.CallsRemaining, new StringValues(
-                    new string[] { result.CallsRemaining.ToString()}));
-                context.Response.Headers.Add(RateLimitHeaders.Limit, new StringValues(
-                    new string[] { result.CacheKey.AllowedCallRate.ToString() }));
+                AddUpdateRateLimitingSuccessHeaders(context, result);
                 await base.OnActionExecutionAsync(actionContext, next);
             }
+        }
+
+        private void AddUpdateRateLimitingSuccessHeaders(HttpContext context, RateLimitingResult result)
+        {
+            context.Response.Headers.Add(RateLimitHeaders.CallsRemaining, new StringValues(
+                new string[] {result.CallsRemaining.ToString()}));
+            context.Response.Headers.Add(RateLimitHeaders.Limit, new StringValues(
+                new string[] {result.CacheKey.AllowedCallRate.ToString()}));
         }
 
         private void InvalidRequestId(ActionExecutingContext context)
