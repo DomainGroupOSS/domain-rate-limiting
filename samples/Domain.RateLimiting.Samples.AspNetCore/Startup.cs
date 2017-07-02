@@ -1,4 +1,9 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
+using Domain.RateLimiting.AspNetCore;
+using Domain.RateLimiting.Core;
+using Domain.RateLimiting.Redis;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -8,13 +13,13 @@ namespace Domain.RateLimiting.Samples.AspNetCore
 {
     #region SampleRateLimitingClientPolicyProvider
 
-    //public class SampleRateLimitingClientPolicyProvider : IRateLimitingPolicyProvider
-    //{
-    //    public Task<RateLimitPolicy> GetPolicyAsync(RateLimitingRequest rateLimitingRequest)
-    //    {
-    //        return Task.FromResult(new RateLimitPolicy("test_client"));
-    //    }
-    //} 
+    public class SampleRateLimitingClientPolicyProvider : IRateLimitingPolicyProvider
+    {
+        public Task<RateLimitPolicy> GetPolicyAsync(RateLimitingRequest rateLimitingRequest)
+        {
+            return Task.FromResult(new RateLimitPolicy("test_client"));
+        }
+    }
 
     #endregion
 
@@ -57,20 +62,25 @@ namespace Domain.RateLimiting.Samples.AspNetCore
             services.AddOptions();
 
             #region Setting policies explicitly using code
-            //var globalRateLimitingPolicyManager = new RateLimitingPolicyManager(rateLimitingPolicyParametersProvider)
-            //    .AddPathToWhiteList("/api/unlimited")
-            //    .AddPoliciesForAllEndpoints(new List<AllowedCallRate>()
-            //    {
-            //        new AllowedCallRate(100, RateLimitUnit.PerMinute)
-            //    })
-            //    .AddEndpointPolicies("/api/globallylimited/{id}", "GET", new List<AllowedCallRate>()
-            //    {
-            //        new AllowedCallRate(5, RateLimitUnit.PerMinute)
-            //    })
-            //    .AddEndpointPolicies("/api/globallylimited/{id}/sub/{subid}", "*", new List<AllowedCallRate>()
-            //    {
-            //        new AllowedCallRate(2, RateLimitUnit.PerMinute)
-            //    });
+
+            var rateLimitingPolicyParametersProvider = new SampleRateLimitingClientPolicyProvider();
+            var globalRateLimitingClientPolicyManager =
+                new RateLimitingPolicyManager(rateLimitingPolicyParametersProvider)
+                    .AddPathToWhiteList("/api/unlimited")
+                    .AddPoliciesForAllEndpoints(new List<AllowedCallRate>()
+                    {
+                        new AllowedCallRate(100, RateLimitUnit.PerMinute)
+                    }, allowAttributeOverride: true, name: "StaticPolicy_2")
+                    .AddEndpointPolicy("/api/globallylimited/{id}", "GET", new List<AllowedCallRate>()
+                    {
+                        new AllowedCallRate(5, RateLimitUnit.PerMinute),
+                        new AllowedCallRate(8, RateLimitUnit.PerHour)
+                    }, true, "StaticPolicy_0")
+                    .AddEndpointPolicy("/api/globallylimited/{id}/sub/{subid}", RateLimitPolicy.AllHttpMethods, 
+                    new List<AllowedCallRate>()
+                    {
+                        new AllowedCallRate(2, RateLimitUnit.PerMinute)
+                    }, true, "StaticPolicy_1");
             #endregion
 
             #region Setting Policies Using Configuration Options
@@ -85,24 +95,24 @@ namespace Domain.RateLimiting.Samples.AspNetCore
             #endregion
 
             #region Setting up the Redis rate limiter
-            //var redisRateLimiterSettings = new RedisRateLimiterSettings();
-            //Configuration.GetSection(nameof(RedisRateLimiterSettings)).Bind(redisRateLimiterSettings);
+            var redisRateLimiterSettings = new RedisRateLimiterSettings();
+            Configuration.GetSection(nameof(RedisRateLimiterSettings)).Bind(redisRateLimiterSettings);
 
-            //var rateLimitCacheProvider = new RedisSlidingWindowRateLimiter(
-            //    redisRateLimiterSettings.RateLimitRedisCacheConnectionString,
-            //    (exp) => _logger.LogError("Error in rate limiting",
-            //        exp),
-            //    onThrottled: (rateLimitingResult) =>
-            //    {
-            //        _logger.LogInformation(
-            //            "Request throttled for client {ClientId} and endpoint {Endpoint}",
-            //            rateLimitingResult.CacheKey.RequestId,
-            //            rateLimitingResult.CacheKey.RouteTemplate);
-            //    },
-            //    circuitBreaker: new DefaultCircuitBreaker(redisRateLimiterSettings.FaultThreshholdPerWindowDuration,
-            //        redisRateLimiterSettings.FaultWindowDurationInMilliseconds, redisRateLimiterSettings.CircuitOpenIntervalInSecs,
-            //        onCircuitOpened: () => _logger.LogWarning("Rate limiting circuit opened"),
-            //        onCircuitClosed: () => _logger.LogWarning("Rate limiting circuit closed")));
+            var rateLimitCacheProvider = new RedisSlidingWindowRateLimiter(
+                redisRateLimiterSettings.RateLimitRedisCacheConnectionString,
+                (exp) => _logger.LogError("Error in rate limiting",
+                    exp),
+                onThrottled: (rateLimitingResult) =>
+                {
+                    _logger.LogInformation(
+                        "Request throttled for client {ClientId} and endpoint {Endpoint}",
+                        rateLimitingResult.CacheKey.RequestId,
+                        rateLimitingResult.CacheKey.RouteTemplate);
+                },
+                circuitBreaker: new DefaultCircuitBreaker(redisRateLimiterSettings.FaultThreshholdPerWindowDuration,
+                    redisRateLimiterSettings.FaultWindowDurationInMilliseconds, redisRateLimiterSettings.CircuitOpenIntervalInSecs,
+                    onCircuitOpened: () => _logger.LogWarning("Rate limiting circuit opened"),
+                    onCircuitClosed: () => _logger.LogWarning("Rate limiting circuit closed")));
 
             #endregion
 
@@ -111,7 +121,7 @@ namespace Domain.RateLimiting.Samples.AspNetCore
             services.AddMvc(options =>
             {
                 #region Adding the RateLimitingActionFilter
-                //options.Filters.Add(new RateLimitingActionFilter(rateLimitCacheProvider, globalRateLimitingClientPolicyManager));
+                options.Filters.Add(new RateLimitingActionFilter(rateLimitCacheProvider, globalRateLimitingClientPolicyManager));
                 #endregion    
             });
         }

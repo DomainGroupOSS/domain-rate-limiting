@@ -3,16 +3,6 @@ using System.Collections.Generic;
 
 namespace Domain.RateLimiting.Core.Configuration
 {
-    public class RateLimitPolicyOptions
-    {
-        public IDictionary<string, int> AllowedCallRates { get; set; } = new Dictionary<string, int>();
-        public bool AllowAttributeOverride { get; set; } = false;
-        public string Name { get; set; } = "";
-        public string RouteTemplate { get; set; } = "*";
-        public string HttpMethod { get; set; } = "*";
-        public string RequestKey { get; set; } = "*";
-    }
-
     public class RateLimitingOptions
     {
         /// <summary>
@@ -32,7 +22,7 @@ namespace Domain.RateLimiting.Core.Configuration
                 var policyStringParameters = policyString.Split(new char[] { ':' });
                 if (policyStringParameters.Length != 6)
                     throw new ArgumentException(
-                        "The policy config is not valid...must be of form client_0:GET:api/values/{id}:60_m&200_h:false:StaticPolicy_0");
+                        "The policy config is not valid...must be of form RequestKey:HttpMethod:RouteTemplate:AllowedCallRates:AllowAttributeOverride:PolicyName");
 
                 var allowedRatesStrings = policyStringParameters[3]
                     .Split(new char[] { '&' }, StringSplitOptions.RemoveEmptyEntries);
@@ -73,20 +63,12 @@ namespace Domain.RateLimiting.Core.Configuration
         }
 
         public bool RateLimitingEnabled { get; set; }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        public string ThrottledResponseMessageToAppend { get; set; } = "";
-
-        /// <summary>
-        /// 
-        /// </summary>
+        
         public IList<string> RateLimitPolicyStrings { get; set; } = 
             new List<string>();
 
-        public IList<RateLimitPolicyOptions> RateLimitPolicyOptions { get; set; } = 
-            new List<RateLimitPolicyOptions>();
+        public IList<RateLimitingPolicyOptions> RateLimitPolicyOptions { get; set; } = 
+            new List<RateLimitingPolicyOptions>();
         
         public IEnumerable<RateLimitPolicy> RateLimitPolicies => 
             _rateLimitPolicies ?? ParseRateLimitPolicyStringsAndOptions();

@@ -83,6 +83,7 @@ namespace Domain.RateLimiting.AspNetCore
             var allowedCallRates = rateLimitingPolicy.AllowedCallRates;
             var routeTemplate = rateLimitingPolicy.RouteTemplate;
             var httpMethod = rateLimitingPolicy.HttpMethod;
+            var name = rateLimitingPolicy.Name;
 
             if(rateLimitingPolicy.AllowAttributeOverride)
             {
@@ -92,6 +93,7 @@ namespace Domain.RateLimiting.AspNetCore
                     allowedCallRates = attributeRates;
                     routeTemplate = actionContext.ActionDescriptor.AttributeRouteInfo.Template;
                     httpMethod = actionContext.HttpContext.Request.Method;
+                    name = $"AttributeOn_{routeTemplate}";
                 }
             }
 
@@ -124,7 +126,7 @@ namespace Domain.RateLimiting.AspNetCore
                 context.Request.Host.Value, routeTemplate, allowedCallRates).ConfigureAwait(false);
 
             if (result.Throttled)
-                TooManyRequests(actionContext, result, rateLimitingPolicy.Name);
+                TooManyRequests(actionContext, result, name);
             else
             {
                 AddUpdateRateLimitingSuccessHeaders(context, result);

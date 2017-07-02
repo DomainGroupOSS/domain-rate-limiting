@@ -142,6 +142,7 @@ namespace Domain.RateLimiting.Core
         /// </summary>
         /// <param name="policies">The policies.</param>
         /// <param name="requestKey"></param>
+        /// <param name="allowAttributeOverride"></param>
         /// <returns></returns>
         public RateLimitingPolicyManager AddPoliciesForAllDeleteRequests(IList<AllowedCallRate> policies, 
             string requestKey = AllRequestKeys, bool allowAttributeOverride = false, string name = "")
@@ -367,6 +368,14 @@ namespace Domain.RateLimiting.Core
             }
 
             return this;
+        }
+
+        public RateLimitingPolicyManager AddEndpointPolicy(string routeTemplate, string method, 
+            IList<AllowedCallRate> allowedCallRates,
+            bool allowAttributeOverride = false, string name = "")
+        {
+            return AddEndpointPolicy(new RateLimitPolicy(AllRequestKeys, routeTemplate, method, allowedCallRates, 
+                allowAttributeOverride, name));
         }
 
         public RateLimitingPolicyManager AddEndpointPolicy(RateLimitPolicy policy)

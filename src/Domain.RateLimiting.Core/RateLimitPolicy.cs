@@ -3,57 +3,42 @@ using System.Collections.Generic;
 
 namespace Domain.RateLimiting.Core
 {
-    /// <summary>
-    /// Represents the rate limiting policy for a single endpoint
-    /// </summary>
-    public class RateLimitPolicy
+        /// <summary>
+        /// Represents the rate limiting policy
+        /// </summary>
+        public class RateLimitPolicy
     {
-        private const string AllHttpMethods = "*";
-        private const string AllRequestPaths = "*";
+        public const string AllRequestKeys = "*";
+        public const string AllHttpMethods = "*";
+        public const string AllRequestPaths = "*";
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="requestKey"></param> 
-        /// <param name="policies"></param>
-        /// <param name="allowAttributeOverride"></param>
-        public RateLimitPolicy(string requestKey, IList<AllowedCallRate> policies, 
-            bool allowAttributeOverride = false) : 
-            this(requestKey, AllRequestPaths, AllHttpMethods, policies, allowAttributeOverride)
+        public RateLimitPolicy(string requestKey, IList<AllowedCallRate> policies,
+            bool allowAttributeOverride = false, string name = "") :
+            this(requestKey, AllRequestPaths, AllHttpMethods, policies, allowAttributeOverride, name)
         { }
-        public RateLimitPolicy(string requestKey, bool allowAttributeOverride = false) :
-            this(requestKey, AllRequestPaths, AllHttpMethods, new List<AllowedCallRate>(), allowAttributeOverride)
+        public RateLimitPolicy(string requestKey, bool allowAttributeOverride = false, string name = "") :
+            this(requestKey, AllRequestPaths, AllHttpMethods, new List<AllowedCallRate>(),
+                allowAttributeOverride, name)
         { }
 
-        public RateLimitPolicy(string requestKey, string httpMethod, IList<AllowedCallRate> policies, 
-            bool allowAttributeOverride = false) :
-            this(requestKey, AllRequestPaths, httpMethod, policies, allowAttributeOverride)
+        public RateLimitPolicy(string requestKey, string httpMethod, IList<AllowedCallRate> policies,
+            bool allowAttributeOverride = false, string name = "") :
+            this(requestKey, AllRequestPaths, httpMethod, policies, allowAttributeOverride, name)
         { }
 
-        public RateLimitPolicy(string requestKey, IList<AllowedCallRate> policies, string path,
-            bool allowAttributeOverride = false) :
-            this(requestKey, path, AllHttpMethods, policies, allowAttributeOverride)
+        public RateLimitPolicy(string requestKey, IList<AllowedCallRate> policies, string routeTemplate,
+            bool allowAttributeOverride = false, string name = "") :
+            this(requestKey, routeTemplate, AllHttpMethods, policies, allowAttributeOverride, name)
         { }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="T:System.Object" /> class.
-        /// </summary>
-        /// <param name="requestKey">The requestKey provided by the client.</param>
-        /// <param name="routeTemplate">The route template.</param>
-        /// <param name="allowedCallRates">The policies.</param>
-        /// <param name="httpMethod">The HTTP method.</param>
-        /// <param name="allowAttributeOverride"></param>
-        /// <param name="name"></param>
-        /// <exception cref="ArgumentOutOfRangeException">limit</exception>
-        /// <exception cref="ArgumentNullException"><paramref name="routeTemplate" /> is <see langword="null" />.</exception>
-        /// <exception cref="ArgumentOutOfRangeException">limit</exception>
-        public RateLimitPolicy(string requestKey, string routeTemplate, string httpMethod, 
+
+        public RateLimitPolicy(string requestKey, string routeTemplate, string httpMethod,
             IList<AllowedCallRate> allowedCallRates, bool allowAttributeOverride = false, string name = "")
         {
-            if (string.IsNullOrWhiteSpace(requestKey)) throw new ArgumentNullException(nameof(requestKey), 
+            if (string.IsNullOrWhiteSpace(requestKey)) throw new ArgumentNullException(nameof(requestKey),
                 "requestKey cannot be null or whitespace");
 
-            if (requestKey.Length == 0) throw new ArgumentOutOfRangeException(nameof(requestKey), 
+            if (requestKey.Length == 0) throw new ArgumentOutOfRangeException(nameof(requestKey),
                 "requestKey cannot be empty");
 
             if (routeTemplate == null) throw new ArgumentNullException(nameof(routeTemplate));
