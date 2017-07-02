@@ -23,16 +23,40 @@ namespace Domain.RateLimiting.Samples.AspNetCore
 
     #endregion
 
-    #region SampleRateLimitingUserPolicyProvider
-    //public class SampleRateLimitingUserPolicyProvider : IRateLimitingPolicyProvider
-    //{
-    //    private readonly Random _random = new Random();
-    //    public Task<RateLimitPolicy> GetPolicyAsync(RateLimitingRequest rateLimitingRequest)
-    //    {
-    //        string[] users = new[] {"test_user_0", "test_user_1"};
-    //        return Task.FromResult(new RateLimitPolicy(users[_random.Next(2)]));
-    //    }
-    //}
+    #region Multi Level rate limiting on user and organization - Separate Policy Providers
+    public class SampleRateLimitingUserPolicyProvider : IRateLimitingPolicyProvider
+    {
+        private static int _index = 1;
+        public Task<RateLimitPolicy> GetPolicyAsync(RateLimitingRequest rateLimitingRequest)
+        {
+            var userId = "test_user_01";
+            if (_index > 200 && _index <= 400)
+                userId = "test_user_02";
+            else if(_index > 400 && _index <= 600)
+                userId = "test_user_03";
+            
+            _index++;
+
+            if (_index > 600)
+                _index = 1;
+
+            return Task.FromResult(new RateLimitPolicy(userId, new List<AllowedCallRate>()
+            {
+                new AllowedCallRate(100, RateLimitUnit.PerHour)
+            }));
+        }
+    }
+
+    public class SampleRateLimitingOrganizationPolicyProvider : IRateLimitingPolicyProvider
+    {
+        public Task<RateLimitPolicy> GetPolicyAsync(RateLimitingRequest rateLimitingRequest)
+        {
+            return Task.FromResult(new RateLimitPolicy("test_oganization_01", new List<AllowedCallRate>()
+            {
+                new AllowedCallRate(200, RateLimitUnit.PerHour)
+            }));
+        }
+    }
     #endregion
 
     public class Startup
@@ -81,6 +105,7 @@ namespace Domain.RateLimiting.Samples.AspNetCore
                     {
                         new AllowedCallRate(2, RateLimitUnit.PerMinute)
                     }, true, "StaticPolicy_1");
+
             #endregion
 
             #region Setting Policies Using Configuration Options
@@ -122,7 +147,12 @@ namespace Domain.RateLimiting.Samples.AspNetCore
             {
                 #region Adding the RateLimitingActionFilter
                 options.Filters.Add(new RateLimitingActionFilter(rateLimitCacheProvider, globalRateLimitingClientPolicyManager));
-                #endregion    
+                #endregion
+
+                #region Multi level rate limiting - Multiple action filters based on separate Policy Providers providing separate policies
+                // options.Filters.Add(new RateLimitingActionFilter(rateLimitCacheProvider, new SampleRateLimitingUserPolicyProvider()));
+                // options.Filters.Add(new RateLimitingActionFilter(rateLimitCacheProvider, new SampleRateLimitingOrganizationPolicyProvider()));
+                #endregion  
             });
         }
 

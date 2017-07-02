@@ -136,10 +136,22 @@ namespace Domain.RateLimiting.AspNetCore
 
         private void AddUpdateRateLimitingSuccessHeaders(HttpContext context, RateLimitingResult result)
         {
-            context.Response.Headers.Add(RateLimitHeaders.CallsRemaining, new StringValues(
-                new string[] {result.CallsRemaining.ToString()}));
-            context.Response.Headers.Add(RateLimitHeaders.Limit, new StringValues(
-                new string[] {result.CacheKey.AllowedCallRate.ToString()}));
+            var successheaders = new string[] { RateLimitHeaders.CallsRemaining, RateLimitHeaders.Limit };
+
+            foreach (string successheader in successheaders)
+            {
+                if (context.Response.Headers.ContainsKey(successheader))
+                {
+                    context.Response.Headers[successheader] = new StringValues(
+                        context.Response.Headers[successheader].ToArray()
+                            .Append(result.CallsRemaining.ToString()).ToArray());
+                }
+                else
+                {
+                    context.Response.Headers.Add(successheader, new StringValues(
+                        new string[] {result.CallsRemaining.ToString()}));
+                }
+            }
         }
 
         private void InvalidRequestId(ActionExecutingContext context)
