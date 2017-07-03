@@ -195,7 +195,7 @@ Now that our policy provider is ready, we now need to implement a limiter which 
 Uncomment the line in that region and this will add the global filter to intercept any framework calls and pass it along to the policy provider, get the policy returned and have the policy verfied by the rate limiter (IRateLimitingCacheProvider)
 
 
-Now we will run some tests against our sample app that we had just finished setting up and verify that it is working as expected by using the SuperBenchmarking tool (sb.exe). It will not only show successfull (200) and throttled (429) but also show the performance of the calls. 
+Now we will run some tests against our sample app that we had just finished setting up and verify that it is working as expected by using the SuperBenchmarking tool (sb.exe from https://github.com/aliostad/SuperBenchmarker). It will not only show successfull (200) and throttled (429) but also show the performance of the calls. 
 
 Let us run the sample project and do some verifications.
 
