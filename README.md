@@ -215,7 +215,7 @@ So without further adeo let us get on with our exploration:
    So essentially making 1000 calls to the GET method of the api/unlimited endpoint
    The result screen shot is given here capture_unlimited
 
-   ![alt text](Capture_UnlimitedCalls.png "image")
+   ![alt text](samples/images/Capture_UnlimitedCalls.png "image")
    
 and wala all 1000 calls successfully executed with a 200 status		
 
@@ -223,20 +223,20 @@ and wala all 1000 calls successfully executed with a 200 status
    and 8 calls per hour.
    Type **sb -u http://localhost:50091/api/globallylimited/1 -n 1000 -c 10**
 
-![alt text](Capture_api_globallylimited_id.png "image")		
+![alt text](samples/images/Capture_api_globallylimited_id.png "image")		
    
 and as excepted 5 calls went through with 200 status while the 995 others got throttled with 429  
  
    Type **sb -u http://localhost:50091/api/globallylimited/2 -n 1000 -c 10** within the same minute
 
-![alt text](Capture_api_globallylimited_id_throttled.png "image")	
+![alt text](samples/images/Capture_api_globallylimited_id_throttled.png "image")	
    
 and as excepted all 1000 calls got throttled with 429 as both these url 
 fall under the same endpoint **api/globallylimited/\{id\}**
 
    Now wait for 1 minute to recover the limits and try the same two steps as above. Here is the screentshot for that:
 
-![alt text](Capture_3successinsteadof5.png "image")	
+![alt text](samples/images/Capture_3successinsteadof5.png "image")	
 
    Here we see only 3 calls succeeded instead of 5 since this policy 
 (named StaticPolicy_0) also enforces a 8 calls per hr limit which was 
@@ -249,7 +249,7 @@ exhausted after the first 3 calls were made (5 + 3 = 8)
 
    Here is a screenshot taken after like 3 minutes or so showing still all request throttled as expected.
 	
-![alt text](Capture_api_globallylimited_id_hrourlyrate.png "image")	
+![alt text](samples/images/Capture_api_globallylimited_id_hrourlyrate.png "image")	
 
    One thing that should be discussed here are the headers returned while for successfull requests
 	For every succssfull request that is not rate limited it will return the headers
@@ -268,7 +268,7 @@ exhausted after the first 3 calls were made (5 + 3 = 8)
 
    we get the following
 
-![alt text](Capture_succuessRateLimitHeaders.png "image")		
+![alt text](samples/images/Capture_succuessRateLimitHeaders.png "image")		
    
    It shows X-RateLimit-Remaining of 4 and X-RateLimit-Limit of 5 calls PerMinute as expected
    If we do it 4 more times to finish the limit we will see the X-RateLimit-Remaining going down to 0
@@ -279,7 +279,7 @@ exhausted after the first 3 calls were made (5 + 3 = 8)
    make 3 more requests before getting throttled by the 8 calls per PerHour limit for the next hr.
    Here is the actual screentshot of the test:
 
-![alt text](Capture_upperrateremaining.png "image")	
+![alt text](samples/images/Capture_upperrateremaining.png "image")	
 
    
    Now let us talk about the headers sent when request are throttled.
@@ -290,7 +290,7 @@ exhausted after the first 3 calls were made (5 + 3 = 8)
    
 Here is the output:
 
-![alt text](Capture_throttledheaders1.png "image")	
+![alt text](samples/images/Capture_throttledheaders1.png "image")	
   
    Notice the headers
 	
@@ -309,7 +309,7 @@ Here is the output:
    For this one no explicit policy has been mentioned so it wiil fall under 
    the general policy with 100 calls per minute that has been set up
 
-![alt text](Capture_api_globallylimited_get.png "image")
+![alt text](samples/images/Capture_api_globallylimited_get.png "image")
    
    And as expected 100 calls went through and 900 got throttled. Any endpoint has hasn't been explicitly set up with fall under this 
    generic rule.
@@ -323,7 +323,7 @@ Here is the output:
 
    and here is the output	
 
-![alt text](Capture_attributelimitedoncontroller.png "image")
+![alt text](samples/images/Capture_attributelimitedoncontroller.png "image")
    
    and as expected 20 calls went through and the rest throttled.
 
@@ -333,13 +333,13 @@ Here is the output:
    Type **sb -u http://localhost:50091/api/attributelimited/1 -n 1000 -c 10** and following is the output produced as expected:
 
 
-![alt text](Capture_attributeonaction.png "image")
+![alt text](samples/images/Capture_attributeonaction.png "image")
    
    Now within the same minute type 
         **sb -u http://localhost:50091/api/attributelimited/1 -n 1 -h** and here is the result
    
 
-![alt text](Capture_attributeviolatedheader.png "image")
+![alt text](samples/images/Capture_attributeviolatedheader.png "image")
 
    Notice that in the X-RateLimit-VPolicyName, it says the policy on the attribute on the endpoint api/attributelimited/{id}
    was violated as expected.
