@@ -46,25 +46,6 @@ namespace Domain.RateLimiting.Redis
             ConnectToRedis(onException);
         }
 
-        //private void SetupCircuitBreaker(int faultThreshholdPerWindowDuration,
-        //    int faultWindowDurationInMilliseconds, int circuitOpenDurationInSecs, Action<Exception> onException,
-        //    Action onCircuitOpened, Action onCircuitClosed)
-        //{
-        //    _circuitBreakerPolicy = new CircuitBreaker(faultThreshholdPerWindowDuration,
-        //        faultWindowDurationInMilliseconds, circuitOpenDurationInSecs,
-        //        () =>
-        //        {
-        //            //CloseRedisConnection();
-        //            onCircuitOpened?.Invoke();
-        //        },
-        //        () =>
-        //        {
-        //            //ConnectToRedis(onException);
-        //            onCircuitClosed?.Invoke();
-        //        },
-        //        onException);
-        //}
-
         private void SetupConnectionConfiguration(string redisEndpoint, int connectionTimeout, int syncTimeout)
         {
             _redisConfigurationOptions = new ConfigurationOptions();
@@ -73,11 +54,6 @@ namespace Domain.RateLimiting.Redis
             _redisConfigurationOptions.ConnectTimeout = connectionTimeout;
             _redisConfigurationOptions.SyncTimeout = syncTimeout;
             _redisConfigurationOptions.AbortOnConnectFail = false;
-        }
-
-        private void CloseRedisConnection()
-        {            
-            var task = _redisConnection?.CloseAsync();
         }
 
         private void ConnectToRedis(Action<Exception> onException)

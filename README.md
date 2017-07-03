@@ -183,12 +183,12 @@ at all. The client provided policy provider could be only provider your applicat
 ### Step 3: Setting up the Redis rate limiter
 Now that our policy provider is ready, we now need to implement a limiter which will track the calls and report wheter they are within the limits of the specified policies and allowed call rates. Here we will use the Sliding window limiter which keeps very accurate counts within a time window and does not allow bursts meaning it will not allow more calls than the specified one at any time. The limiter takes the following parameters: 
 	
-  * redisEndpoint: install redis if not already done so
-* onException: gets called when there is an Exception, useful for logging purposes
-* onThrottled: get called when the call is throttled, useful for logging purposes
-* connectionTimeout: the timeout when trying to establish a Redis connection
-* syncTimeout: the timeout when performing a Redis operation
-* countThrottledRequests: whether to count throttled request as well. 
+  * redisEndpoint: install redis if not already done so (https://redis.io/download) or use an already existing one. If you install in your local then the default value is localhost:6379. This value is mandatory.
+* onException: gets called when there is an Exception, useful for logging purposes. This is optional with default value of null.
+* onThrottled: get called when the call is throttled, useful for logging purposes. This is optional with default value of null.
+* connectionTimeout: the timeout when trying to establish a Redis connection. This is optional with default value of 2 secs.
+* syncTimeout: the timeout when performing a Redis operation. This is optional with default value of 1 sec.
+* countThrottledRequests: whether to count throttled request as well. This is optional with default value of false. 
 * circuitBreaker: the circuit breaker to use for resiliency when there are any issues with the connected Redis. A default circuit breaker DefaultCircuitBreaker class is provided and if no circuit breaker if set by the user, the default one will be used internally with a faultThreshhold of 10 in a faultWindowDuration of 10 seconds and the circuit will kept open for the next 5 minutes.
 
 ### Step 4: Adding the RateLimitingActionFilter
@@ -263,7 +263,7 @@ exhausted after the first 3 calls were made (5 + 3 = 8)
 
 
 
-   For instance flush the redis db using the Redis Desktop Manager to reach a clean state (no calls made so far) and type
+   For instance restart the redis service to reach a clean state (no calls made so far) and type
        **sb -u http://localhost:50091/api/globallylimited/1 -n 1 -h**
 
    we get the following
