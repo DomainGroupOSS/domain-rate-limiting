@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Domain.RateLimiting.Core", 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{266F7D08-EBA8-47D7-A3D6-6A88CE54E6EC}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Domain.RateLimiting.AspNetCore", "src\Domain.AspDotNetCore.RateLimiting\Domain.RateLimiting.AspNetCore.csproj", "{2D39359F-F226-4C65-AF3F-9662FE3709E8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Domain.RateLimiting.AspNetCore", "src\Domain.RateLimiting.AspNetCore\Domain.RateLimiting.AspNetCore.csproj", "{2D39359F-F226-4C65-AF3F-9662FE3709E8}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Domain.RateLimiting.Redis", "src\Domain.RateLimiting.Redis\Domain.RateLimiting.Redis.csproj", "{9DF7AB1D-7ADD-4D72-B5AC-BACF235EDCBD}"
 EndProject
