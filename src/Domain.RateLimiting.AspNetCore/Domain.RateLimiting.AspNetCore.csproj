@@ -6,6 +6,9 @@
     <AssemblyVersion>1.0.0.1</AssemblyVersion>
     <FileVersion>1.0.0.1</FileVersion>
     <Version>1.0.1</Version>
+    <Authors>Kazi Zahir</Authors>
+    <Company>Domain</Company>
+    <Description>Contains the rate limiting action filter which works with Domain.RateLimiting.Core</Description>
   </PropertyGroup>
 
   <ItemGroup>
