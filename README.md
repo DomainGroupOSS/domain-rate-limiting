@@ -184,12 +184,12 @@ at all. The client provided policy provider could be only provider your applicat
 Now that our policy provider is ready, we now need to implement a limiter which will track the calls and report wheter they are within the limits of the specified policies and allowed call rates. Here we will use the Sliding window limiter which keeps very accurate counts within a time window and does not allow bursts meaning it will not allow more calls than the specified one at any time. The limiter takes the following parameters: 
 	
   * redisEndpoint: install redis if not already done so
-    * onException: gets called when there is an Exception, useful for logging purposes
-    * onThrottled: get called when the call is throttled, useful for logging purposes
-    * connectionTimeout: the timeout when trying to establish a Redis connection
-    * syncTimeout: the timeout when performing a Redis operation
-    * countThrottledRequests: whether to count throttled request as well. 
-    * circuitBreaker: the circuit breaker to use for resiliency when there are any issues with the connected Redis. A default circuit breaker DefaultCircuitBreaker class is provided and if no circuit breaker if set by the user, the default one will be used internally with a faultThreshhold of 10 in a faultWindowDuration of 10 seconds and the circuit will kept open for the next 5 minutes.
+* onException: gets called when there is an Exception, useful for logging purposes
+* onThrottled: get called when the call is throttled, useful for logging purposes
+* connectionTimeout: the timeout when trying to establish a Redis connection
+* syncTimeout: the timeout when performing a Redis operation
+* countThrottledRequests: whether to count throttled request as well. 
+* circuitBreaker: the circuit breaker to use for resiliency when there are any issues with the connected Redis. A default circuit breaker DefaultCircuitBreaker class is provided and if no circuit breaker if set by the user, the default one will be used internally with a faultThreshhold of 10 in a faultWindowDuration of 10 seconds and the circuit will kept open for the next 5 minutes.
 
 ### Step 4: Adding the RateLimitingActionFilter
 Uncomment the line in that region and this will add the global filter to intercept any framework calls and pass it along to the policy provider, get the policy returned and have the policy verfied by the rate limiter (IRateLimitingCacheProvider)
@@ -254,12 +254,12 @@ exhausted after the first 3 calls were made (5 + 3 = 8)
    One thing that should be discussed here are the headers returned while for successfull requests
 	For every succssfull request that is not rate limited it will return the headers
 	
-    * X-RateLimit-Remaining: shows the numbers of calls remaining right after the current call before getting throttled next. Note
-                             that for distributed apps this will only give an indication of how many was remaining when that 
-			                  call was made and not how many will be remaining before the next call is made since by the time the 
-			                  next call is made there might be 0 calls remaining as they could have been used up my another node. It is
-                             mostly to give an idea.
-	* X-RateLimit-Limit:     shows the limit under which the last call fell under
+* X-RateLimit-Remaining: shows the numbers of calls remaining right after the current call before getting throttled next. Note
+                            that for distributed apps this will only give an indication of how many was remaining when that 
+			                call was made and not how many will be remaining before the next call is made since by the time the 
+			                next call is made there might be 0 calls remaining as they could have been used up my another node. It is
+                            mostly to give an idea.
+* X-RateLimit-Limit:     shows the limit under which the last call fell under
 
 
 
@@ -294,10 +294,10 @@ Here is the output:
   
    Notice the headers
 	
-    * Retry-After: which shows the seconds to waits before making the next request
-    * X-RateLimit-VPolicyName: which gives the name of the policy that was violated or empty for unnamed policies
-    * X-RateLimit-VCallRate: shows the call rate that was violated within the policy (usefull for multiple call rates in 
-                             a single policy)	
+* Retry-After: which shows the seconds to waits before making the next request
+* X-RateLimit-VPolicyName: which gives the name of the policy that was violated or empty for unnamed policies
+* X-RateLimit-VCallRate: shows the call rate that was violated within the policy (usefull for multiple call rates in 
+                            a single policy)	
 			
 	
 	It tells to retry after 50 seconds and the call was throttled due to violation of StaticPolicy_0 policy for the 
