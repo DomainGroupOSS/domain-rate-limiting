@@ -20,14 +20,14 @@ The first thing we need to understand is the **IRateLimitingPolicyProvider** whi
 
 As seen it gets passed in a RateLimitingRequest instance as parameter which decribes the context of the current request. The RateLimitingRequest class exposes the following properties: 
 
-	* RouteTemplate: the route template that the current request path matches with. For example a GET request nade to the url 
-      api/values/1 falls under the route template api/values/{id} and will be mapped to the action in a controller that has this Route defined
-      on it. Also the request for api/values/2 will be mapped to the same action via the same route template and rate limiting should be applied on the route template rather than the path which is an instance of the route template. It is the route template that identifies an endpoint on a general level. If you set a rate limit on api/values/{id} for let us say 10 calls PerMinute then any call made to that endpoint with whatever value for the {id} part will counted as a call to api/values/{id} and moreover whatever value we put in the {id} part, we will get to make only 10 calls PerMinute    
-	* Path: the actual url path the request was made to for instance api/values/1 or api/values/2 which can be thought of as an instance of a route template
-	* HttpMethod: the http method the request was with like GET, PUT, POST, DELETE, etc
-	* GetHeaders: this method takes a string header name and returns the value of that header from the current request. This can be used by the IRateLimitingPolicyProvider implementation to inspect any header from the current request to decide which policy to apply to the current request 
-	* ClaimPrinciple: the authenticated user/client making the current request. We can extract the userid/clientid or any other claim from this property and later use it apply a particular rate limit on the current request.
-	* InputStream: the body of the request as a stream to let the implementation a chance to examine the body if required to help it make its decision on what rate limit to apply to the current request
+* RouteTemplate: the route template that the current request path matches with. For example a GET request nade to the url 
+    api/values/1 falls under the route template api/values/{id} and will be mapped to the action in a controller that has this Route defined
+    on it. Also the request for api/values/2 will be mapped to the same action via the same route template and rate limiting should be applied on the route template rather than the path which is an instance of the route template. It is the route template that identifies an endpoint on a general level. If you set a rate limit on api/values/{id} for let us say 10 calls PerMinute then any call made to that endpoint with whatever value for the {id} part will counted as a call to api/values/{id} and moreover whatever value we put in the {id} part, we will get to make only 10 calls PerMinute    
+* Path: the actual url path the request was made to for instance api/values/1 or api/values/2 which can be thought of as an instance of a route template
+* HttpMethod: the http method the request was with like GET, PUT, POST, DELETE, etc
+* GetHeaders: this method takes a string header name and returns the value of that header from the current request. This can be used by the IRateLimitingPolicyProvider implementation to inspect any header from the current request to decide which policy to apply to the current request 
+* ClaimPrinciple: the authenticated user/client making the current request. We can extract the userid/clientid or any other claim from this property and later use it apply a particular rate limit on the current request.
+* InputStream: the body of the request as a stream to let the implementation a chance to examine the body if required to help it make its decision on what rate limit to apply to the current request
 
 
 The idea is that for every request the framework will ask the implementation of **IRateLimitingPolicyProvider** for the RateLimitPolicy to apply to that request and the 
