@@ -1,0 +1,37 @@
+﻿using System.Collections.Generic;
+using System.Web.Http;
+
+// For more information on enabling Web API for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
+
+namespace Domain.RateLimiting.Samples.Owin.Controllers
+{
+    public class GloballyLimitedController : ApiController
+    {
+        public IEnumerable<string> Get()
+        {
+            return new string[] { "value1", "value2" };
+        }
+        
+        public string Get(int id)
+        {
+            return "value";
+        }
+        
+        public string Get(int id, int subid)
+        {
+            return "value from sub";
+        }
+        
+        public void Post([FromBody]string value)
+        {
+        }
+        
+        public void Put(int id, [FromBody]string value)
+        {
+        }
+        
+        public void Delete(int id)
+        {
+        }
+    }
+}

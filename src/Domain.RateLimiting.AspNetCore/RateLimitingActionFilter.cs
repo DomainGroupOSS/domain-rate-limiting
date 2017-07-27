@@ -134,7 +134,7 @@ namespace Domain.RateLimiting.AspNetCore
             }
         }
 
-        private void AddUpdateRateLimitingSuccessHeaders(HttpContext context, RateLimitingResult result)
+        private static void AddUpdateRateLimitingSuccessHeaders(HttpContext context, RateLimitingResult result)
         {
             var successheaders = new string[] { RateLimitHeaders.CallsRemaining, RateLimitHeaders.Limit };
 
@@ -154,7 +154,7 @@ namespace Domain.RateLimiting.AspNetCore
             }
         }
 
-        private void InvalidRequestId(ActionExecutingContext context)
+        private static void InvalidRequestId(ActionExecutingContext context)
         {
             context.HttpContext.Response.StatusCode = (int)HttpStatusCode.Forbidden;
             context.HttpContext.Response.Headers.Clear();
@@ -165,7 +165,7 @@ namespace Domain.RateLimiting.AspNetCore
             };
         }
 
-        private void TooManyRequests(ActionExecutingContext context, 
+        private static void TooManyRequests(ActionExecutingContext context, 
             RateLimitingResult result, string violatedPolicyName = "")
         {
             var throttledResponseParameters =
@@ -178,14 +178,13 @@ namespace Domain.RateLimiting.AspNetCore
                     throttledResponseParameters.RateLimitHeaders[header]);
             }
             
-
             context.Result = new ContentResult()
             {
                 Content = throttledResponseParameters.Message
             };
         }
         
-        private IList<AllowedCallRate> GetCustomAttributes(ActionDescriptor actionDescriptor)
+        private static IList<AllowedCallRate> GetCustomAttributes(ActionDescriptor actionDescriptor)
         {
             var controllerActionDescriptor = actionDescriptor as ControllerActionDescriptor;
             if (controllerActionDescriptor == null)
