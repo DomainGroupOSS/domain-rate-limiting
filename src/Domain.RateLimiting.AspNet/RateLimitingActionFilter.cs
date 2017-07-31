@@ -56,6 +56,15 @@ namespace Domain.RateLimiting.WebApi
         {
         }
 
+        public override Task OnActionExecutedAsync(HttpActionExecutedContext actionExecutedContext, CancellationToken cancellationToken)
+        {
+            if (actionExecutedContext.Request.Properties.ContainsKey("RateLimitingResult"))
+                AddUpdateRateLimitingSuccessHeaders(actionExecutedContext,
+                    (RateLimitingResult)actionExecutedContext.Request.Properties["RateLimitingResult"]);
+
+            return base.OnActionExecutedAsync(actionExecutedContext, cancellationToken);
+        }
+
         /// <summary>
         ///     Occurs before the action method is invoked.
         /// </summary>
@@ -100,7 +109,7 @@ namespace Domain.RateLimiting.WebApi
 
             if (allowedCallRates == null || !allowedCallRates.Any())
                 return;
-            
+
             var requestKey = rateLimitingPolicy.RequestKey;
 
             if (string.IsNullOrWhiteSpace(requestKey))
@@ -129,23 +138,13 @@ namespace Domain.RateLimiting.WebApi
                 TooManyRequests(actionContext, result, name);
             else
             {
-                AddUpdateRateLimitingSuccessHeaders(actionContext, result);
+                actionContext.Request.Properties.Add("RateLimitingResult", result);
                 await base.OnActionExecutingAsync(actionContext, cancellationToken);
             }
         }
 
         private static string GetRouteTemplate(HttpActionContext actionContext)
         {
-            //var routes = actionContext.Request.GetConfiguration().Routes;
-            //var routeData = routes.GetRouteData(actionContext.Request);
-            //var subRoutes = routeData.Values["MS_SubRoutes"] as IHttpRouteData[];
-
-            //var routeTemplate = subRoutes?[0].Route.RouteTemplate;
-
-            //if (routeTemplate != null)
-            //    return routeTemplate;
-            
-
             var controller = actionContext.RequestContext.RouteData.Values.ContainsKey("controller")
                 ? actionContext.RequestContext.RouteData.Values["controller"].ToString()
                 : null;
@@ -156,24 +155,20 @@ namespace Domain.RateLimiting.WebApi
             return routeTemplate;
         }
 
-        private static void AddUpdateRateLimitingSuccessHeaders(HttpActionContext context, RateLimitingResult result)
+        private static void AddUpdateRateLimitingSuccessHeaders(HttpActionExecutedContext context, RateLimitingResult result)
         {
             var successheaders = new Dictionary<string, string>()
             {
-                {RateLimitHeaders.CallsRemaining, RateLimitHeaders.Limit},
+                {RateLimitHeaders.CallsRemaining, result.CallsRemaining.ToString()},
                 {RateLimitHeaders.Limit, result.CacheKey.Limit.ToString() }
             };
-            var response = context.Request.CreateResponse();
+            var response = context.Response;
             foreach (var successheader in successheaders.Keys)
             {
                 if (response.Headers.Contains(successheader))
                 {
                     // KAZI revisit
-                    var successHeaderValues = response.Headers.GetValues(successheader)?.ToList();
-
-                    if (successHeaderValues == null)
-                        continue;
-
+                    var successHeaderValues = response.Headers.GetValues(successheader)?.ToList() ?? new List<string>();
                     successHeaderValues.Add(successheaders[successheader]);
                     context.Response.Headers.Remove(successheader);
                     response.Headers.Add(successheader, successHeaderValues);
@@ -184,6 +179,8 @@ namespace Domain.RateLimiting.WebApi
                 }
             }
         }
+
+
 
         private static void InvalidRequestId(HttpActionContext context)
         {
@@ -201,7 +198,7 @@ namespace Domain.RateLimiting.WebApi
             var throttledResponseParameters =
                 RateLimitingHelper.GetThrottledResponseParameters(result, violatedPolicyName);
 
-            response.StatusCode = (HttpStatusCode) ThrottledResponseParameters.StatusCode;
+            response.StatusCode = (HttpStatusCode)ThrottledResponseParameters.StatusCode;
 
             foreach (var header in throttledResponseParameters.RateLimitHeaders.Keys)
             {
