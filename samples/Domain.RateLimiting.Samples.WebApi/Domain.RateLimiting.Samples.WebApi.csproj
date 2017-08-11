@@ -177,7 +177,7 @@
     <Content Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Domain.RateLimiting.AspNet\Domain.RateLimiting.WebApi.csproj">
+    <ProjectReference Include="..\..\src\Domain.RateLimiting.WebApi\Domain.RateLimiting.WebApi.csproj">
       <Project>{c01161a2-f802-4690-9719-0d5ddd09ad45}</Project>
       <Name>Domain.RateLimiting.WebApi</Name>
     </ProjectReference>

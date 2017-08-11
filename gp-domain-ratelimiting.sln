@@ -17,11 +17,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Domain.RateLimiting.Samples
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Domain.RateLimiting.Samples.WebApi", "samples\Domain.RateLimiting.Samples.WebApi\Domain.RateLimiting.Samples.WebApi.csproj", "{2F1E65E8-98ED-4908-A0B6-8863E093F3AA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Domain.RateLimiting.WebApi", "src\Domain.RateLimiting.AspNet\Domain.RateLimiting.WebApi.csproj", "{C01161A2-F802-4690-9719-0D5DDD09AD45}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Domain.RateLimiting.WebApi", "src\Domain.RateLimiting.WebApi\Domain.RateLimiting.WebApi.csproj", "{C01161A2-F802-4690-9719-0D5DDD09AD45}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Domain.RateLimiting.Samples.Owin", "samples\Domain.RateLimiting.Samples.Owin\Domain.RateLimiting.Samples.Owin.csproj", "{F0FE0C8E-B4DE-4554-96D2-32B149E92054}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Domain.RateLimiting.Samples.ConsoleCore", "Domain.RateLimiting.Samples.ConsoleCore\Domain.RateLimiting.Samples.ConsoleCore.csproj", "{E40BB62D-B3A3-4A2A-B25C-F265AC60F660}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Domain.RateLimiting.Samples.ConsoleCore", "samples\Domain.RateLimiting.Samples.ConsoleCore\Domain.RateLimiting.Samples.ConsoleCore.csproj", "{E40BB62D-B3A3-4A2A-B25C-F265AC60F660}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
