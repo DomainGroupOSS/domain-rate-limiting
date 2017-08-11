@@ -82,7 +82,7 @@ namespace Domain.RateLimiting.WebApi
                     actionContext.Request.Method.Method,
                     (header) => actionContext.Request.Headers.GetValues(header).ToArray(),
                     actionContext.RequestContext.Principal as ClaimsPrincipal,
-                    await actionContext.Request.Content.ReadAsStreamAsync()));
+                    await actionContext.Request.Content.ReadAsStreamAsync().ConfigureAwait(false))).ConfigureAwait(false);
 
             if (rateLimitingPolicy == null)
             {

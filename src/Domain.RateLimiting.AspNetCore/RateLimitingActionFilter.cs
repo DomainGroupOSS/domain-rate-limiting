@@ -72,7 +72,7 @@ namespace Domain.RateLimiting.AspNetCore
                         actionContext.HttpContext.Request.Method,
                         (header) => actionContext.HttpContext.Request.Headers[header],
                         actionContext.HttpContext.User,
-                        actionContext.HttpContext.Request.Body));
+                        actionContext.HttpContext.Request.Body)).ConfigureAwait(false);
 
             if (rateLimitingPolicy == null)
             {

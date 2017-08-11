@@ -252,7 +252,7 @@ namespace Domain.RateLimiting.Core
             if (IsWhiteListedPath(rateLimitingRequest.Path, rateLimitingRequest.Method))
                 return null;
 
-            var providedPolicyEntry = await _policyProvider.GetPolicyAsync(rateLimitingRequest);
+            var providedPolicyEntry = await _policyProvider.GetPolicyAsync(rateLimitingRequest).ConfigureAwait(false);
 
             if (providedPolicyEntry == null || 
                 IsWhiteListedRequestKey(providedPolicyEntry.RequestKey))
