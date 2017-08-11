@@ -1,9 +1,9 @@
-# Getting started for Aspnet Core apps
+# Getting started
 
-First we need to reference the following three packages from Nuget:
+First we need to reference the following packages from Nuget:
 
-* Domain.RateLimiting.Core package which contains the core abstractions and classes for rate limiting.
-* Domain.RateLimiting.AspNetCore package which contains the rate limiting action filter which works with Domain.RateLimiting.Core
+* For AspnetCore apps: install the Domain.RateLimiting.AspNetCore package which contains the rate limiting action filter which works     with Domain.RateLimiting.Core (skip for WebApi/Owin projects)
+* For WebApi/Owin projects: install the Domain.RateLimiting.WebApi package which contains the rate limiting action filter which works with Domain.RateLimiting.Core (Skip for AspnetCore projects)
 * Domain.RateLimiting.Redis package which provides a distributed 
   Redis implementation of the IRateLimitingCacheProvider from the Domain.RateLimiting.Core package meaning 
   that it can be used from multiple servers which is more suiting to real
@@ -46,9 +46,9 @@ The RateLimitPolicy provided contains:
 For an example scenario let us consider a request coming for the path **api/values/1** which falls under the routeTemplate **api/values/\{id\}** and for method **GET**. The library will examine the request and ask the IRateLimitingPolicyProvider: "I have a request for endpoint api/values/1 falling under the route template api/values/{id} for method GET. What policy should I apply?". Now it is completely up to the IRateLimitingPolicyProvider to answer with whatever policy it sees fit. It can fetch a dynamic policy from a database based on the client_id from the ClaimsPrincipal or it can apply a general or specific statically configured one. Let us say the client_id of the request is client_0. It can reply saying: "Ok allow 10 calls per minute for routeTemplate api/values/{id} and method Get for client client_0". Or it can reply: "Ok file this request under the more generic policy of 100 call per minute for all routes (*) and for all methods (*) for client_0" for a more general level limiting meaning each client (represented by the requestKey) can call any endpoint of the app for a total of 100 times in 1 minute. It will become more clear once we start playing with the sampla app. Note that asterisk * represents for all.
 
 
-To demostrate the functionalities of the packages we will take a tutorial approach with the sample app provided in the solution. 
+### To demostrate the functionalities of the packages we will take a tutorial approach with the sample AspNetCore app provided in the solution. Sample apps are also provided for WebApi, Owin and Console apps.
 
-Please open up the Startup.cs file from the Domain.RateLimiting.Samples.AspNetCore project 
+Let us get started by opening up the Startup.cs file from the Domain.RateLimiting.Samples.AspNetCore project 
 
 
 ### Step 1: Create a implementation of the IRateLimitingPolicyProvider
