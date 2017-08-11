@@ -2,9 +2,9 @@
   <PropertyGroup>
     <TargetFrameworks>netstandard1.3;net452</TargetFrameworks>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <Version>1.0.1-alpha</Version>
-    <AssemblyVersion>1.0.0.1</AssemblyVersion>
-    <FileVersion>1.0.0.1</FileVersion>
+    <Version>10.0.1-alpha</Version>
+    <AssemblyVersion>10.0.0.1</AssemblyVersion>
+    <FileVersion>10.0.0.1</FileVersion>
     <Authors>Kazi Zahir</Authors>
     <Company>Domain</Company>
     <Description>Contains the core abstractions and classes for rate limiting.</Description>
