@@ -247,21 +247,6 @@ namespace Domain.RateLimiting.Core
             return this;
         }
 
-        /// <summary>
-        /// Gets the rate limiting policy entry for the current request.
-        /// </summary>
-        /// <remarks>
-        /// Rate limiting matching occurs in the following order
-        /// 1. Match on the current http method and request path e.g. 'GET /v1/example'
-        /// 2. If no match found in (1), match on all http methods (*) and the request path e.g. 'GET /v1/example'
-        /// 3. if no match found in (1, 2), match on the current http method for all request paths (*) e.g. 'GET /*'
-        /// 4. If no match found in (1, 2, 3), match on all http methods (*) and all request paths (*) i.e. '* /*'
-        /// </remarks>
-        /// <param name="rateLimitingRequest">The request path or endpoint</param>
-        /// <returns>
-        /// <c>A rate limiting policy entry</c> if [one is found matching the current request]; 
-        /// otherwise, <c>null</c>.
-        /// </returns>
         public async Task<RateLimitPolicy> GetPolicyAsync(RateLimitingRequest rateLimitingRequest)
         {
             if (IsWhiteListedPath(rateLimitingRequest.Path, rateLimitingRequest.Method))
@@ -281,44 +266,35 @@ namespace Domain.RateLimiting.Core
 
             if (!_entries.ContainsKey(policyKey))
             {
-                // Policy key for the current request path belonging to all HTTP methods, e.g. * /v1/example
-                // Policy key matching the current request path for current HTTP method, e.g. GET /v1/example
                 policyKey = new RateLimitingPolicyKey(providedPolicyEntry.RequestKey,
                     rateLimitingRequest.RouteTemplate, AllHttpMethods);
             }
 
             if (!_entries.ContainsKey(policyKey))
             {
-                // Policy key for the current request path belonging to all HTTP methods, e.g. * /v1/example
-                // Policy key matching the current request path for current HTTP method, e.g. GET /v1/example
                 policyKey = new RateLimitingPolicyKey(providedPolicyEntry.RequestKey,
                     AllRequestPaths, AllHttpMethods);
             }
 
             if (!_entries.ContainsKey(policyKey))
             {
-                // Policy key for the current request path belonging to all HTTP methods, e.g. * /v1/example
-                // Policy key matching the current request path for current HTTP method, e.g. GET /v1/example
                 policyKey = new RateLimitingPolicyKey(AllRequestKeys,
                     rateLimitingRequest.RouteTemplate, rateLimitingRequest.Method);
             }
             
             if (!_entries.ContainsKey(policyKey))
             {
-                // Policy key for the current request path belonging to all HTTP methods, e.g. * /v1/example
                 policyKey = new RateLimitingPolicyKey(AllRequestKeys, 
                     rateLimitingRequest.RouteTemplate, AllHttpMethods);
             }
 
             if (!_entries.ContainsKey(policyKey))
             {
-                // Policy key for all requests paths matching the current HTTP method, e.g.. GET /*
                 policyKey = AllRequestsByHttpMethodKeyMapping[rateLimitingRequest.Method.ToUpperInvariant()];
             }
 
             if (!_entries.ContainsKey(policyKey))
             {
-                // Policy key for all clients, all requests paths and all HTTP methods, i.e. * /*
                 policyKey = AllRequestsKey;
             }
 
