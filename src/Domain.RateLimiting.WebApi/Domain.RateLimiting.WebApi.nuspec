@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>Domain.RateLimiting.WebApi</id>
+    <version>$version$-alpha</version>
+    <title>Domain.RateLimiting.WebApi</title>
+    <authors>kazi.zahir</authors>
+    <owners>Domain Group</owners>
+    <iconUrl>http://www.domain.com.au/content/files/99x99.png</iconUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Rate limiting action filter for Web Api</description>
+    <copyright>Copyright 2017</copyright>
+    <tags>rate limting, webapi, filters</tags>
+  </metadata>
+</package>

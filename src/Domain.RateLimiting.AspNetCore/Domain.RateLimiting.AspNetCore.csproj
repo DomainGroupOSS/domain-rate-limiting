@@ -5,10 +5,11 @@
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <AssemblyVersion>1.0.0.1</AssemblyVersion>
     <FileVersion>1.0.0.1</FileVersion>
-    <Version>1.0.1</Version>
+    <Version>1.0.1-alpha</Version>
     <Authors>Kazi Zahir</Authors>
     <Company>Domain</Company>
     <Description>Contains the rate limiting action filter which works with Domain.RateLimiting.Core</Description>
+    <PackageIconUrl>http://www.domain.com.au/content/files/99x99.png</PackageIconUrl>
   </PropertyGroup>
 
   <ItemGroup>

@@ -8,6 +8,7 @@
     <Authors>Kazi Zahir</Authors>
     <Company>Domain</Company>
     <Description>Contains the core abstractions and classes for rate limiting.</Description>
+    <PackageIconUrl>http://www.domain.com.au/content/files/99x99.png</PackageIconUrl>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netstandard1.3|AnyCPU'">
     <DefineConstants>TRACE;DEBUG;NETSTANDARD1_3;NET452;</DefineConstants>
