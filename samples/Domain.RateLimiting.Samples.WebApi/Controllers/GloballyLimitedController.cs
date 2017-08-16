@@ -17,11 +17,25 @@ namespace Domain.RateLimiting.Samples.WebApi.Controllers
             return "value";
         }
         
+        [Route("api/GloballyLimited/{id}/sub/{subid}")]
         public string Get(int id, int subid)
         {
             return "value from sub";
         }
-        
+
+        [HttpGet]
+        [Route("api/GloballyLimited/FetchMyStuff/{id}")]
+        public string FetchMyThang(int id)
+        {
+            return "Here is your thang";
+        }
+
+        [HttpGet]
+        public string FetchAnotherThang(int id)
+        {
+            return "Here is your another thang";
+        }
+
         public void Post([FromBody]string value)
         {
         }

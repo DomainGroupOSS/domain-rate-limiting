@@ -147,10 +147,14 @@ namespace Domain.RateLimiting.WebApi
         {
             var controller = actionContext.RequestContext.RouteData.Values.ContainsKey("controller")
                 ? actionContext.RequestContext.RouteData.Values["controller"].ToString()
-                : null;
+                : string.Empty;
 
-            var routeTemplate = controller != null ? actionContext.RequestContext.RouteData.Route.RouteTemplate
-                .Replace("{controller}", controller) : actionContext.Request.RequestUri.AbsolutePath;
+            var action = actionContext.RequestContext.RouteData.Values.ContainsKey("action")
+                ? actionContext.RequestContext.RouteData.Values["action"].ToString()
+                : string.Empty;
+
+            var routeTemplate = actionContext.RequestContext.RouteData.Route.RouteTemplate
+                .Replace("{controller}", controller).Replace("{action}", action);
 
             return routeTemplate;
         }
