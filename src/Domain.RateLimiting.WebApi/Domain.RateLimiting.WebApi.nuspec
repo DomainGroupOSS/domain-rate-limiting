@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>Domain.RateLimiting.WebApi</id>
-    <version>$version$-alpha</version>
+    <version>$version$-experimental</version>
     <title>Domain.RateLimiting.WebApi</title>
     <authors>kazi.zahir</authors>
     <owners>Domain Group</owners>

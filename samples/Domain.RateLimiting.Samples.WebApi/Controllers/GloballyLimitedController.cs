@@ -30,12 +30,6 @@ namespace Domain.RateLimiting.Samples.WebApi.Controllers
             return "Here is your thang";
         }
 
-        [HttpGet]
-        public string FetchAnotherThang(int id)
-        {
-            return "Here is your another thang";
-        }
-
         public void Post([FromBody]string value)
         {
         }

@@ -166,6 +166,7 @@ namespace Domain.RateLimiting.WebApi
                 {RateLimitHeaders.CallsRemaining, result.CallsRemaining.ToString()},
                 {RateLimitHeaders.Limit, result.CacheKey.Limit.ToString() }
             };
+
             var response = context.Response;
             foreach (var successheader in successheaders.Keys)
             {

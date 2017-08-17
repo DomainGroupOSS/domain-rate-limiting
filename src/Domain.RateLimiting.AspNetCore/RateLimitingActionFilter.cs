@@ -136,20 +136,24 @@ namespace Domain.RateLimiting.AspNetCore
 
         private static void AddUpdateRateLimitingSuccessHeaders(HttpContext context, RateLimitingResult result)
         {
-            var successheaders = new string[] { RateLimitHeaders.CallsRemaining, RateLimitHeaders.Limit };
+            var successheaders = new Dictionary<string, string>()
+            {
+                {RateLimitHeaders.CallsRemaining, result.CallsRemaining.ToString()},
+                {RateLimitHeaders.Limit, result.CacheKey.Limit.ToString() }
+            };
 
-            foreach (string successheader in successheaders)
+            foreach (string successheader in successheaders.Keys)
             {
                 if (context.Response.Headers.ContainsKey(successheader))
                 {
                     context.Response.Headers[successheader] = new StringValues(
                         context.Response.Headers[successheader].ToArray()
-                            .Append(result.CallsRemaining.ToString()).ToArray());
+                            .Append(successheaders[successheader]).ToArray());
                 }
                 else
                 {
                     context.Response.Headers.Add(successheader, new StringValues(
-                        new string[] {result.CallsRemaining.ToString()}));
+                        new string[] { successheaders[successheader] }));
                 }
             }
         }
