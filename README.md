@@ -13,6 +13,8 @@ allow multiple call rates to be specified for four different time units of secon
 days allowing a single endpoint to be limited at multiple levels like allowing 60 calls per min but no
 more than 100 calls per hour.
 
+Compatible with WebApi, Owin and AspnetCore.
+
 # Getting started
 
 First we need to reference the following packages from Nuget:
