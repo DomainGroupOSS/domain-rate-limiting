@@ -8,19 +8,18 @@ namespace Domain.RateLimiting.Core
     /// </summary>
     public struct RateLimitCacheKey
     {
-        private readonly string _requestId;
-        private readonly string _method;
-        private readonly string _host;
-        private readonly string _routeTemplate;
         private readonly Func<DateTime, string> _getSuffix;
         
         private readonly DateTime _dateTimeUtcNow;
 
-        public string RequestId => _requestId;
-        public string Method => _method;
-        public string Host => _host;
-        public string RouteTemplate => _routeTemplate;
-        
+        public string RequestId { get; }
+
+        public string Method { get; }
+
+        public string Host { get; }
+
+        public string RouteTemplate { get; }
+
         private static readonly IDictionary<RateLimitUnit, Func<int, TimeSpan>> RateLimitTypeExpirationMapping = new Dictionary<RateLimitUnit, Func<int, TimeSpan>>
         {
             {RateLimitUnit.PerSecond, limit => TimeSpan.FromSeconds(1)},
@@ -52,10 +51,10 @@ namespace Domain.RateLimiting.Core
 
             _dateTimeUtcNow = DateTime.UtcNow;
 
-            _requestId = requestId;
-            _method = method;
-            _host = host;
-            _routeTemplate = routeTemplate.StartsWith(@"/") ? routeTemplate : @"/" + routeTemplate;
+            RequestId = requestId;
+            Method = method;
+            Host = host;
+            RouteTemplate = routeTemplate.StartsWith(@"/") ? routeTemplate : @"/" + routeTemplate;
             Expiration = RateLimitTypeExpirationMapping[allowedCallRate.Unit](allowedCallRate.Limit);
             RetryAfter = _dateTimeUtcNow.Add(Expiration).ToString("R");
             AllowedCallRate = allowedCallRate;
@@ -96,7 +95,7 @@ namespace Domain.RateLimiting.Core
         public override string ToString()
         {
             return
-                $"{_requestId}::{_method.ToUpperInvariant()} {_host.ToLowerInvariant()}{_routeTemplate.ToLowerInvariant()}::{_getSuffix(_dateTimeUtcNow)}";
+                $"{RequestId}::{Method.ToUpperInvariant()} {Host.ToLowerInvariant()}{RouteTemplate.ToLowerInvariant()}::{_getSuffix(_dateTimeUtcNow)}";
         }
     }
 }

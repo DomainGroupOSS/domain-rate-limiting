@@ -54,15 +54,15 @@ namespace Domain.RateLimiting.Core
         /// <summary>
         /// Adds the policy for all requests and all HTTP methods.
         /// </summary>
-        /// <param name="policies">The policies.</param>
+        /// <param name="allowedCallRates">The policies.</param>
         /// <param name="requestKey"></param>
         /// <param name="allowAttributeOverride"></param>
         /// <param name="name"></param>
         /// <returns></returns>
-        public RateLimitingPolicyManager AddPoliciesForAllEndpoints(IList<AllowedCallRate> policies, 
+        public RateLimitingPolicyManager AddPoliciesForAllEndpoints(IList<AllowedCallRate> allowedCallRates, 
             string requestKey=AllRequestKeys, bool allowAttributeOverride = false, string name = "")
         {
-            AddEndpointPolicy(new RateLimitPolicy(requestKey, AllRequestPaths, AllHttpMethods, policies,
+            AddEndpointPolicy(new RateLimitPolicy(requestKey, AllRequestPaths, AllHttpMethods, allowedCallRates,
                 allowAttributeOverride, name));
 
             return this;
@@ -249,7 +249,8 @@ namespace Domain.RateLimiting.Core
 
         public async Task<RateLimitPolicy> GetPolicyAsync(RateLimitingRequest rateLimitingRequest)
         {
-            if (IsWhiteListedPath(rateLimitingRequest.Path, rateLimitingRequest.Method))
+            if (IsWhiteListedPath(rateLimitingRequest.RouteTemplate, rateLimitingRequest.Method) ||
+                IsWhiteListedPath(rateLimitingRequest.Path, rateLimitingRequest.Method))
                 return null;
 
             var providedPolicyEntry = await _policyProvider.GetPolicyAsync(rateLimitingRequest).ConfigureAwait(false);

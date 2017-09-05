@@ -97,7 +97,7 @@ namespace Domain.RateLimiting.Redis
                             redisTransaction, utcNowTicks));
                 }
 
-                await ExecuteTransactionAsync(redisTransaction);
+                await ExecuteTransactionAsync(redisTransaction).ConfigureAwait(false);
                 
                 var violatedCacheKeys = new SortedList<long, RateLimitCacheKey>();
 
@@ -134,7 +134,7 @@ namespace Domain.RateLimiting.Redis
                     SetupGetOldestRequestTimestampInTicks(postViolationTransaction,
                         violatedCacheKey, utcNowTicks);
 
-                await ExecuteTransactionAsync(postViolationTransaction);
+                await ExecuteTransactionAsync(postViolationTransaction).ConfigureAwait(false);
 
                 var rateLimitingResult = new RateLimitingResult(true,
                     await GetWaitingIntervalInTicks(setupGetOldestRequestTimestampInTicks, 
