@@ -1,3 +1,20 @@
+# Introduction
+
+At its heart the idea of Rate Limiting is basically putting an upper limit on the number
+of calls a particular caller (user/client/organization) can make on our
+api endpoints within a certain time interval. So in essence it is about
+setting the allowed call rates on our api endpoints whether at a
+indivdual or more general level thereby trying to ensure a fair
+distribution of our system resources and preventing any one client or
+user from abusing the system.
+
+The libraries in this repo provide distributed implementations of rate limiting using Redis for both the fixed and sliding window algorithms. Also they
+allow multiple call rates to be specified for four different time units of seconds, minutes, hours and
+days allowing a single endpoint to be limited at multiple levels like allowing 60 calls per min but no
+more than 100 calls per hour.
+
+Compatible with WebApi, Owin and AspnetCore.
+
 # Getting started
 
 First we need to reference the following packages from Nuget:
