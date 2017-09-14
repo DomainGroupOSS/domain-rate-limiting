@@ -48,12 +48,12 @@ namespace Domain.RateLimiting.Redis
         }
 
         protected override Task<long> GetNumberOfRequestsAsync(string requestId, string method, string host, string routeTemplate,
-             AllowedCallRate policy, IList<RateLimitCacheKey> cacheKeys, 
+             AllowedCallRate allowedCallRate, IList<RateLimitCacheKey> cacheKeys, 
              ITransaction redisTransaction, long utcNowTicks)
         {
-            RateLimitCacheKey cacheKey =
-                new RateLimitCacheKey(requestId, method, host, routeTemplate, policy, 
-                RateLimitTypeCacheKeyFormatMapping[policy.Unit]);
+            var cacheKey =
+                new RateLimitCacheKey(requestId, method, host, routeTemplate, allowedCallRate, 
+                RateLimitTypeCacheKeyFormatMapping[allowedCallRate.Unit]);
 
             var cacheKeyString = cacheKey.ToString();
             cacheKeys.Add(cacheKey);

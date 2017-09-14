@@ -12,22 +12,22 @@ namespace Domain.RateLimiting.Core
         /// Initializes a new instance of the <see cref="RateLimitingPolicyKey"/> struct.
         /// </summary>
         /// <param name="requestKey">The request path.</param>
-        /// <param name="requestPath">The request path.</param>
+        /// <param name="routeTemplate">The request path.</param>
         /// <param name="httpMethod">The HTTP method.</param>
         /// <exception cref="ArgumentNullException">requestPath or httpMethod</exception>
         /// <exception cref="ArgumentOutOfRangeException">requestPath;requestPath cannot be empty or httpMethod;httpMethod cannot be empty</exception>
-        public RateLimitingPolicyKey(string requestKey, string requestPath, string httpMethod)
+        public RateLimitingPolicyKey(string requestKey, string routeTemplate, string httpMethod)
         {
             if (string.IsNullOrWhiteSpace(requestKey)) throw new ArgumentNullException(nameof(requestKey),
                 $"{nameof(requestKey)} cannot be null or whitespace");
             if (requestKey.Length == 0) throw new ArgumentOutOfRangeException($"{nameof(requestKey)} cannot be empty");
-            if (requestPath == null) throw new ArgumentNullException(nameof(requestPath));
-            if (requestPath.Length == 0) throw new ArgumentOutOfRangeException(nameof(requestPath), "requestPath cannot be empty");
+            if (routeTemplate == null) throw new ArgumentNullException(nameof(routeTemplate));
+            if (routeTemplate.Length == 0) throw new ArgumentOutOfRangeException(nameof(routeTemplate), "requestPath cannot be empty");
             if (httpMethod == null) throw new ArgumentNullException(nameof(httpMethod));
             if (httpMethod.Length == 0) throw new ArgumentOutOfRangeException(nameof(httpMethod), "httpMethod cannot be empty");
 
             RequestKey = requestKey;
-            Endpoint = (requestPath.StartsWith(@"/") ? requestPath : @"/" + requestPath).ToLowerInvariant();
+            Endpoint = (routeTemplate.StartsWith(@"/") ? routeTemplate : @"/" + routeTemplate).ToLowerInvariant();
             HttpMethod = httpMethod.ToUpperInvariant();
         }
 

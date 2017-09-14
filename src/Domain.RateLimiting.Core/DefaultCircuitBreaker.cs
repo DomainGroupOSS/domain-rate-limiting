@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Domain.RateLimiting.Core
@@ -13,7 +14,7 @@ namespace Domain.RateLimiting.Core
         private DateTime _faultWindowOpenTime;
 
 
-        private readonly object _circuitLock = new object();
+        private readonly SemaphoreSlim _circuitLock = new SemaphoreSlim(1);
 
         private DateTime _circuitOpenTime;
         private bool _circuitIsOpen;
@@ -21,8 +22,8 @@ namespace Domain.RateLimiting.Core
         private readonly Action _onCircuitClosed;
         private readonly Action<Exception> _onCircuitException;
 
-        public DefaultCircuitBreaker(int faultThreshholdPerWindowDuration, 
-            int faultWindowDurationInMilliseconds, 
+        public DefaultCircuitBreaker(int faultThreshholdPerWindowDuration,
+            int faultWindowDurationInMilliseconds,
             int circuitOpenIntervalInSecs,
             Action onCircuitOpened = null,
             Action onCircuitClosed = null,
@@ -45,15 +46,16 @@ namespace Domain.RateLimiting.Core
                     return defaultResult;
                 }
 
-                lock (_circuitLock)
+                await _circuitLock.WaitAsync();
+
+                if (_circuitIsOpen)
                 {
-                    if (_circuitIsOpen)
-                    {
-                        _consecutiveFaultsCount = 0;
-                        _circuitIsOpen = false;
-                        _onCircuitClosed?.Invoke();
-                    }
+                    _consecutiveFaultsCount = 0;
+                    _circuitIsOpen = false;
+                    _onCircuitClosed?.Invoke();
                 }
+
+                _circuitLock.Release();
             }
 
             try
@@ -67,30 +69,31 @@ namespace Domain.RateLimiting.Core
                 if (_circuitIsOpen)
                     return defaultResult;
 
-                lock (_circuitLock)
+                await _circuitLock.WaitAsync();
+
+                if (_circuitIsOpen)
+                    return defaultResult;
+
+                if (_consecutiveFaultsCount == 0)
+                    _faultWindowOpenTime = DateTime.Now;
+
+                _consecutiveFaultsCount++;
+                if (_consecutiveFaultsCount <= _faultThreshholdPerWindowDuration)
+                    return defaultResult;
+
+                if (DateTime.Now.Subtract(_faultWindowOpenTime).TotalMilliseconds <= _faultWindowDurationInMilliseconds)
                 {
-                    if (_circuitIsOpen)
-                        return defaultResult;
-
-                    if(_consecutiveFaultsCount == 0)
-                        _faultWindowOpenTime = DateTime.Now;
-
-                    _consecutiveFaultsCount++;
-                    if (_consecutiveFaultsCount <= _faultThreshholdPerWindowDuration)
-                        return defaultResult;
-
-                    if (DateTime.Now.Subtract(_faultWindowOpenTime).TotalMilliseconds <= _faultWindowDurationInMilliseconds)
-                    {
-                        _circuitOpenTime = DateTime.Now;
-                        _circuitIsOpen = true;
-                        _onCircuitOpened?.Invoke();
-                    }
-                    else
-                    {
-                        _consecutiveFaultsCount = 1;
-                        _faultWindowOpenTime = DateTime.Now;
-                    }
+                    _circuitOpenTime = DateTime.Now;
+                    _circuitIsOpen = true;
+                    _onCircuitOpened?.Invoke();
                 }
+                else
+                {
+                    _consecutiveFaultsCount = 1;
+                    _faultWindowOpenTime = DateTime.Now;
+                }
+
+                _circuitLock.Release();
             }
 
             return defaultResult;

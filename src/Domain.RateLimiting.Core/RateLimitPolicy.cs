@@ -41,9 +41,9 @@ namespace Domain.RateLimiting.Core
             if (requestKey.Length == 0) throw new ArgumentOutOfRangeException(nameof(requestKey),
                 "requestKey cannot be empty");
 
-            if (routeTemplate == null) throw new ArgumentNullException(nameof(routeTemplate));
-            if (routeTemplate.Length == 0) throw new ArgumentOutOfRangeException(nameof(routeTemplate),
-                "the routeTemplate to rate limit cannot be empty");
+            //if (routeTemplate == null) throw new ArgumentNullException(nameof(routeTemplate));
+            //if (routeTemplate.Length == 0) throw new ArgumentOutOfRangeException(nameof(routeTemplate),
+            //    "the routeTemplate to rate limit cannot be empty");
 
             if (string.IsNullOrWhiteSpace(routeTemplate) || routeTemplate.Length == 0)
                 routeTemplate = AllRequestPaths;
@@ -77,7 +77,7 @@ namespace Domain.RateLimiting.Core
         public string Name { get; }
 
         /// <summary>
-        /// Gets the path the path to apply the specified rate limit</summary>
+        /// Gets the path to apply the specified rate limit</summary>
         /// <value>The path to rate limit.</value>
         public string RouteTemplate { get; }
 

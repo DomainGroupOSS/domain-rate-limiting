@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26228.4
+VisualStudioVersion = 15.0.26730.12
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Domain.RateLimiting.Core", "src\Domain.RateLimiting.Core\Domain.RateLimiting.Core.csproj", "{2F325D15-4368-41EA-8A5E-BE73FA6AC6B0}"
 EndProject
@@ -21,7 +21,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Domain.RateLimiting.WebApi"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Domain.RateLimiting.Samples.Owin", "samples\Domain.RateLimiting.Samples.Owin\Domain.RateLimiting.Samples.Owin.csproj", "{F0FE0C8E-B4DE-4554-96D2-32B149E92054}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Domain.RateLimiting.Samples.ConsoleCore", "samples\Domain.RateLimiting.Samples.ConsoleCore\Domain.RateLimiting.Samples.ConsoleCore.csproj", "{E40BB62D-B3A3-4A2A-B25C-F265AC60F660}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Domain.RateLimiting.Samples.ConsoleCore", "samples\Domain.RateLimiting.Samples.ConsoleCore\Domain.RateLimiting.Samples.ConsoleCore.csproj", "{E40BB62D-B3A3-4A2A-B25C-F265AC60F660}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XUnitTestProject1", "XUnitTestProject1\XUnitTestProject1.csproj", "{8ED1AAB9-0547-43FA-A542-740007919B73}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{13966DD6-192E-48E2-8723-DCBF647D25A3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -61,6 +65,10 @@ Global
 		{E40BB62D-B3A3-4A2A-B25C-F265AC60F660}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E40BB62D-B3A3-4A2A-B25C-F265AC60F660}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E40BB62D-B3A3-4A2A-B25C-F265AC60F660}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8ED1AAB9-0547-43FA-A542-740007919B73}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8ED1AAB9-0547-43FA-A542-740007919B73}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8ED1AAB9-0547-43FA-A542-740007919B73}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8ED1AAB9-0547-43FA-A542-740007919B73}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -74,5 +82,9 @@ Global
 		{C01161A2-F802-4690-9719-0D5DDD09AD45} = {266F7D08-EBA8-47D7-A3D6-6A88CE54E6EC}
 		{F0FE0C8E-B4DE-4554-96D2-32B149E92054} = {D316720E-4E82-420D-93EA-68DB2E6F7A0C}
 		{E40BB62D-B3A3-4A2A-B25C-F265AC60F660} = {D316720E-4E82-420D-93EA-68DB2E6F7A0C}
+		{8ED1AAB9-0547-43FA-A542-740007919B73} = {13966DD6-192E-48E2-8723-DCBF647D25A3}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {49635931-1417-422B-805A-66BCD3490CA4}
 	EndGlobalSection
 EndGlobal
