@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Reflection;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Domain.RateLimiting.Core;
 using Microsoft.AspNetCore.Http;
@@ -21,6 +22,7 @@ namespace Domain.RateLimiting.AspNetCore
     {
         private readonly IRateLimitingCacheProvider _rateLimitingCacheProvider;
         private readonly IRateLimitingPolicyProvider _policyManager;
+        private readonly RateLimiter _rateLimitingHelper;
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="RateLimitingActionFilter" /> class.
@@ -38,6 +40,8 @@ namespace Domain.RateLimiting.AspNetCore
                 throw new ArgumentNullException(nameof(rateLimitingCacheProvider));
             _policyManager = policyManager ?? 
                 throw new ArgumentNullException(nameof(policyManager));
+
+            _rateLimitingHelper = new RateLimiter(_rateLimitingCacheProvider, _policyManager);
         }
 
         /// <summary>
@@ -48,60 +52,33 @@ namespace Domain.RateLimiting.AspNetCore
         /// <returns></returns>
         public override async Task OnActionExecutionAsync(ActionExecutingContext actionContext, ActionExecutionDelegate next)
         {
-            var rateLimitingPolicy = await _policyManager.GetPolicyAsync(
-                 new RateLimitingRequest(
-                        actionContext.ActionDescriptor.AttributeRouteInfo.Template,
-                        actionContext.HttpContext.Request.Path,
-                        actionContext.HttpContext.Request.Method,
-                        (header) => actionContext.HttpContext.Request.Headers[header],
-                        actionContext.HttpContext.User,
-                        actionContext.HttpContext.Request.Body)).ConfigureAwait(false);
-
-            if (rateLimitingPolicy == null)
-            {
-                await base.OnActionExecutionAsync(actionContext, next);
-                return;
-            }
-
-            var allowedCallRates = rateLimitingPolicy.AllowedCallRates;
-            var routeTemplate = rateLimitingPolicy.RouteTemplate;
-            var httpMethod = rateLimitingPolicy.HttpMethod;
-            var name = rateLimitingPolicy.Name;
-
-            if(rateLimitingPolicy.AllowAttributeOverride)
-            {
-                var attributeRates = GetCustomAttributes(actionContext.ActionDescriptor);
-                if (attributeRates != null && attributeRates.Any())
+            var result = await _rateLimitingHelper.LimitRequestAsync(
+                new RateLimitingRequest(
+                    actionContext.ActionDescriptor.AttributeRouteInfo.Template,
+                    actionContext.HttpContext.Request.Path,
+                    actionContext.HttpContext.Request.Method,
+                    (header) => actionContext.HttpContext.Request.Headers[header],
+                    actionContext.HttpContext.User,
+                    actionContext.HttpContext.Request.Body),
+                () => GetCustomAttributes(actionContext.ActionDescriptor),
+                actionContext.HttpContext.Request.Host.Value,
+                async () =>
                 {
-                    allowedCallRates = attributeRates;
-                    routeTemplate = actionContext.ActionDescriptor.AttributeRouteInfo.Template;
-                    httpMethod = actionContext.HttpContext.Request.Method;
-                    name = $"AttributeOn_{routeTemplate}";
+                    InvalidRequestId(actionContext);
+                    await Task.FromResult<object>(null);
+                },
+                async rateLimitingResult =>
+                {
+                    AddUpdateRateLimitingSuccessHeaders(actionContext.HttpContext, rateLimitingResult);
+                    await base.OnActionExecutionAsync(actionContext, next);
+                },
+                async (rateLimitingResult, violatedPolicyName) =>
+                {
+                    TooManyRequests(actionContext, rateLimitingResult, violatedPolicyName);
+                    await Task.FromResult<object>(null);
                 }
-            }
 
-            if (allowedCallRates == null || !allowedCallRates.Any())
-                return;
-
-            var context = actionContext.HttpContext;
-            var requestKey = rateLimitingPolicy.RequestKey;
-
-            if (string.IsNullOrWhiteSpace(requestKey))
-            {
-                InvalidRequestId(actionContext);
-                return;
-            }
-            
-            var result = await _rateLimitingCacheProvider.LimitRequestAsync(requestKey, httpMethod,
-                context.Request.Host.Value, routeTemplate, allowedCallRates).ConfigureAwait(false);
-
-            if (result.Throttled)
-                TooManyRequests(actionContext, result, name);
-            else
-            {
-                AddUpdateRateLimitingSuccessHeaders(context, result);
-                await base.OnActionExecutionAsync(actionContext, next);
-            }
+                ).ConfigureAwait(false);
         }
 
         private static void AddUpdateRateLimitingSuccessHeaders(HttpContext context, RateLimitingResult result)
