@@ -15,7 +15,7 @@ namespace Domain.RateLimiting.WebApi
     /// <summary>
     ///     Action filter which rate limits requests using the action/controllers rate limit entry attribute.
     /// </summary>
-    public partial class RateLimitingActionFilter : ActionFilterAttribute
+    public partial class RateLimitingActionFilter : AuthorizationFilterAttribute
     {
         private readonly IRateLimitingCacheProvider _rateLimitingCacheProvider;
         private readonly IRateLimitingPolicyProvider _policyManager;
@@ -43,22 +43,17 @@ namespace Domain.RateLimiting.WebApi
             _rateLimitingHelper = new RateLimiter(_rateLimitingCacheProvider, _policyManager);
         }
 
-        public override Task OnActionExecutedAsync(HttpActionExecutedContext actionExecutedContext, CancellationToken cancellationToken)
-        {
-            if (actionExecutedContext.Request.Properties.ContainsKey("RateLimitingResult"))
-                AddUpdateRateLimitingSuccessHeaders(actionExecutedContext,
-                    (RateLimitingResult)actionExecutedContext.Request.Properties["RateLimitingResult"]);
+        //public override Task OnActionExecutedAsync(HttpActionExecutedContext actionExecutedContext, CancellationToken cancellationToken)
+        //{
+        //    if (actionExecutedContext.Request.Properties.ContainsKey("RateLimitingResult"))
+        //        AddUpdateRateLimitingSuccessHeaders(actionExecutedContext,
+        //            (RateLimitingResult)actionExecutedContext.Request.Properties["RateLimitingResult"]);
 
-            return base.OnActionExecutedAsync(actionExecutedContext, cancellationToken);
-        }
+        //    return base.OnActionExecutedAsync(actionExecutedContext, cancellationToken);
+        //}
 
-        /// <summary>
-        ///     Occurs before the controller action method is invoked.
-        /// </summary>
-        /// <param name="actionContext"></param>
-        /// <param name="cancellationToken"></param>
-        /// <returns></returns>
-        public override async Task OnActionExecutingAsync(HttpActionContext actionContext, CancellationToken cancellationToken)
+
+        public override async Task OnAuthorizationAsync(HttpActionContext actionContext, CancellationToken cancellationToken)
         {
             var result = await _rateLimitingHelper.LimitRequestAsync(
                 new RateLimitingRequest(
@@ -68,23 +63,57 @@ namespace Domain.RateLimiting.WebApi
                     (header) => actionContext.Request.Headers.GetValues(header).ToArray(),
                     actionContext.RequestContext.Principal as ClaimsPrincipal,
                     await actionContext.Request.Content.ReadAsStreamAsync().ConfigureAwait(false)),
-                    () => GetCustomAttributes(actionContext), 
-                    actionContext.Request.Headers.Host, 
-                    async () => 
-                    {
-                        InvalidRequestId(actionContext);
-                        await Task.FromResult<object>(null);
-                    },
-                    async rateLimitingResult =>
-                    {
-                        actionContext.Request.Properties.Add("RateLimitingResult", rateLimitingResult);
-                        await base.OnActionExecutingAsync(actionContext, cancellationToken);
-                    },
-                    async (rateLimitingResult, violatedPolicyName) =>
-                    {
-                        await TooManyRequests(actionContext, rateLimitingResult, violatedPolicyName);
-                    }).ConfigureAwait(false);
+                () => GetCustomAttributes(actionContext),
+                actionContext.Request.Headers.Host,
+                async () =>
+                {
+                    InvalidRequestId(actionContext);
+                    await Task.FromResult<object>(null);
+                },
+                async rateLimitingResult =>
+                {
+                    actionContext.Request.Properties.Add("RateLimitingResult", rateLimitingResult);
+                    await base.OnAuthorizationAsync(actionContext, cancellationToken);
+                },
+                async (rateLimitingResult, violatedPolicyName) =>
+                {
+                    await TooManyRequests(actionContext, rateLimitingResult, violatedPolicyName);
+                }).ConfigureAwait(false);
         }
+
+        /// <summary>
+        ///     Occurs before the controller action method is invoked.
+        /// </summary>
+        /// <param name="actionContext"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        //public override async Task OnActionExecutingAsync(HttpActionContext actionContext, CancellationToken cancellationToken)
+        //{
+        //    var result = await _rateLimitingHelper.LimitRequestAsync(
+        //        new RateLimitingRequest(
+        //            GetRouteTemplate(actionContext),
+        //            actionContext.Request.RequestUri.AbsolutePath,
+        //            actionContext.Request.Method.Method,
+        //            (header) => actionContext.Request.Headers.GetValues(header).ToArray(),
+        //            actionContext.RequestContext.Principal as ClaimsPrincipal,
+        //            await actionContext.Request.Content.ReadAsStreamAsync().ConfigureAwait(false)),
+        //            () => GetCustomAttributes(actionContext), 
+        //            actionContext.Request.Headers.Host, 
+        //            async () => 
+        //            {
+        //                InvalidRequestId(actionContext);
+        //                await Task.FromResult<object>(null);
+        //            },
+        //            async rateLimitingResult =>
+        //            {
+        //                actionContext.Request.Properties.Add("RateLimitingResult", rateLimitingResult);
+        //                await base.OnActionExecutingAsync(actionContext, cancellationToken);
+        //            },
+        //            async (rateLimitingResult, violatedPolicyName) =>
+        //            {
+        //                await TooManyRequests(actionContext, rateLimitingResult, violatedPolicyName);
+        //            }).ConfigureAwait(false);
+        //}
 
         private static string GetRouteTemplate(HttpActionContext actionContext)
         {

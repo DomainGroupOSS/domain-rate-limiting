@@ -93,7 +93,7 @@ namespace Domain.RateLimiting.Samples.AspNetCore
                     .AddPathToWhiteList("/api/unlimited")
                     .AddPoliciesForAllEndpoints(new List<AllowedCallRate>()
                     {
-                        new AllowedCallRate(100, RateLimitUnit.PerMinute)
+                        new AllowedCallRate(1000, RateLimitUnit.PerMinute)
                     }, allowAttributeOverride: true, name: "StaticPolicy_2")
                     .AddEndpointPolicy("/api/globallylimited/{id}", "GET", new List<AllowedCallRate>()
                     {
