@@ -143,7 +143,7 @@ namespace Domain.RateLimiting.AspNetCore
             RateLimitingResult result, string violatedPolicyName = "")
         {
             var throttledResponseParameters =
-                RateLimitingHelper.GetThrottledResponseParameters(result, violatedPolicyName);
+                RateLimiter.GetThrottledResponseParameters(result, violatedPolicyName);
             context.HttpContext.Response.StatusCode = ThrottledResponseParameters.StatusCode;
 
             foreach (var header in throttledResponseParameters.RateLimitHeaders.Keys)

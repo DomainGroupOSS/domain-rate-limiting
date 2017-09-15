@@ -8,22 +8,29 @@ namespace Domain.RateLimiting.Core
 {
     public interface IRateLimiter
     {
-        
+        Task<RateLimitingResult> LimitRequestAsync(RateLimitingRequest rateLimitingRequest,
+            Func<IList<AllowedCallRate>> getCustomAttributes, string host,
+            Func<Task> onInvalidRequestKey,
+            Func<RateLimitingResult, Task> onSuccessFunc,
+            Func<RateLimitingResult, string, Task> onThrottledFunc);
     }
 
-    public class RateLimitingHelper
+    public class RateLimiter : IRateLimiter
     {
         private readonly IRateLimitingCacheProvider _rateLimitingCacheProvider;
         private readonly IRateLimitingPolicyProvider _policyProvider;
 
-        public RateLimitingHelper(IRateLimitingCacheProvider rateLimitingCacheProvider,
+        public RateLimiter(IRateLimitingCacheProvider rateLimitingCacheProvider,
             IRateLimitingPolicyProvider policyProvider)
         {
             _rateLimitingCacheProvider = rateLimitingCacheProvider;
             _policyProvider = policyProvider;
         }
         public async Task<RateLimitingResult> LimitRequestAsync(RateLimitingRequest rateLimitingRequest,
-            Func<IList<AllowedCallRate>> getCustomAttributes, string host, Action onInvalidRequestKey)
+            Func<IList<AllowedCallRate>> getCustomAttributes, string host, 
+            Func<Task> onInvalidRequestKey,
+            Func<RateLimitingResult, Task> onSuccessFunc,
+            Func<RateLimitingResult, string, Task> onThrottledFunc)
         {
 
             var rateLimitingPolicy = await _policyProvider.GetPolicyAsync(rateLimitingRequest).ConfigureAwait(false);
@@ -55,12 +62,23 @@ namespace Domain.RateLimiting.Core
 
             if (string.IsNullOrWhiteSpace(rateLimitingPolicy.RequestKey))
             {
-                onInvalidRequestKey?.Invoke();
+                await onInvalidRequestKey.Invoke();
                 return new RateLimitingResult(false, 0);
             }
 
-            return await _rateLimitingCacheProvider.LimitRequestAsync(rateLimitingPolicy.RequestKey, httpMethod,
+            var rateLimitingResult = await _rateLimitingCacheProvider.LimitRequestAsync(rateLimitingPolicy.RequestKey, httpMethod,
                 host, routeTemplate, allowedCallRates).ConfigureAwait(false);
+
+            if (!rateLimitingResult.Throttled)
+            {
+                await onSuccessFunc(rateLimitingResult);
+            }
+            else
+            {
+                await onThrottledFunc(rateLimitingResult, policyName);
+            }
+
+            return rateLimitingResult;
         }
 
 
