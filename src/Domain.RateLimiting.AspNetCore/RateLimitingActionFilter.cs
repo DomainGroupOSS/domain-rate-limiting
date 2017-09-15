@@ -21,40 +21,23 @@ namespace Domain.RateLimiting.AspNetCore
     {
         private readonly IRateLimitingCacheProvider _rateLimitingCacheProvider;
         private readonly IRateLimitingPolicyProvider _policyManager;
-        private readonly IEnumerable<string> _whitelistedRequestKeys;
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="RateLimitingActionFilter" /> class.
         /// </summary>
         /// <param name="rateLimitingCacheProvider">The rate limiting cache provider.</param>
-        /// <param name="whitelistedRequestKeys">The request keys request keys to ignore when rate limiting.</param>
         /// <param name="policyManager">The global policy when rate limiting.</param>
         /// <exception cref="System.ArgumentNullException">
         ///     rateLimitingCacheProvider or rateLimitRequestKeyService or
         ///     whitelistedRequestKeys
         /// </exception>
         public RateLimitingActionFilter(IRateLimitingCacheProvider rateLimitingCacheProvider,
-            IRateLimitingPolicyProvider policyManager,
-            IEnumerable<string> whitelistedRequestKeys)
+            IRateLimitingPolicyProvider policyManager)
         {
             _rateLimitingCacheProvider = rateLimitingCacheProvider ?? 
                 throw new ArgumentNullException(nameof(rateLimitingCacheProvider));
-            _whitelistedRequestKeys = whitelistedRequestKeys ?? 
-                throw new ArgumentNullException(nameof(whitelistedRequestKeys));
             _policyManager = policyManager ?? 
                 throw new ArgumentNullException(nameof(policyManager));
-        }
-
-        /// <summary>
-        ///     Initializes a new instance of the <see cref="RateLimitingActionFilter" /> class.
-        /// </summary>
-        /// <param name="rateLimitingCacheProvider">The rate limiting cache provider.</param>
-        /// <param name="policyManager"></param>
-        /// <exception cref="System.ArgumentNullException">rateLimitingCacheProvider or rateLimitRequestKeyService</exception>
-        public RateLimitingActionFilter(IRateLimitingCacheProvider rateLimitingCacheProvider,
-            IRateLimitingPolicyProvider policyManager) : 
-            this(rateLimitingCacheProvider, policyManager, Enumerable.Empty<string>())
-        {
         }
 
         /// <summary>
@@ -108,20 +91,7 @@ namespace Domain.RateLimiting.AspNetCore
                 InvalidRequestId(actionContext);
                 return;
             }
-
-            if (_whitelistedRequestKeys != null &&
-                _whitelistedRequestKeys.Any(k => string.Compare(requestKey, k, StringComparison.CurrentCultureIgnoreCase) == 0))
-            {
-                return;
-            }
-
-            if (allowedCallRates.Any(
-                rl => rl.WhiteListRequestKeys.Any(
-                    k => string.Compare(requestKey, k, StringComparison.CurrentCultureIgnoreCase) == 0)))
-            {
-                return;
-            }
-
+            
             var result = await _rateLimitingCacheProvider.LimitRequestAsync(requestKey, httpMethod,
                 context.Request.Host.Value, routeTemplate, allowedCallRates).ConfigureAwait(false);
 

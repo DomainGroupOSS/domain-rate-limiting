@@ -8,6 +8,7 @@
 
         public RateLimitCacheKey CacheKey { get; }
         public int CallsRemaining { get; }
+        public string ViolatedPolicyName { get; }
 
         /// <summary>
         /// 
@@ -16,12 +17,14 @@
         /// <param name="throttled"></param>
         /// <param name="waitingIntervalInTicks"></param>
         /// <param name="callsRemaining"></param>
-        public RateLimitingResult(bool throttled, long waitingIntervalInTicks, RateLimitCacheKey cacheKey, int callsRemaining)
+        /// <param name="violatedPolicyName"></param>
+        public RateLimitingResult(bool throttled, long waitingIntervalInTicks, RateLimitCacheKey cacheKey, int callsRemaining, string violatedPolicyName = "")
         {
             Throttled = throttled;
             WaitingIntervalInTicks = waitingIntervalInTicks;
             CacheKey = cacheKey;
             CallsRemaining = callsRemaining;
+            ViolatedPolicyName = violatedPolicyName;
         }
 
         /// <summary>

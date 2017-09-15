@@ -8,7 +8,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Web.Http.Controllers;
 using System.Web.Http.Filters;
-using System.Web.Http.Routing;
 using Domain.RateLimiting.Core;
 
 namespace Domain.RateLimiting.WebApi
@@ -16,44 +15,32 @@ namespace Domain.RateLimiting.WebApi
     /// <summary>
     ///     Action filter which rate limits requests using the action/controllers rate limit entry attribute.
     /// </summary>
-    public class RateLimitingActionFilter : ActionFilterAttribute
+    public partial class RateLimitingActionFilter : ActionFilterAttribute
     {
         private readonly IRateLimitingCacheProvider _rateLimitingCacheProvider;
         private readonly IRateLimitingPolicyProvider _policyManager;
-        private readonly IEnumerable<string> _whitelistedRequestKeys;
+
+        private readonly RateLimitingHelper _rateLimitingHelper;
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="RateLimitingActionFilter" /> class.
         /// </summary>
         /// <param name="rateLimitingCacheProvider">The rate limiting cache provider.</param>
-        /// <param name="whitelistedRequestKeys">The request keys request keys to ignore when rate limiting.</param>
         /// <param name="policyManager">The global policy when rate limiting.</param>
         /// <exception cref="System.ArgumentNullException">
         ///     rateLimitingCacheProvider or rateLimitRequestKeyService or
         ///     whitelistedRequestKeys
         /// </exception>
         public RateLimitingActionFilter(IRateLimitingCacheProvider rateLimitingCacheProvider,
-            IRateLimitingPolicyProvider policyManager,
-            IEnumerable<string> whitelistedRequestKeys)
+            IRateLimitingPolicyProvider policyManager)
         {
             _rateLimitingCacheProvider = rateLimitingCacheProvider ??
                                          throw new ArgumentNullException(nameof(rateLimitingCacheProvider));
-            _whitelistedRequestKeys = whitelistedRequestKeys ??
-                                      throw new ArgumentNullException(nameof(whitelistedRequestKeys));
+
             _policyManager = policyManager ??
                              throw new ArgumentNullException(nameof(policyManager));
-        }
 
-        /// <summary>
-        ///     Initializes a new instance of the <see cref="RateLimitingActionFilter" /> class.
-        /// </summary>
-        /// <param name="rateLimitingCacheProvider">The rate limiting cache provider.</param>
-        /// <param name="policyManager"></param>
-        /// <exception cref="System.ArgumentNullException">rateLimitingCacheProvider or rateLimitRequestKeyService</exception>
-        public RateLimitingActionFilter(IRateLimitingCacheProvider rateLimitingCacheProvider,
-            IRateLimitingPolicyProvider policyManager) :
-            this(rateLimitingCacheProvider, policyManager, Enumerable.Empty<string>())
-        {
+            _rateLimitingHelper = new RateLimitingHelper(_rateLimitingCacheProvider, _policyManager);
         }
 
         public override Task OnActionExecutedAsync(HttpActionExecutedContext actionExecutedContext, CancellationToken cancellationToken)
@@ -66,76 +53,25 @@ namespace Domain.RateLimiting.WebApi
         }
 
         /// <summary>
-        ///     Occurs before the action method is invoked.
+        ///     Occurs before the controller action method is invoked.
         /// </summary>
         /// <param name="actionContext"></param>
-        /// <param name="next"></param>
+        /// <param name="cancellationToken"></param>
         /// <returns></returns>
         public override async Task OnActionExecutingAsync(HttpActionContext actionContext, CancellationToken cancellationToken)
         {
-            var routeTemplate = GetRouteTemplate(actionContext);
-
-            var rateLimitingPolicy = await _policyManager.GetPolicyAsync(
+            var result = await _rateLimitingHelper.LimitRequestAsync(
                 new RateLimitingRequest(
-                    routeTemplate,
+                    GetRouteTemplate(actionContext),
                     actionContext.Request.RequestUri.AbsolutePath,
                     actionContext.Request.Method.Method,
                     (header) => actionContext.Request.Headers.GetValues(header).ToArray(),
                     actionContext.RequestContext.Principal as ClaimsPrincipal,
-                    await actionContext.Request.Content.ReadAsStreamAsync().ConfigureAwait(false))).ConfigureAwait(false);
-
-            if (rateLimitingPolicy == null)
-            {
-                await base.OnActionExecutingAsync(actionContext, cancellationToken);
-                return;
-            }
-
-            var allowedCallRates = rateLimitingPolicy.AllowedCallRates;
-            routeTemplate = rateLimitingPolicy.RouteTemplate;
-            var httpMethod = rateLimitingPolicy.HttpMethod;
-            var name = rateLimitingPolicy.Name;
-
-            if (rateLimitingPolicy.AllowAttributeOverride)
-            {
-                var attributeRates = GetCustomAttributes(actionContext);
-                if (attributeRates != null && attributeRates.Any())
-                {
-                    allowedCallRates = attributeRates;
-                    routeTemplate = actionContext.RequestContext.RouteData.Route.RouteTemplate;
-                    httpMethod = actionContext.Request.Method.Method;
-                    name = $"AttributeOn_{routeTemplate}";
-                }
-            }
-
-            if (allowedCallRates == null || !allowedCallRates.Any())
-                return;
-
-            var requestKey = rateLimitingPolicy.RequestKey;
-
-            if (string.IsNullOrWhiteSpace(requestKey))
-            {
-                InvalidRequestId(actionContext);
-                return;
-            }
-
-            if (_whitelistedRequestKeys != null &&
-                _whitelistedRequestKeys.Any(k => string.Compare(requestKey, k, StringComparison.CurrentCultureIgnoreCase) == 0))
-            {
-                return;
-            }
-
-            if (allowedCallRates.Any(
-                rl => rl.WhiteListRequestKeys.Any(
-                    k => string.Compare(requestKey, k, StringComparison.CurrentCultureIgnoreCase) == 0)))
-            {
-                return;
-            }
-
-            var result = await _rateLimitingCacheProvider.LimitRequestAsync(requestKey, httpMethod,
-                actionContext.Request.Headers.Host, routeTemplate, allowedCallRates).ConfigureAwait(false);
+                    await actionContext.Request.Content.ReadAsStreamAsync().ConfigureAwait(false)),
+                    () => GetCustomAttributes(actionContext), "", () => InvalidRequestId(actionContext)).ConfigureAwait(false);
 
             if (result.Throttled)
-                TooManyRequests(actionContext, result, name);
+                TooManyRequests(actionContext, result, "");
             else
             {
                 actionContext.Request.Properties.Add("RateLimitingResult", result);
@@ -184,8 +120,6 @@ namespace Domain.RateLimiting.WebApi
                 }
             }
         }
-
-
 
         private static void InvalidRequestId(HttpActionContext context)
         {
