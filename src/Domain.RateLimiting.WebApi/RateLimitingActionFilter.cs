@@ -55,7 +55,7 @@ namespace Domain.RateLimiting.WebApi
 
         public override async Task OnAuthorizationAsync(HttpActionContext actionContext, CancellationToken cancellationToken)
         {
-            var result = await _rateLimitingHelper.LimitRequestAsync(
+            await _rateLimitingHelper.LimitRequestAsync(
                 new RateLimitingRequest(
                     GetRouteTemplate(actionContext),
                     actionContext.Request.RequestUri.AbsolutePath,
@@ -65,11 +65,6 @@ namespace Domain.RateLimiting.WebApi
                     await actionContext.Request.Content.ReadAsStreamAsync().ConfigureAwait(false)),
                 () => GetCustomAttributes(actionContext),
                 actionContext.Request.Headers.Host,
-                async () =>
-                {
-                    InvalidRequestId(actionContext);
-                    await Task.FromResult<object>(null);
-                },
                 async rateLimitingResult =>
                 {
                     actionContext.Request.Properties.Add("RateLimitingResult", rateLimitingResult);
@@ -78,7 +73,8 @@ namespace Domain.RateLimiting.WebApi
                 async (rateLimitingResult, violatedPolicyName) =>
                 {
                     await TooManyRequests(actionContext, rateLimitingResult, violatedPolicyName);
-                }).ConfigureAwait(false);
+                },
+                null).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -155,14 +151,6 @@ namespace Domain.RateLimiting.WebApi
                     response.Headers.Add(successheader, new string[] { successheaders[successheader] });
                 }
             }
-        }
-
-        private static void InvalidRequestId(HttpActionContext context)
-        {
-            var response = context.Response ?? context.Request.CreateResponse();
-            response.StatusCode = HttpStatusCode.Forbidden;
-            response.ReasonPhrase = "An invalid request identifier was specified.";
-            context.Response = response;
         }
 
         private static async Task TooManyRequests(HttpActionContext context,

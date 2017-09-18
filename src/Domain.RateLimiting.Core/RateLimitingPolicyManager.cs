@@ -274,6 +274,12 @@ namespace Domain.RateLimiting.Core
             if (!_entries.ContainsKey(policyKey))
             {
                 policyKey = new RateLimitingPolicyKey(providedPolicyEntry.RequestKey,
+                    AllRequestPaths, rateLimitingRequest.Method);
+            }
+
+            if (!_entries.ContainsKey(policyKey))
+            {
+                policyKey = new RateLimitingPolicyKey(providedPolicyEntry.RequestKey,
                     AllRequestPaths, AllHttpMethods);
             }
 

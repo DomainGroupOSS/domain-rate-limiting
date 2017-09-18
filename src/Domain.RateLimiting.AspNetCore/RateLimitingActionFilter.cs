@@ -152,7 +152,7 @@ namespace Domain.RateLimiting.AspNetCore
         public async Task OnAuthorizationAsync(AuthorizationFilterContext actionContext)
         {
             
-            var result = await _rateLimitingHelper.LimitRequestAsync(
+            await _rateLimitingHelper.LimitRequestAsync(
                 new RateLimitingRequest(
                     actionContext.ActionDescriptor.AttributeRouteInfo.Template,
                     actionContext.HttpContext.Request.Path,
@@ -162,11 +162,6 @@ namespace Domain.RateLimiting.AspNetCore
                     actionContext.HttpContext.Request.Body),
                 () => GetCustomAttributes(actionContext.ActionDescriptor),
                 actionContext.HttpContext.Request.Host.Value,
-                async () =>
-                {
-                    InvalidRequestId(actionContext);
-                    await Task.FromResult<object>(null);
-                },
                 async rateLimitingResult =>
                 {
                     AddUpdateRateLimitingSuccessHeaders(actionContext.HttpContext, rateLimitingResult);
@@ -176,9 +171,8 @@ namespace Domain.RateLimiting.AspNetCore
                 {
                     TooManyRequests(actionContext, rateLimitingResult, violatedPolicyName);
                     await Task.FromResult<object>(null);
-                }
-
-            ).ConfigureAwait(false);
+                }, 
+                null).ConfigureAwait(false);
         }
     }
 }

@@ -27,7 +27,7 @@ namespace Domain.RateLimiting.Core
             if (httpMethod.Length == 0) throw new ArgumentOutOfRangeException(nameof(httpMethod), "httpMethod cannot be empty");
 
             RequestKey = requestKey;
-            Endpoint = (routeTemplate.StartsWith(@"/") ? routeTemplate : @"/" + routeTemplate).ToLowerInvariant();
+            RouteTemplate = (routeTemplate.StartsWith(@"/") ? routeTemplate : @"/" + routeTemplate).ToLowerInvariant();
             HttpMethod = httpMethod.ToUpperInvariant();
         }
 
@@ -38,7 +38,7 @@ namespace Domain.RateLimiting.Core
         /// <summary>
         /// The endpoint being rate limited
         /// </summary>
-        public readonly string Endpoint;
+        public readonly string RouteTemplate;
 
         /// <summary>
         /// The HTTP method being rate limited
@@ -54,7 +54,7 @@ namespace Domain.RateLimiting.Core
         /// </returns>
         public override string ToString()
         {
-            return $"{RequestKey}::{HttpMethod.ToUpperInvariant()} {Endpoint.ToLowerInvariant()}";
+            return $"{RequestKey}::{HttpMethod.ToUpperInvariant()} {RouteTemplate.ToLowerInvariant()}";
         }
 
         /// <summary>

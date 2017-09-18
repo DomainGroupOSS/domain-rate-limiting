@@ -2,17 +2,18 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace Domain.RateLimiting.Core
 {
     public interface IRateLimiter
     {
-        Task<RateLimitingResult> LimitRequestAsync(RateLimitingRequest rateLimitingRequest,
+        Task LimitRequestAsync(RateLimitingRequest rateLimitingRequest,
             Func<IList<AllowedCallRate>> getCustomAttributes, string host,
-            Func<Task> onInvalidRequestKey,
             Func<RateLimitingResult, Task> onSuccessFunc,
-            Func<RateLimitingResult, string, Task> onThrottledFunc);
+            Func<RateLimitingResult, string, Task> onThrottledFunc,
+            Func<Task> onNotApplicableFunc);
     }
 
     public class RateLimiter : IRateLimiter
@@ -26,18 +27,19 @@ namespace Domain.RateLimiting.Core
             _rateLimitingCacheProvider = rateLimitingCacheProvider;
             _policyProvider = policyProvider;
         }
-        public async Task<RateLimitingResult> LimitRequestAsync(RateLimitingRequest rateLimitingRequest,
-            Func<IList<AllowedCallRate>> getCustomAttributes, string host, 
-            Func<Task> onInvalidRequestKey,
+        public async Task LimitRequestAsync(RateLimitingRequest rateLimitingRequest,
+            Func<IList<AllowedCallRate>> getCustomAttributes, string host,
             Func<RateLimitingResult, Task> onSuccessFunc,
-            Func<RateLimitingResult, string, Task> onThrottledFunc)
+            Func<RateLimitingResult, string, Task> onThrottledFunc,
+            Func<Task> onNotApplicableFunc)
         {
 
             var rateLimitingPolicy = await _policyProvider.GetPolicyAsync(rateLimitingRequest).ConfigureAwait(false);
 
             if (rateLimitingPolicy == null)
             {
-                return new RateLimitingResult(false, 0);
+                onNotApplicableFunc?.Invoke();
+                return;
             }
 
             var allowedCallRates = rateLimitingPolicy.AllowedCallRates;
@@ -47,7 +49,7 @@ namespace Domain.RateLimiting.Core
 
             if (rateLimitingPolicy.AllowAttributeOverride)
             {
-                var attributeRates = getCustomAttributes();
+                var attributeRates = getCustomAttributes?.Invoke();
                 if (attributeRates != null && attributeRates.Any())
                 {
                     allowedCallRates = attributeRates;
@@ -58,14 +60,11 @@ namespace Domain.RateLimiting.Core
             }
 
             if (allowedCallRates == null || !allowedCallRates.Any())
-                return new RateLimitingResult(false, 0);
-
-            if (string.IsNullOrWhiteSpace(rateLimitingPolicy.RequestKey))
             {
-                await onInvalidRequestKey.Invoke();
-                return new RateLimitingResult(false, 0);
+                onNotApplicableFunc?.Invoke();
+                return;
             }
-
+            
             var rateLimitingResult = await _rateLimitingCacheProvider.LimitRequestAsync(rateLimitingPolicy.RequestKey, httpMethod,
                 host, routeTemplate, allowedCallRates).ConfigureAwait(false);
 
@@ -77,8 +76,6 @@ namespace Domain.RateLimiting.Core
             {
                 await onThrottledFunc(rateLimitingResult, policyName);
             }
-
-            return rateLimitingResult;
         }
 
 

@@ -1,5 +1,8 @@
 ﻿using System.Collections.Generic;
+using System.Net.Http;
 using System.Web.Http;
+using System.Web.Http.Dispatcher;
+using System.Web.Http.WebHost;
 
 // For more information on enabling Web API for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
 
