@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using Moq;
 using Xunit;
 
@@ -7,179 +8,68 @@ namespace Domain.RateLimiting.Core.UnitTests
     public class RateLimitingPolicyManagerTests
     {
         [Fact]
+        public async void ShouldApplyPolicyReturnedByCustomPolicyProviderWhenAllowedCallRatesIsNonEmptyAndSamePolicyHasBeenAddedStaticallyInManager()
+        {
+            await ArangeActAndAssert("/api/values", "GET", "testclient_01", "CustomProviderPolicy",
+                new List<AllowedCallRate>()
+                {
+                    new AllowedCallRate(5, RateLimitUnit.PerMinute)
+                });
+        }
+
+        public async void ShouldReturnNullPolicyWhenNullIsReturnedByCustomPolicyProviderEvenThoughSamePolicyHasBeenAddedStaticallyInManager()
+        {
+            await ArangeActAndAssert("/api/values", "GET", "testclient_01", "CustomProviderPolicy",
+                returnNullPolicy:true);
+        }
+
+        [Fact]
         public async void ShouldFallbackToStaticallyAddedPolicyForMatchingRequestKeyRouteMethodFromManagerWhenPolicyWithNoAllowedCallRatesIsReturnedByCustomPolicyProvider()
         {
-            var rateLimtingRequest = new RateLimitingRequest("/api/values",
-                "/api/values", "GET", s => new string[] { "s_value" }, null, null);
-
-            var policyProviderMock = new Mock<IRateLimitingPolicyProvider>();
-            policyProviderMock.Setup(provider => provider.GetPolicyAsync(rateLimtingRequest))
-                .ReturnsAsync(new RateLimitPolicy("testclient_01"));
-
-            var policyManager = new RateLimitingPolicyManager(policyProviderMock.Object);
-            
-            SetupPolicyManager(policyManager, rateLimtingRequest);
-
-            var policyToApply = await policyManager.GetPolicyAsync(rateLimtingRequest);
-
-            policyProviderMock.VerifyAll();
-
-            Assert.Equal("RequestKey_Route_Method_MatchingPolicy_FromManager", policyToApply.Name);
+            await ArangeActAndAssert("/api/values", "GET", "testclient_01", "RequestKey_Route_Method_MatchingPolicy_FromManager");
         }
 
         [Fact]
         public async void ShouldFallbackToStaticallyAddedPolicyForRequestKeyRouteAllMethodsFromManagerWhenPolicyWithNoAllowedCallRatesIsReturnedByCustomPolicyProvider()
         {
-            var rateLimtingRequest = new RateLimitingRequest("/api/values/{id}",
-                "/api/values/1", "GET", s => new string[] { "s_value" }, null, null);
-
-            var policyProviderMock = new Mock<IRateLimitingPolicyProvider>();
-            policyProviderMock.Setup(provider => provider.GetPolicyAsync(rateLimtingRequest))
-                .ReturnsAsync(new RateLimitPolicy("testclient_01"));
-
-            var policyManager = new RateLimitingPolicyManager(policyProviderMock.Object);
-
-            SetupPolicyManager(policyManager, rateLimtingRequest);
-
-            var policyToApply = await policyManager.GetPolicyAsync(rateLimtingRequest);
-
-            policyProviderMock.VerifyAll();
-
-            Assert.Equal("RequestKey_Route_AllMethods_MatchingPolicy_FromManager", policyToApply.Name);
+            await ArangeActAndAssert("/api/values/{id}", "GET", "testclient_01", "RequestKey_Route_AllMethods_MatchingPolicy_FromManager");
         }
 
         [Fact]
         public async void ShouldFallbackToStaticallyAddedPolicyForRequestKeyAllRoutesMethodFromManagerWhenPolicyWithNoAllowedCallRatesIsReturnedByCustomPolicyProvider()
         {
-            var rateLimtingRequest = new RateLimitingRequest("/api/test/{id}",
-                "/api/test/1", "GET", s => new string[] { "s_value" }, null, null);
-
-            var policyProviderMock = new Mock<IRateLimitingPolicyProvider>();
-            policyProviderMock.Setup(provider => provider.GetPolicyAsync(rateLimtingRequest))
-                .ReturnsAsync(new RateLimitPolicy("testclient_01"));
-
-            var policyManager = new RateLimitingPolicyManager(policyProviderMock.Object);
-
-            SetupPolicyManager(policyManager, rateLimtingRequest);
-
-            var policyToApply = await policyManager.GetPolicyAsync(rateLimtingRequest);
-
-            policyProviderMock.VerifyAll();
-
-            Assert.Equal("RequestKey_AllRoutes_Method_MatchingPolicy_FromManager", policyToApply.Name);
+            await ArangeActAndAssert("/api/values/test", "GET", "testclient_01", "RequestKey_AllRoutes_Method_MatchingPolicy_FromManager");
         }
 
         [Fact]
         public async void ShouldFallbackToStaticallyAddedPolicyForRequestKeyAllRoutesAllMethodsFromManagerWhenPolicyWithNoAllowedCallRatesIsReturnedByCustomPolicyProvider()
         {
-            var rateLimtingRequest = new RateLimitingRequest("/api/items",
-                "/api/items", "POST", s => new string[] { "s_value" }, null, null);
-
-           
-            var policyProviderMock = new Mock<IRateLimitingPolicyProvider>();
-            policyProviderMock.Setup(provider => provider.GetPolicyAsync(rateLimtingRequest))
-                .ReturnsAsync(new RateLimitPolicy("testclient_01"));
-
-            var policyManager = new RateLimitingPolicyManager(policyProviderMock.Object);
-
-            SetupPolicyManager(policyManager, rateLimtingRequest);
-
-            var policyToApply = await policyManager.GetPolicyAsync(rateLimtingRequest);
-
-            policyProviderMock.VerifyAll();
-
-            Assert.Equal("RequestKey_AllRoutes_AllMethods_MatchingPolicy_FromManager", policyToApply.Name);
+            await ArangeActAndAssert("/api/items", "POST", "testclient_01", "RequestKey_AllRoutes_AllMethods_MatchingPolicy_FromManager");
         }
 
         [Fact]
         public async void ShouldFallbackToStaticallyAddedPolicyForAllRequestKeysRouteMethodFromManagerWhenPolicyWithNoAllowedCallRatesIsReturnedByCustomPolicyProvider()
         {
-            var rateLimtingRequest = new RateLimitingRequest("/api/values",
-                "/api/values", "GET", s => new string[] { "s_value" }, null, null);
-            
-
-            var policyProviderMock = new Mock<IRateLimitingPolicyProvider>();
-            policyProviderMock.Setup(provider => provider.GetPolicyAsync(rateLimtingRequest))
-                .ReturnsAsync(new RateLimitPolicy("testclient_02"));
-
-            var policyManager = new RateLimitingPolicyManager(policyProviderMock.Object);
-
-            SetupPolicyManager(policyManager, rateLimtingRequest);
-
-            var policyToApply = await policyManager.GetPolicyAsync(rateLimtingRequest);
-
-            policyProviderMock.VerifyAll();
-
-            Assert.Equal("AllRequestKeys_Route_Method_MatchingPolicy_FromManager", policyToApply.Name);
+            await ArangeActAndAssert("/api/values", "GET", "testclient_02", "AllRequestKeys_Route_Method_MatchingPolicy_FromManager");
         }
 
 
         [Fact]
         public async void ShouldFallbackToStaticallyAddedPolicyForAllRequestKeysRouteAllMethodsFromManagerWhenPolicyWithNoAllowedCallRatesIsReturnedByCustomPolicyProvider()
         {
-            var rateLimtingRequest = new RateLimitingRequest("/api/values",
-                "/api/values", "POST", s => new string[] { "s_value" }, null, null);
-            
-            var policyProviderMock = new Mock<IRateLimitingPolicyProvider>();
-            policyProviderMock.Setup(provider => provider.GetPolicyAsync(rateLimtingRequest))
-                .ReturnsAsync(new RateLimitPolicy("testclient_02"));
-
-            var policyManager = new RateLimitingPolicyManager(policyProviderMock.Object);
-
-            SetupPolicyManager(policyManager, rateLimtingRequest);
-
-            var policyToApply = await policyManager.GetPolicyAsync(rateLimtingRequest);
-
-            policyProviderMock.VerifyAll();
-
-            Assert.Equal("AllRequestKeys_Route_AllMethods_MatchingPolicy_FromManager", policyToApply.Name);
+            await ArangeActAndAssert("/api/values", "POST", "testclient_02", "AllRequestKeys_Route_AllMethods_MatchingPolicy_FromManager");
         }
 
         [Fact]
         public async void ShouldFallbackToStaticallyAddedPolicyForAllRequestKeysAllRoutesMethodFromManagerWhenPolicyWithNoAllowedCallRatesIsReturnedByCustomPolicyProvider()
         {
-            var rateLimtingRequest = new RateLimitingRequest("/api/values/{id}",
-                "/api/values/1", "GET", s => new string[] { "s_value" }, null, null);
-            
-            var policyProviderMock = new Mock<IRateLimitingPolicyProvider>();
-            policyProviderMock.Setup(provider => provider.GetPolicyAsync(rateLimtingRequest))
-                .ReturnsAsync(new RateLimitPolicy("testclient_02"));
-
-            var policyManager = new RateLimitingPolicyManager(policyProviderMock.Object);
-
-            SetupPolicyManager(policyManager, rateLimtingRequest);
-
-            var policyToApply = await policyManager.GetPolicyAsync(rateLimtingRequest);
-
-            policyProviderMock.VerifyAll();
-
-            Assert.Equal("AllRequestKeys_AllRoutes_Method_MatchingPolicy_FromManager", policyToApply.Name);
+            await ArangeActAndAssert("/api/values/{id}", "GET", "testclient_02", "AllRequestKeys_AllRoutes_Method_MatchingPolicy_FromManager");
         }
 
         [Fact]
         public async void ShouldFallbackToStaticallyAddedPolicyForAllRequestKeysAllRoutesAllMethodsFromManagerWhenPolicyWithNoAllowedCallRatesIsReturnedByCustomPolicyProvider()
         {
-            var rateLimtingRequest = new RateLimitingRequest("/api/values/{id}",
-                "/api/values/1", "HEAD", s => new string[] { "s_value" }, null, null);
-
-            var allowedCallRates = new List<AllowedCallRate>()
-            {
-                new AllowedCallRate(5, RateLimitUnit.PerMinute)
-            };
-
-            var policyProviderMock = new Mock<IRateLimitingPolicyProvider>();
-            policyProviderMock.Setup(provider => provider.GetPolicyAsync(rateLimtingRequest))
-                .ReturnsAsync(new RateLimitPolicy("testclient_02"));
-
-            var policyManager = new RateLimitingPolicyManager(policyProviderMock.Object);
-
-            SetupPolicyManager(policyManager, rateLimtingRequest);
-
-            var policyToApply = await policyManager.GetPolicyAsync(rateLimtingRequest);
-
-            policyProviderMock.VerifyAll();
-
-            Assert.Equal("AllRequestKeys_AllRoutes_AllMethods_MatchingPolicy_FromManager", policyToApply.Name);
+            await ArangeActAndAssert("/api/values/{id}", "HEAD", "testclient_02", "AllRequestKeys_AllRoutes_AllMethods_MatchingPolicy_FromManager");
         }
 
         private static void SetupPolicyManager(RateLimitingPolicyManager policyManager, 
@@ -213,6 +103,33 @@ namespace Domain.RateLimiting.Core.UnitTests
 
             policyManager.AddEndpointPolicy(new RateLimitPolicy("*", "*",
                 "*", allowedCallRates, name: "AllRequestKeys_AllRoutes_AllMethods_MatchingPolicy_FromManager"));
+        }
+
+        private static async Task ArangeActAndAssert(string routeTemplate, string method, string requestKey,
+            string expectedPolicyNameToApply, IList<AllowedCallRate> allowedCallRates = null, bool allowAttributeOverride=false,
+            bool returnNullPolicy = false)
+        {
+            var rateLimtingRequest = new RateLimitingRequest(routeTemplate,
+                routeTemplate, method, s => new string[] { "s_value" }, null, null);
+
+            var policyProviderMock = new Mock<IRateLimitingPolicyProvider>();
+            policyProviderMock.Setup(provider => provider.GetPolicyAsync(rateLimtingRequest))
+                .ReturnsAsync(returnNullPolicy ? null :
+                    new RateLimitPolicy(requestKey, allowedCallRates, allowAttributeOverride, 
+                    name:"CustomProviderPolicy"));
+
+            var policyManager = new RateLimitingPolicyManager(policyProviderMock.Object);
+
+            SetupPolicyManager(policyManager, rateLimtingRequest);
+
+            var policyToApply = await policyManager.GetPolicyAsync(rateLimtingRequest);
+
+            policyProviderMock.VerifyAll();
+
+            if(returnNullPolicy)
+                Assert.Null(policyToApply);
+            else
+                Assert.Equal(expectedPolicyNameToApply, policyToApply.Name);
         }
     }
 
