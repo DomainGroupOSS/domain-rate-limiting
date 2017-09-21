@@ -18,68 +18,14 @@ namespace Domain.RateLimiting.AspNetCore
     /// <summary>
     ///     Action filter which rate limits requests using the action/controllers rate limit entry attribute.
     /// </summary>
-    public class RateLimitingActionFilter : IAsyncAuthorizationFilter
+    public class RateLimitingFilter : IAsyncAuthorizationFilter
     {
-        private readonly IRateLimitingCacheProvider _rateLimitingCacheProvider;
-        private readonly IRateLimitingPolicyProvider _policyManager;
-        private readonly RateLimiter _rateLimitingHelper;
-
-        /// <summary>
-        ///     Initializes a new instance of the <see cref="RateLimitingActionFilter" /> class.
-        /// </summary>
-        /// <param name="rateLimitingCacheProvider">The rate limiting cache provider.</param>
-        /// <param name="policyManager">The global policy when rate limiting.</param>
-        /// <exception cref="System.ArgumentNullException">
-        ///     rateLimitingCacheProvider or rateLimitRequestKeyService or
-        ///     whitelistedRequestKeys
-        /// </exception>
-        public RateLimitingActionFilter(IRateLimitingCacheProvider rateLimitingCacheProvider,
-            IRateLimitingPolicyProvider policyManager)
+        private readonly IRateLimiter _rateLimiter;
+        
+        public RateLimitingFilter(IRateLimiter rateLimiter)
         {
-            _rateLimitingCacheProvider = rateLimitingCacheProvider ?? 
-                throw new ArgumentNullException(nameof(rateLimitingCacheProvider));
-            _policyManager = policyManager ?? 
-                throw new ArgumentNullException(nameof(policyManager));
-
-            _rateLimitingHelper = new RateLimiter(_rateLimitingCacheProvider, _policyManager);
+            _rateLimiter = rateLimiter ?? throw new ArgumentNullException(nameof(rateLimiter));
         }
-
-        /// <summary>
-        ///     Occurs before the action method is invoked.
-        /// </summary>
-        /// <param name="actionContext"></param>
-        /// <param name="next"></param>
-        /// <returns></returns>
-        //public override async Task OnActionExecutionAsync(ActionExecutingContext actionContext, ActionExecutionDelegate next)
-        //{
-        //    var result = await _rateLimitingHelper.LimitRequestAsync(
-        //        new RateLimitingRequest(
-        //            actionContext.ActionDescriptor.AttributeRouteInfo.Template,
-        //            actionContext.HttpContext.Request.Path,
-        //            actionContext.HttpContext.Request.Method,
-        //            (header) => actionContext.HttpContext.Request.Headers[header],
-        //            actionContext.HttpContext.User,
-        //            actionContext.HttpContext.Request.Body),
-        //        () => GetCustomAttributes(actionContext.ActionDescriptor),
-        //        actionContext.HttpContext.Request.Host.Value,
-        //        async () =>
-        //        {
-        //            InvalidRequestId(actionContext);
-        //            await Task.FromResult<object>(null);
-        //        },
-        //        async rateLimitingResult =>
-        //        {
-        //            AddUpdateRateLimitingSuccessHeaders(actionContext.HttpContext, rateLimitingResult);
-        //            await base.OnActionExecutionAsync(actionContext, next);
-        //        },
-        //        async (rateLimitingResult, violatedPolicyName) =>
-        //        {
-        //            TooManyRequests(actionContext, rateLimitingResult, violatedPolicyName);
-        //            await Task.FromResult<object>(null);
-        //        }
-
-        //        ).ConfigureAwait(false);
-        //}
 
         private static void AddUpdateRateLimitingSuccessHeaders(HttpContext context, RateLimitingResult result)
         {
@@ -89,7 +35,7 @@ namespace Domain.RateLimiting.AspNetCore
                 {RateLimitHeaders.Limit, result.CacheKey.Limit.ToString() }
             };
 
-            foreach (string successheader in successheaders.Keys)
+            foreach (var successheader in successheaders.Keys)
             {
                 if (context.Response.Headers.ContainsKey(successheader))
                 {
@@ -103,17 +49,6 @@ namespace Domain.RateLimiting.AspNetCore
                         new string[] { successheaders[successheader] }));
                 }
             }
-        }
-
-        private static void InvalidRequestId(AuthorizationFilterContext context)
-        {
-            context.HttpContext.Response.StatusCode = (int)HttpStatusCode.Forbidden;
-            context.HttpContext.Response.Headers.Clear();
-
-            context.Result = new ContentResult()
-            {
-                Content = "An invalid request identifier was specified."
-            };
         }
 
         private static void TooManyRequests(AuthorizationFilterContext context, 
@@ -151,13 +86,13 @@ namespace Domain.RateLimiting.AspNetCore
 
         public async Task OnAuthorizationAsync(AuthorizationFilterContext actionContext)
         {
-            
-            await _rateLimitingHelper.LimitRequestAsync(
+            var context = actionContext;
+            await _rateLimiter.LimitRequestAsync(
                 new RateLimitingRequest(
                     actionContext.ActionDescriptor.AttributeRouteInfo.Template,
                     actionContext.HttpContext.Request.Path,
                     actionContext.HttpContext.Request.Method,
-                    (header) => actionContext.HttpContext.Request.Headers[header],
+                    (header) => context.HttpContext.Request.Headers[header],
                     actionContext.HttpContext.User,
                     actionContext.HttpContext.Request.Body),
                 () => GetCustomAttributes(actionContext.ActionDescriptor),

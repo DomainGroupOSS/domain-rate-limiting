@@ -10,6 +10,7 @@ namespace Domain.RateLimiting.Samples.Owin
             HttpConfiguration httpConfiguration = new HttpConfiguration();
             WebApiConfig.Register(httpConfiguration);
             FilterConfig.ConfigureRateLimiting(httpConfiguration.Filters);
+        
             appBuilder.UseWebApi(httpConfiguration);
         }
     }

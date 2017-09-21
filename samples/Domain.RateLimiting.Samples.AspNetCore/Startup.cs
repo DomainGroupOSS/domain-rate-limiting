@@ -146,12 +146,15 @@ namespace Domain.RateLimiting.Samples.AspNetCore
             services.AddMvc(options =>
             {
                 #region Adding the RateLimitingActionFilter
-                options.Filters.Add(new RateLimitingActionFilter(rateLimitCacheProvider, globalRateLimitingClientPolicyManager));
+                options.Filters.Add(new RateLimitingFilter(
+                    new RateLimiter(rateLimitCacheProvider, globalRateLimitingClientPolicyManager)));
                 #endregion
 
                 #region Multi level rate limiting - Multiple action filters based on separate Policy Providers providing separate policies
-                // options.Filters.Add(new RateLimitingActionFilter(rateLimitCacheProvider, new SampleRateLimitingUserPolicyProvider()));
-                // options.Filters.Add(new RateLimitingActionFilter(rateLimitCacheProvider, new SampleRateLimitingOrganizationPolicyProvider()));
+                //options.Filters.Add(new RateLimitingFilter(
+                //    new RateLimiter(rateLimitCacheProvider, new SampleRateLimitingUserPolicyProvider())));
+                //options.Filters.Add(new RateLimitingFilter(
+                //    new RateLimiter(rateLimitCacheProvider, new SampleRateLimitingOrganizationPolicyProvider())));
                 #endregion  
             });
         }

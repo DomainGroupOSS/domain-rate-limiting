@@ -15,7 +15,6 @@ namespace Domain.RateLimiting.Samples.WebApi.Controllers
             return new string[] { "value1", "value2" };
         }
         
-        [Authorize]
         public string Get(int id)
         {
             return "value";
