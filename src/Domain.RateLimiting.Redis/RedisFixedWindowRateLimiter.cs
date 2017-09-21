@@ -18,31 +18,24 @@ namespace Domain.RateLimiting.Redis
             {RateLimitUnit.PerHour, dateTime => dateTime.ToString("yyyyMMddHH")},
             {RateLimitUnit.PerDay, dateTime => dateTime.ToString("yyyyMMdd")},
         };
-
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="redisEndpoint"></param>
-        /// <param name="onException"></param>
-        /// <param name="onThrottled"></param>
-        /// <param name="connectionTimeout"></param>
-        /// <param name="syncTimeout"></param>
-        /// <param name="countThrottledRequests"></param>
-        /// <param name="circuitBreaker"></param>
+        
         public RedisFixedWindowRateLimiter(string redisEndpoint,
             Action<Exception> onException = null,
             Action<RateLimitingResult> onThrottled = null,
             int connectionTimeout = 2000,
             int syncTimeout = 1000,
             bool countThrottledRequests = false,
-            ICircuitBreaker circuitBreaker = null) : base(redisEndpoint,
+            ICircuitBreaker circuitBreaker = null,
+            IClock clock = null,
+            Func<Task<IConnectionMultiplexer>> connectToRedisFunc = null) : base(redisEndpoint,
             onException,
             onThrottled,
             connectionTimeout,
             syncTimeout,
             countThrottledRequests,
-            circuitBreaker)
+            circuitBreaker,
+            clock,
+            connectToRedisFunc)
         {
         }
 

@@ -17,6 +17,7 @@ namespace Domain.RateLimiting.Core.UnitTests
                 });
         }
 
+        [Fact]
         public async void ShouldReturnNullPolicyWhenNullIsReturnedByCustomPolicyProviderEvenThoughSamePolicyHasBeenAddedStaticallyInManager()
         {
             await ArangeActAndAssert("/api/values", "GET", "testclient_01", "CustomProviderPolicy",

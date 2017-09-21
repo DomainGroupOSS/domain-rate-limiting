@@ -9,41 +9,39 @@ namespace Domain.RateLimiting.Redis
 {
     public abstract class RedisRateLimiter : IRateLimitingCacheProvider
     {
-        private ConnectionMultiplexer _redisConnection;
+        private IConnectionMultiplexer _redisConnection;
         private ConfigurationOptions _redisConfigurationOptions;
-        
+
         private readonly ICircuitBreaker _circuitBreakerPolicy;
         private readonly Action<RateLimitingResult> _onThrottled;
         private readonly bool _countThrottledRequests;
+        private readonly Func<Task<IConnectionMultiplexer>> _connectToRedisFunc;
+        private readonly IClock _clock;
 
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="redisEndpoint"></param>
-        /// <param name="onException"></param>
-        /// <param name="onThrottled"></param>
-        /// <param name="connectionTimeout"></param>
-        /// <param name="syncTimeout"></param>
-        /// <param name="countThrottledRequests"></param>
-        /// <param name="circuitBreaker"></param>
         protected RedisRateLimiter(string redisEndpoint,
             Action<Exception> onException = null,
             Action<RateLimitingResult> onThrottled = null,
             int connectionTimeout = 2000,
             int syncTimeout = 1000,
             bool countThrottledRequests = false,
-            ICircuitBreaker circuitBreaker = null)
+            ICircuitBreaker circuitBreaker = null,
+            IClock clock = null,
+            Func<Task<IConnectionMultiplexer>> connectToRedisFunc = null)
         {
             if (redisEndpoint == null) throw new ArgumentNullException(nameof(redisEndpoint));
 
             _onThrottled = onThrottled;
             _countThrottledRequests = countThrottledRequests;
-            _circuitBreakerPolicy = circuitBreaker ?? 
+            _connectToRedisFunc = connectToRedisFunc;
+            _clock = clock;
+            _circuitBreakerPolicy = circuitBreaker ??
                 new DefaultCircuitBreaker(3, 10000, 300);
-            SetupConnectionConfiguration(redisEndpoint, connectionTimeout, syncTimeout);
+
+            if(connectToRedisFunc == null)
+                SetupConnectionConfiguration(redisEndpoint, connectionTimeout, syncTimeout);
+
             //SetupCircuitBreaker(faultThreshholdPerWindowDuration, faultWindowDurationInMilliseconds, circuitOpenDurationInSecs, onException, onCircuitOpened, onCircuitClosed);
-            ConnectToRedis(onException);
+            ConnectToRedis(onException).GetAwaiter();
         }
 
         private void SetupConnectionConfiguration(string redisEndpoint, int connectionTimeout, int syncTimeout)
@@ -56,25 +54,17 @@ namespace Domain.RateLimiting.Redis
             _redisConfigurationOptions.AbortOnConnectFail = false;
         }
 
-        private void ConnectToRedis(Action<Exception> onException)
+        private async Task ConnectToRedis(Action<Exception> onException)
         {
-            _redisConnection = ConnectionMultiplexer.Connect(_redisConfigurationOptions);
+            _redisConnection = _connectToRedisFunc != null ? await _connectToRedisFunc.Invoke() :
+                               await ConnectionMultiplexer.ConnectAsync(_redisConfigurationOptions);
+
             if (_redisConnection == null || !_redisConnection.IsConnected)
             {
                 onException?.Invoke(new Exception("Could not connect to redis server"));
             }
         }
-
-        /// <summary>
-        /// Rate limits a request using to cache key provided
-        /// </summary>
-        /// <param name="requestId">The request identifier.</param>
-        /// <param name="method">The request method</param>
-        /// <param name="host">The host</param>
-        /// <param name="routeTemplate">The route template.</param>
-        /// <param name="allowedCallRates">The rate limit entry.</param>
-        /// <returns></returns>
-
+        
         public async Task<RateLimitingResult> LimitRequestAsync(string requestId, string method, string host,
             string routeTemplate,
             IList<AllowedCallRate> allowedCallRates)
@@ -86,10 +76,11 @@ namespace Domain.RateLimiting.Redis
 
                 var redisDb = _redisConnection.GetDatabase();
                 var redisTransaction = redisDb.CreateTransaction();
-                var utcNowTicks = DateTime.UtcNow.Ticks;
+                var utcNowTicks = _clock?.GetCurrentUtcTimeInTicks() ?? DateTime.UtcNow.Ticks;
                 IList<Task<long>> numberOfRequestsMadePerAllowedCallRateAsync = new List<Task<long>>();
 
                 IList<RateLimitCacheKey> cacheKeys = new List<RateLimitCacheKey>();
+
                 foreach (var allowedCallRate in allowedCallRates)
                 {
                     numberOfRequestsMadePerAllowedCallRateAsync.Add(
@@ -98,7 +89,7 @@ namespace Domain.RateLimiting.Redis
                 }
 
                 await ExecuteTransactionAsync(redisTransaction).ConfigureAwait(false);
-                
+
                 var violatedCacheKeys = new SortedList<long, RateLimitCacheKey>();
 
                 var minCallsRemaining = int.MaxValue;
@@ -125,7 +116,7 @@ namespace Domain.RateLimiting.Redis
 
                 var postViolationTransaction = redisDb.CreateTransaction();
 
-                if(!_countThrottledRequests)
+                if (!_countThrottledRequests)
                     UndoUnsuccessfulRequestCount(postViolationTransaction, cacheKeys, utcNowTicks);
 
                 var violatedCacheKey = violatedCacheKeys.Last().Value;
@@ -137,7 +128,7 @@ namespace Domain.RateLimiting.Redis
                 await ExecuteTransactionAsync(postViolationTransaction).ConfigureAwait(false);
 
                 var rateLimitingResult = new RateLimitingResult(true,
-                    await GetWaitingIntervalInTicks(setupGetOldestRequestTimestampInTicks, 
+                    await GetWaitingIntervalInTicks(setupGetOldestRequestTimestampInTicks,
                         violatedCacheKey, utcNowTicks), violatedCacheKey, 0);
 
                 _onThrottled?.Invoke(rateLimitingResult);
@@ -147,13 +138,13 @@ namespace Domain.RateLimiting.Redis
             }, new RateLimitingResult(false, 0));
         }
 
-        private async Task<long> GetWaitingIntervalInTicks(Task<SortedSetEntry[]> setupGetOldestRequestTimestampInTicks, 
-            RateLimitCacheKey violatedCacheKey, 
+        private async Task<long> GetWaitingIntervalInTicks(Task<SortedSetEntry[]> setupGetOldestRequestTimestampInTicks,
+            RateLimitCacheKey violatedCacheKey,
             long utcNowTicks)
         {
             return await GetOldestRequestTimestampInTicks(setupGetOldestRequestTimestampInTicks,
                        violatedCacheKey, utcNowTicks).ConfigureAwait(false) +
-                   (long) violatedCacheKey.Unit - utcNowTicks;
+                   (long)violatedCacheKey.Unit - utcNowTicks;
         }
 
         private async Task ExecuteTransactionAsync(ITransaction redisTransaction)
@@ -161,8 +152,8 @@ namespace Domain.RateLimiting.Redis
             var redisTransactionTask = redisTransaction.ExecuteAsync();
             var transactionTask = await Task.WhenAny(redisTransactionTask).ConfigureAwait(false);
 
-            if (!redisTransactionTask.IsCompleted || 
-                redisTransactionTask.IsFaulted || 
+            if (!redisTransactionTask.IsCompleted ||
+                redisTransactionTask.IsFaulted ||
                 !await redisTransactionTask)
             {
                 throw new Exception("Redis transaction did not succeed", redisTransactionTask.Exception);

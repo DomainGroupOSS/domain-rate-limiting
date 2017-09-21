@@ -20,30 +20,23 @@ namespace Domain.RateLimiting.Redis
             {RateLimitUnit.PerDay, _ => RateLimitUnit.PerDay.ToString()}
         };
 
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="redisEndpoint"></param>
-        /// <param name="onException"></param>
-        /// <param name="onThrottled"></param>
-        /// <param name="connectionTimeout"></param>
-        /// <param name="syncTimeout"></param>
-        /// <param name="countThrottledRequests"></param>
-        /// <param name="circuitBreaker"></param>
         public RedisSlidingWindowRateLimiter(string redisEndpoint,
             Action<Exception> onException = null,
             Action<RateLimitingResult> onThrottled = null,
             int connectionTimeout = 2000,
             int syncTimeout = 1000,
             bool countThrottledRequests = false,
-            ICircuitBreaker circuitBreaker = null) : base(redisEndpoint,
+            ICircuitBreaker circuitBreaker = null,
+            IClock clock = null,
+            Func<Task<IConnectionMultiplexer>> connectToRedisFunc = null) : base(redisEndpoint,
             onException,
             onThrottled,
             connectionTimeout,
             syncTimeout,
             countThrottledRequests,
-            circuitBreaker)
+            circuitBreaker,
+            clock,
+            connectToRedisFunc)
         {
         }
 
@@ -57,9 +50,9 @@ namespace Domain.RateLimiting.Redis
 
             var cacheKeyString = cacheKey.ToString();
             cacheKeys.Add(cacheKey);
+            
             var sortedSetRemoveRangeByScoreAsync = redisTransaction.SortedSetRemoveRangeByScoreAsync(
-                cacheKeyString, 0,
-                utcNowTicks - (long)cacheKey.Unit);
+                cacheKeyString, 0, utcNowTicks - (long)cacheKey.Unit);
 
             var sortedSetAddAsync = redisTransaction.SortedSetAddAsync(cacheKeyString, Guid.NewGuid().ToString(), utcNowTicks);
             var numberOfRequestsInWindowAsyncList = redisTransaction.SortedSetLengthAsync(cacheKeyString);

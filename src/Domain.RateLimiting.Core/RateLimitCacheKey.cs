@@ -37,19 +37,20 @@ namespace Domain.RateLimiting.Core
         /// <param name="routeTemplate">The route template.</param>
         /// <param name="allowedCallRate">The rate limit entry.</param>
         /// <param name="getSuffix">The suffix function based on the process</param>
+        /// <param name="clock"></param>
         /// <exception cref="System.ArgumentNullException">requestId</exception>
         /// <exception cref="System.ArgumentOutOfRangeException">requestId;requestId cannot be empty</exception>
         /// <exception cref="ArgumentNullException">requestId or host or pathToLimit or expirationKey or httpMethod</exception>
         /// <exception cref="ArgumentOutOfRangeException">requestId;requestId cannot be empty or host;host cannot be empty or pathToLimit;requestId cannot be empty or  expirationKey;expirationKey cannot be empty or httpMethod;httpMethod cannot be empty</exception>
         public RateLimitCacheKey(string requestId, string method, string host, string routeTemplate, 
-            AllowedCallRate allowedCallRate, Func<DateTime, string> getSuffix)
+            AllowedCallRate allowedCallRate, Func<DateTime, string> getSuffix, IClock clock = null)
         {
             if (requestId == null) throw new ArgumentNullException(nameof(requestId));
             if (requestId.Length == 0) throw new ArgumentOutOfRangeException(nameof(requestId), "requestId cannot be empty");
             if (routeTemplate == null) throw new ArgumentNullException(nameof(routeTemplate));
             if (routeTemplate.Length == 0) throw new ArgumentOutOfRangeException(nameof(routeTemplate), "routeTemplate cannot be empty");
 
-            _dateTimeUtcNow = DateTime.UtcNow;
+            _dateTimeUtcNow = clock?.GetUtcDateTime() ?? DateTime.UtcNow;
 
             RequestId = requestId;
             Method = method;
@@ -85,7 +86,7 @@ namespace Domain.RateLimiting.Core
         /// The rate limiting policy for this key
         /// </summary>
         public readonly AllowedCallRate AllowedCallRate;
-
+        
         /// <summary>
         /// Returns a string that represents the current object.
         /// </summary>

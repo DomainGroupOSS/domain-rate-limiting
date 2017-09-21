@@ -27,6 +27,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{13966DD6
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Domain.RateLimiting.Core.UnitTests", "XUnitTestProject2\Domain.RateLimiting.Core.UnitTests.csproj", "{256D0433-FC7D-466B-830B-CBCA8CEA41A1}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Domain.RateLimiting.Redis.UnitTests", "DOmain.RateLimiting.Redis.UnitTests\Domain.RateLimiting.Redis.UnitTests.csproj", "{5298F769-47B9-460C-B525-BCFBFC45F928}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -69,6 +71,10 @@ Global
 		{256D0433-FC7D-466B-830B-CBCA8CEA41A1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{256D0433-FC7D-466B-830B-CBCA8CEA41A1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{256D0433-FC7D-466B-830B-CBCA8CEA41A1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5298F769-47B9-460C-B525-BCFBFC45F928}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5298F769-47B9-460C-B525-BCFBFC45F928}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5298F769-47B9-460C-B525-BCFBFC45F928}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5298F769-47B9-460C-B525-BCFBFC45F928}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -83,6 +89,7 @@ Global
 		{F0FE0C8E-B4DE-4554-96D2-32B149E92054} = {D316720E-4E82-420D-93EA-68DB2E6F7A0C}
 		{E40BB62D-B3A3-4A2A-B25C-F265AC60F660} = {D316720E-4E82-420D-93EA-68DB2E6F7A0C}
 		{256D0433-FC7D-466B-830B-CBCA8CEA41A1} = {13966DD6-192E-48E2-8723-DCBF647D25A3}
+		{5298F769-47B9-460C-B525-BCFBFC45F928} = {13966DD6-192E-48E2-8723-DCBF647D25A3}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {49635931-1417-422B-805A-66BCD3490CA4}
