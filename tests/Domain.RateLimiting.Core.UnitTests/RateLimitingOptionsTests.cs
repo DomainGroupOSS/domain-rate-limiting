@@ -8,7 +8,7 @@ namespace Domain.RateLimiting.Core.UnitTests
     public class RateLimitingOptionsTests
     {
         [Fact]
-        public void ShouldParsePoliciesFromOptionsCorrectly()
+        public void ShouldParseFourPoliciesFromOptionsCorrectly()
         {
             var rateLimitingOptions = new RateLimitingOptions()
             {
