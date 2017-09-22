@@ -1,21 +1,11 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace Domain.RateLimiting.Core
 {
-    public interface IRateLimiter
-    {
-        Task LimitRequestAsync(RateLimitingRequest rateLimitingRequest,
-            Func<IList<AllowedCallRate>> getCustomAttributes, string host,
-            Func<RateLimitingResult, Task> onSuccessFunc,
-            Func<RateLimitingResult, string, Task> onThrottledFunc,
-            Func<Task> onNotApplicableFunc);
-    }
-
     public class RateLimiter : IRateLimiter
     {
         private readonly IRateLimitingCacheProvider _rateLimitingCacheProvider;
@@ -59,7 +49,7 @@ namespace Domain.RateLimiting.Core
                 }
             }
 
-            if (allowedCallRates == null || !allowedCallRates.Any())
+            if (allowedCallRates == null || !Enumerable.Any<AllowedCallRate>(allowedCallRates))
             {
                 onNotApplicableFunc?.Invoke();
                 return;

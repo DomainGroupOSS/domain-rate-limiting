@@ -1,12 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Domain.RateLimiting.Core
 {
-        /// <summary>
-        /// Represents the rate limiting policy
-        /// </summary>
-        public class RateLimitPolicy
+    /// <summary>
+    /// Represents the rate limiting policy
+    /// </summary>
+    public class RateLimitPolicy
     {
         public const string AllRequestKeys = "*";
         public const string AllHttpMethods = "*";
@@ -40,10 +41,6 @@ namespace Domain.RateLimiting.Core
 
             if (requestKey.Length == 0) throw new ArgumentOutOfRangeException(nameof(requestKey),
                 "requestKey cannot be empty");
-
-            //if (routeTemplate == null) throw new ArgumentNullException(nameof(routeTemplate));
-            //if (routeTemplate.Length == 0) throw new ArgumentOutOfRangeException(nameof(routeTemplate),
-            //    "the routeTemplate to rate limit cannot be empty");
 
             if (string.IsNullOrWhiteSpace(routeTemplate) || routeTemplate.Length == 0)
                 routeTemplate = AllRequestPaths;
@@ -87,9 +84,6 @@ namespace Domain.RateLimiting.Core
         /// <value>The HTTP method.</value>
         public string HttpMethod { get; }
 
-        /// <summary>
-        /// 
-        /// </summary>
         public string RequestKey { get; }
     }
 }

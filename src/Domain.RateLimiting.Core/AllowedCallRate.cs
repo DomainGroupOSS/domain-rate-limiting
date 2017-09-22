@@ -22,28 +22,7 @@ namespace Domain.RateLimiting.Core
 
             Limit = limit;
             Unit = unit;
-            WhiteListRequestKeys = Enumerable.Empty<string>();
         }
-
-        //public object TypeId => this;
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="AllowedCallRate" /> class.
-        /// </summary>
-        /// <param name="limit">The limit.</param>
-        /// <param name="unit">The unit.</param>
-        /// <param name="whiteListedRequestKeysCommaSeparated">The white listed request keys comma separated without spaces.</param>
-        /// <exception cref="System.ArgumentNullException">if whiteListedRequestKeys is null</exception>
-        public AllowedCallRate(int limit, RateLimitUnit unit, string whiteListedRequestKeysCommaSeparated)
-        {
-            if (limit <= 0)
-                throw new ArgumentOutOfRangeException($"{nameof(limit)} has to be greater than 0");
-
-            Limit = limit;
-            Unit = unit;
-            WhiteListRequestKeys = whiteListedRequestKeysCommaSeparated?.Split(',') ?? throw new ArgumentNullException();
-        }
-
         /// <summary>
         /// Gets the limit.
         /// </summary>
@@ -56,17 +35,23 @@ namespace Domain.RateLimiting.Core
         /// <value>The unit.</value>
         public RateLimitUnit Unit { get; }
 
-        /// <summary>
-        /// Gets the white listed request keys.
-        /// </summary>
-        /// <value>
-        /// The white listed request keys.
-        /// </value>
-        public IEnumerable<string> WhiteListRequestKeys { get;  }
-
         public override string ToString()
         {
             return $"{Limit} calls {Unit}";
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj == null || GetType() != obj.GetType()) return false;
+
+            var compareObj = (AllowedCallRate)obj;
+
+            return compareObj.ToString() == ToString();
+        }
+
+        public override int GetHashCode()
+        {
+            return ToString().GetHashCode();
         }
     }
 }

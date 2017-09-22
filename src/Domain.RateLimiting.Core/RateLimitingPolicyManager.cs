@@ -249,8 +249,8 @@ namespace Domain.RateLimiting.Core
 
         public async Task<RateLimitPolicy> GetPolicyAsync(RateLimitingRequest rateLimitingRequest)
         {
-            if (IsWhiteListedPath(rateLimitingRequest.RouteTemplate, rateLimitingRequest.Method) ||
-                IsWhiteListedPath(rateLimitingRequest.Path, rateLimitingRequest.Method))
+            if (IsWhiteListedPath(rateLimitingRequest.RouteTemplate) ||
+                IsWhiteListedPath(rateLimitingRequest.Path))
                 return null;
 
             var providedPolicyEntry = await _policyProvider.GetPolicyAsync(rateLimitingRequest).ConfigureAwait(false);
@@ -325,14 +325,10 @@ namespace Domain.RateLimiting.Core
 
             return _entries.ContainsKey(key) || _entries.ContainsKey(AllRequestsKey);
         }
+        
 
-        /// <summary>
-        /// Determines whether [is white listed request] [the specified request].
-        /// </summary>
-        /// <param name="requestPath">The request path.</param>
-        /// <param name="httpMethod">The http method.</param>
-        /// <returns></returns>
-        public bool IsWhiteListedPath(string requestPath, string httpMethod)
+        
+        public bool IsWhiteListedPath(string requestPath)
         {
             return _whiteListedPaths.Any(requestPath.StartsWith);
         }

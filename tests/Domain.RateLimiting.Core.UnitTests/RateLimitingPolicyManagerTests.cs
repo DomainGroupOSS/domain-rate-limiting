@@ -20,7 +20,7 @@ namespace Domain.RateLimiting.Core.UnitTests
         [Fact]
         public async void ShouldReturnNullPolicyWhenNullIsReturnedByCustomPolicyProviderEvenThoughSamePolicyHasBeenAddedStaticallyInManager()
         {
-            await ArangeActAndAssert("/api/values", "GET", "testclient_01", "CustomProviderPolicy",
+            await ArangeActAndAssert("/api/values", "GET", "testclient_01", null,
                 returnNullPolicy:true);
         }
 
@@ -73,13 +73,38 @@ namespace Domain.RateLimiting.Core.UnitTests
             await ArangeActAndAssert("/api/values/{id}", "HEAD", "testclient_02", "AllRequestKeys_AllRoutes_AllMethods_MatchingPolicy_FromManager");
         }
 
+        [Fact]
+        public async void ShouldNotFallbackToStaticallyAddedPolicyForAllRequestKeysAllRoutesAllMethodsFromManagerWhenPathIsWhiteListed()
+        {
+            await ArangeActAndAssert("/api/values/{id}", "HEAD", "testclient_02", null, 
+                whiteListedPaths: new List<string>(){ "/api/values/{id}" }, isWhiteListedPathTest:true);
+        }
+
+        [Fact]
+        public async void ShouldFallbackToStaticallyAddedPolicyForAllRequestKeysAllRoutesAllMethodsFromManagerWhenRequestKeyIsNotWhiteListed()
+        {
+            await ArangeActAndAssert("/api/values/{id}", "HEAD", "testclient_03", "AllRequestKeys_AllRoutes_AllMethods_MatchingPolicy_FromManager");
+        }
+
+        [Fact]
+        public async void ShouldNotFallbackToStaticallyAddedPolicyForAllRequestKeysAllRoutesAllMethodsFromManagerWhenRequestKeyIsWhiteListed()
+        {
+            await ArangeActAndAssert("/api/values/{id}", "HEAD", "testclient_03", null,
+                whiteListedRequestKeys: new List<string>() { "testclient_03" });
+        }
+
         private static void SetupPolicyManager(RateLimitingPolicyManager policyManager, 
-            RateLimitingRequest rateLimtingRequest)
+            RateLimitingRequest rateLimtingRequest, 
+            IList<string> whiteListedRequestKeys = null, IList<string> whiteListedPaths = null)
         {
             var allowedCallRates = new List<AllowedCallRate>()
             {
                 new AllowedCallRate(5, RateLimitUnit.PerMinute)
             };
+
+            policyManager.AddRequestKeysToWhiteList(whiteListedRequestKeys ?? new List<string>());
+            policyManager.AddPathsToWhiteList(whiteListedPaths ?? new List<string>());
+
 
             policyManager.AddEndpointPolicy(new RateLimitPolicy("testclient_01", "/api/values",
                 "GET", allowedCallRates, name: "RequestKey_Route_Method_MatchingPolicy_FromManager"));
@@ -108,26 +133,32 @@ namespace Domain.RateLimiting.Core.UnitTests
 
         private static async Task ArangeActAndAssert(string routeTemplate, string method, string requestKey,
             string expectedPolicyNameToApply, IList<AllowedCallRate> allowedCallRates = null, bool allowAttributeOverride=false,
-            bool returnNullPolicy = false)
+            bool returnNullPolicy = false, IList<string> whiteListedRequestKeys = null, IList<string> whiteListedPaths = null,
+            bool isWhiteListedPathTest = false)
         {
             var rateLimtingRequest = new RateLimitingRequest(routeTemplate,
                 routeTemplate, method, s => new string[] { "s_value" }, null, null);
 
             var policyProviderMock = new Mock<IRateLimitingPolicyProvider>();
-            policyProviderMock.Setup(provider => provider.GetPolicyAsync(rateLimtingRequest))
-                .ReturnsAsync(returnNullPolicy ? null :
-                    new RateLimitPolicy(requestKey, allowedCallRates, allowAttributeOverride, 
-                    name:"CustomProviderPolicy"));
+
+            if (!isWhiteListedPathTest)
+            {
+                policyProviderMock.Setup(provider => provider.GetPolicyAsync(rateLimtingRequest))
+                    .ReturnsAsync(returnNullPolicy
+                        ? null
+                        : new RateLimitPolicy(requestKey, allowedCallRates, allowAttributeOverride,
+                            name: "CustomProviderPolicy"));
+            }
 
             var policyManager = new RateLimitingPolicyManager(policyProviderMock.Object);
 
-            SetupPolicyManager(policyManager, rateLimtingRequest);
+            SetupPolicyManager(policyManager, rateLimtingRequest, whiteListedRequestKeys, whiteListedPaths);
 
             var policyToApply = await policyManager.GetPolicyAsync(rateLimtingRequest);
 
             policyProviderMock.VerifyAll();
 
-            if(returnNullPolicy)
+            if(expectedPolicyNameToApply == null)
                 Assert.Null(policyToApply);
             else
                 Assert.Equal(expectedPolicyNameToApply, policyToApply.Name);
