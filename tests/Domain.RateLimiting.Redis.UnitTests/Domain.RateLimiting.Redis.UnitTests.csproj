@@ -15,8 +15,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\src\Domain.RateLimiting.Core\Domain.RateLimiting.Core.csproj" />
-    <ProjectReference Include="..\src\Domain.RateLimiting.Redis\Domain.RateLimiting.Redis.csproj" />
+    <ProjectReference Include="..\..\src\Domain.RateLimiting.Core\Domain.RateLimiting.Core.csproj" />
+    <ProjectReference Include="..\..\src\Domain.RateLimiting.Redis\Domain.RateLimiting.Redis.csproj" />
   </ItemGroup>
 
 </Project>

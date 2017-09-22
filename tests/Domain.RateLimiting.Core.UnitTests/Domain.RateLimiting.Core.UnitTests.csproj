@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\src\Domain.RateLimiting.Core\Domain.RateLimiting.Core.csproj" />
+    <ProjectReference Include="..\..\src\Domain.RateLimiting.Core\Domain.RateLimiting.Core.csproj" />
   </ItemGroup>
 
 </Project>
