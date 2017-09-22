@@ -25,9 +25,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Domain.RateLimiting.Samples
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{13966DD6-192E-48E2-8723-DCBF647D25A3}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Domain.RateLimiting.Core.UnitTests", "XUnitTestProject2\Domain.RateLimiting.Core.UnitTests.csproj", "{256D0433-FC7D-466B-830B-CBCA8CEA41A1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Domain.RateLimiting.Core.UnitTests", "tests\Domain.RateLimiting.Core.UnitTests\Domain.RateLimiting.Core.UnitTests.csproj", "{256D0433-FC7D-466B-830B-CBCA8CEA41A1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Domain.RateLimiting.Redis.UnitTests", "DOmain.RateLimiting.Redis.UnitTests\Domain.RateLimiting.Redis.UnitTests.csproj", "{5298F769-47B9-460C-B525-BCFBFC45F928}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Domain.RateLimiting.Redis.UnitTests", "tests\Domain.RateLimiting.Redis.UnitTests\Domain.RateLimiting.Redis.UnitTests.csproj", "{5298F769-47B9-460C-B525-BCFBFC45F928}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
