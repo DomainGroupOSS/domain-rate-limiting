@@ -32,7 +32,7 @@ namespace Domain.RateLimiting.AspNetCore
             var successheaders = new Dictionary<string, string>()
             {
                 {RateLimitHeaders.CallsRemaining, result.CallsRemaining.ToString()},
-                {RateLimitHeaders.Limit, result.CacheKey.Limit.ToString() }
+                {RateLimitHeaders.Limit, result.CacheKey.AllowedCallRate.ToString() }
             };
 
             foreach (var successheader in successheaders.Keys)

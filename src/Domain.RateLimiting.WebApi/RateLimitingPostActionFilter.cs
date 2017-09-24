@@ -23,7 +23,7 @@ namespace Domain.RateLimiting.WebApi
             var successheaders = new Dictionary<string, string>()
             {
                 {RateLimitHeaders.CallsRemaining, result.CallsRemaining.ToString()},
-                {RateLimitHeaders.Limit, result.CacheKey.Limit.ToString() }
+                {RateLimitHeaders.Limit, result.CacheKey.AllowedCallRate.ToString() }
             };
 
             var response = context.Response;

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Domain.RateLimiting.AspNetCore;
 using Domain.RateLimiting.Core;
@@ -15,9 +16,15 @@ namespace Domain.RateLimiting.Samples.AspNetCore
 
     public class SampleRateLimitingClientPolicyProvider : IRateLimitingPolicyProvider
     {
+        private readonly string _requestKey;
+
+        public SampleRateLimitingClientPolicyProvider()
+        {
+            _requestKey = Guid.NewGuid().ToString();
+        }
         public Task<RateLimitPolicy> GetPolicyAsync(RateLimitingRequest rateLimitingRequest)
         {
-            return Task.FromResult(new RateLimitPolicy("test_client"));
+            return Task.FromResult(new RateLimitPolicy(_requestKey));
         }
     }
 
