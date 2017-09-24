@@ -36,7 +36,6 @@ namespace Domain.RateLimiting.Samples.AspnetCore.IntegrationTests
             
         }
         
-        [Fact]
         public async void Calling_api_globallylimited_id_ShouldNotThrottleOnTheFirstFiveCallsButShouldThrottleOnTheSixthCall()
         {
             for (int i = 4; i >= 0; i--)
@@ -64,8 +63,7 @@ namespace Domain.RateLimiting.Samples.AspnetCore.IntegrationTests
             Assert.Equal("StaticPolicy_0", response.Headers.GetValues("X-RateLimit-VPolicyName").First());
             Assert.Equal("5 calls PerMinute", response.Headers.GetValues("X-RateLimit-VCallRate").First());
         }
-
-        [Fact]
+        
         public async void ShouldNotApplyRateLimitingToUnlimitedControllerEndpoints()
         {
             var response = await _httpClient.GetAsync("/api/unlimited/1");
