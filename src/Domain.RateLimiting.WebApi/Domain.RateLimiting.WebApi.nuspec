@@ -10,7 +10,6 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>Rate limiting action filter for Web Api</description>
     <copyright>Copyright 2017</copyright>
-    <repositoryUrl>https://github.com/DomainGroupOSS/domain-rate-limiting.git</repositoryUrl>
     <tags>webapi, filters, ratelimiting, rate limiting, throttling, API throttling, request throttling</tags>
   </metadata>
 </package>
