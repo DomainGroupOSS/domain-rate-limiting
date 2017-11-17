@@ -36,6 +36,7 @@ namespace Domain.RateLimiting.Samples.AspnetCore.IntegrationTests
             
         }
         
+        [Fact(Skip = "You need to have redis installed before running this test")]
         public async void Calling_api_globallylimited_id_ShouldNotThrottleOnTheFirstFiveCallsButShouldThrottleOnTheSixthCall()
         {
             for (int i = 4; i >= 0; i--)
@@ -64,6 +65,7 @@ namespace Domain.RateLimiting.Samples.AspnetCore.IntegrationTests
             Assert.Equal("5 calls PerMinute", response.Headers.GetValues("X-RateLimit-VCallRate").First());
         }
         
+        [Fact(Skip = "You need to have redis installed before running this test")]
         public async void ShouldNotApplyRateLimitingToUnlimitedControllerEndpoints()
         {
             var response = await _httpClient.GetAsync("/api/unlimited/1");
