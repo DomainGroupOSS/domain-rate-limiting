@@ -2,13 +2,17 @@
   <PropertyGroup>
     <TargetFrameworks>netstandard1.3;net452</TargetFrameworks>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <Version>1.0.1-experimental</Version>
+    <Version>1.0.1-alpha</Version>
     <AssemblyVersion>1.0.0.1</AssemblyVersion>
     <FileVersion>1.0.0.1</FileVersion>
     <Authors>Kazi Zahir</Authors>
     <Company>Domain</Company>
     <Description>Contains the core abstractions and classes for rate limiting.</Description>
     <PackageIconUrl>http://www.domain.com.au/content/files/99x99.png</PackageIconUrl>
+    <PackageProjectUrl />
+    <RepositoryUrl>https://github.com/DomainGroupOSS/domain-rate-limiting.git</RepositoryUrl>
+    <RepositoryType />
+    <PackageTags>ratelimiting, rate limiting, throttling, API throttling, request throttling</PackageTags>
   </PropertyGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard1.3' ">
