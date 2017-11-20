@@ -124,7 +124,7 @@ as this step and uncomment the code in that region.
 
 Here we create a RateLimitingPolicyManager which is default policy manager implementation useful for defining rate limiting policies through code or configuration. Please note that this manager also implements the IRateLimitingPolicyProvider interface and takes in another IRateLimitingPolicyProvider in its constructor essentially providing extra functionalities on top of the custom provider IRateLimitingPolicyProvider (implemented by you). In this case it is setting up global policies for its endpoints on top of the ones provided by the client provided one. Let us the discuss the details of how it returns a RateLimitingPolicy.
 
-## The RateLimitingPolicy determination process for the current RateLimitingRequest
+## The RateLimitingPolicy determination process as used by the RateLimitingPolicyManager for the current RateLimitingRequest
 
 * If the routeTemplate or path is in its white list then it immediately returns null meaning no limit is required for the current call.
 
