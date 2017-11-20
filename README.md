@@ -19,8 +19,8 @@ Both WebApi and AspnetCore versions are included.
 
 First we need to reference the following packages from Nuget:
 
-* For AspnetCore apps: install the Domain.RateLimiting.AspNetCore package which contains the rate limiting action filter which works     with Domain.RateLimiting.Core (skip for WebApi/Owin projects)
-* For WebApi/Owin projects: install the Domain.RateLimiting.WebApi package which contains the rate limiting action filter which works with Domain.RateLimiting.Core (Skip for AspnetCore projects)
+* For AspnetCore apps: install the Domain.RateLimiting.AspNetCore package which contains the rate limiting filter which works     with Domain.RateLimiting.Core (skip for WebApi/Owin projects)
+* For WebApi/Owin projects: install the Domain.RateLimiting.WebApi package which contains the rate limiting filter which works with Domain.RateLimiting.Core (Skip for AspnetCore projects)
 * Domain.RateLimiting.Redis package which provides a distributed 
   Redis implementation of the IRateLimitingCacheProvider from the Domain.RateLimiting.Core package meaning 
   that it can be used from multiple servers which is more suiting to real
@@ -76,18 +76,24 @@ To do that go to the region titled "SampleRateLimitingClientPolicyProvider" and 
 
     public class SampleRateLimitingClientPolicyProvider : IRateLimitingPolicyProvider
     {
+        private readonly string _requestKey;
+
+        public SampleRateLimitingClientPolicyProvider()
+        {
+            _requestKey = Guid.NewGuid().ToString();
+        }
         public Task<RateLimitPolicy> GetPolicyAsync(RateLimitingRequest rateLimitingRequest)
         {
-            return Task.FromResult(new RateLimitPolicy("test_client"));
+            return Task.FromResult(new RateLimitPolicy(_requestKey));
         }
     }
 
     #endregion
 
 
-This provides a simple implementation which just returns a RateLimitPolicy with test_client as the requestKey but does not provide any AllowedCallRates. Now there is also the 	DefaultRateLimitingPolicyProvider implementation provided in the core package which you can use in your code to return the client_id from the ClaimsPrincipal for authenticated requests. But here for demo we will only return the hardcoded client_id of test_client and simulate that the request are coming from that client.You could for instance extact the current clientid or userid from the RateLimitingRequest provided and consult a database configured per clientid and return a more sepcific policy with allowed call rates set. Just know for now that if you provide an implementation which returns a null plicy, no rate limting will be applied. If it returns a policy with no AllowedCallRates set then we can override the AllowedCallRates with statically defined rules. If it returns a policy with AllowedCallRates set then those rates will be used to limit the request and take precedence over anything else. More on this later.
+This provides a simple implementation which just returns a RateLimitPolicy with a Guid as the requestKey but does not provide any AllowedCallRates. Now there is also the 	DefaultRateLimitingPolicyProvider implementation provided in the core package which you can use in your code to return the client_id from the ClaimsPrincipal for authenticated requests. You could for instance extract the current clientid or userid from the RateLimitingRequest provided and consult a database configured per clientid and return a more sepcific policy with allowed call rates set. Just know for now that if you provide an implementation which returns a null policy, no rate limting will be applied. If it returns a policy with no AllowedCallRates set, then we can override the AllowedCallRates with statically defined rules. If it returns a policy with AllowedCallRates set then those rates will be used to limit the request and take precedence over anything else. More on this later.
 
-For our discussin our sample provider which we just uncommented, provides a Policy with the requestKey set and leaves the call rates to be overriden later by code, configuration or attribute in the application.
+For our discussin our sample provider which we just uncommented, provides a Policy with the guid requestKey set and leaves the call rates to be overriden later by code, configuration or attribute in the application.
 
 
 ### Step 2: Setting policies explicitly using code
@@ -120,16 +126,30 @@ Here we create a RateLimitingPolicyManager which is default policy manager imple
 
 ## The RateLimitingPolicy determination process for the current RateLimitingRequest
 
-* First it asks the developer (you) provided PolicyProvider for a policy for the current RateLimitingRequest 
-* If the client provider returns a null or if the requestKey contained in the policy returned is whitelisted then it returns null meaning
-* no limit is required for the current call.
-* Client provider returns a policy with one or more call rates, then it immediatelly returns that policy to the caller.
-* If it finds a globally defined policy for the specified requestKey, specified method and specified route for current call, it returns that.
-* If it finds a globally defined policy for the specified requestKey, all methods (*) and specified route for current call, it returns that.
-* If it finds a globally defined policy for the specified requestKey, all methods (*) and all routes (*) for current call, it returns that. 
-* If it finds a globally defined policy for all request keys (*), specified method and specified route for current call, it returns that.
-* If it finds a a globally defined policy for all request keys (*), specified method and all paths (*) for current call, it returns that.
-* If it finds a a globally defined policy for all request keys (*), all methods (*) and all paths (*) for current call, it returns that.
+* If the routeTemplate or path is in its white list then it immediately returns null meaning no limit is required for the current call.
+
+* If not white listed, it asks the IRateLimitingPolicyProvider passed into it during construction for a RateLimitPolicy. 
+
+* If the IRateLimitingPolicyProvider returns a null or if the requestKey contained in the policy returned is whitelisted then it returns null meaning no limit is required for the current call.
+
+* If provider returns a policy with one or more call rates, then it immediatelly returns that policy to the caller.
+
+* If not any of the above, it tries to find a globally defined policy for the specified requestKey, specified method and specified route for current call and it returns that if found.
+
+* If not any of the above, it tries to find a globally defined policy for the specified requestKey, all methods (*) and specified route for current call and it returns that if found.
+
+* If not any of the above, it tries to find a globally defined policy for the specified requestKey, specified method and all routes (*) for current call and it returns that if found.
+
+* If not any of the above, it tries to find a globally defined policy for the specified requestKey, all methods (*) and all routes (*) for current call and returns that if found. 
+
+* If not any of the above, it tries to find a globally defined policy for all request keys (*), specified method and specified route for current call and returns that if found.
+
+* If not any of the above, it tries to find a globally defined policy for all request keys (*), all methods (*) and specified route for current call, and returns that if found.
+
+* If not any of the above, it tries to find a globally defined policy for all request keys (*), specified method and all routes (*) for current call, and returns that if found.
+
+* If not any of the above, it tries to find a globally defined policy for all request keys (*), all methods (*) and all paths (*) for current call and returns that if found.
+
 * Otherwise It returns null meaning no rate limiting needs to be applied.  
 
 **Please note that in the above precedence logic flow a particular logic point is checked if 
@@ -143,9 +163,9 @@ in place of the \*. Policies will be be applied in the context of a
 provided request key like a clientid or userid or ip or whatever you 
 choose to provide.**
 
+Now let us analyse the code a bit more.
 
 The first thing it is doing is adding the /api/unlimited path prefix in the white listed paths list.
-
 
     .AddPathToWhiteList("/api/unlimited")
 
@@ -168,6 +188,7 @@ with two allowed call rates. One is 5 calls per minute and the other one is
         new AllowedCallRate(5, RateLimitUnit.PerMinute),
         new AllowedCallRate(8, RateLimitUnit.PerHour)
     }, true, "StaticPolicy_0")
+    
 Please note it is limiting by the route meaning calls 
 to api/globallylimited/1 and api/globallylimited/2 or 
 any other id at the end will be counted as one group defined by the template 
@@ -198,7 +219,7 @@ at all. The client provided policy provider could be only provider your applicat
 
    
 ### Step 3: Setting up the Redis rate limiter
-Now that our policy provider is ready, we now need to implement a limiter which will track the calls and report wheter they are within the limits of the specified policies and allowed call rates. Here we will use the Sliding window limiter which keeps very accurate counts within a time window and does not allow bursts meaning it will not allow more calls than the specified one at any time. The limiter takes the following parameters: 
+Now that our policy provider is ready, we now need to implement a limiter of type **IRateLimitingCacheProvider** which will track the calls and report wheter they are within the limits of the specified policies and allowed call rates. Here we will use the Sliding window limiter which keeps very accurate counts within a time window and does not allow bursts meaning it will not allow more calls than the specified one at any time. The limiter takes the following parameters: 
 	
   * redisEndpoint: install redis if not already done so (https://redis.io/download) or use an already existing one. If you install in your local then the default value is localhost:6379. This value is mandatory.
 * onException: gets called when there is an Exception, useful for logging purposes. This is optional with default value of null.
@@ -208,9 +229,9 @@ Now that our policy provider is ready, we now need to implement a limiter which 
 * countThrottledRequests: whether to count throttled request as well. This is optional with default value of false. 
 * circuitBreaker: the circuit breaker to use for resiliency when there are any issues with the connected Redis. A default circuit breaker DefaultCircuitBreaker class is provided and if no circuit breaker if set by the user, the default one will be used internally with a faultThreshhold of 10 in a faultWindowDuration of 10 seconds and the circuit will kept open for the next 5 minutes.
 
-### Step 4: Adding the RateLimitingActionFilter
-Uncomment the line in that region and this will add the global filter to intercept any framework calls and pass it along to the policy provider, get the policy returned and have the policy verfied by the rate limiter (IRateLimitingCacheProvider)
-
+### Step 4: Adding the RateLimitingFilter
+Uncomment the line in that region and this will add the global filter to intercept any framework calls and pass it along to the policy provider, get the policy returned and have the policy verfied by the rate limiter (IRateLimitingCacheProvider). The filter takes in the 
+RateLimiter class which iun turns is dependend on IRateLimitingCacheProvider and IRateLimitingPolicyProvider.
 
 Now we will run some tests against our sample app that we had just finished setting up and verify that it is working as expected by using the SuperBenchmarking tool (sb.exe from https://github.com/aliostad/SuperBenchmarker). It will not only show successfull (200) and throttled (429) but also show the performance of the calls. 
 
@@ -220,7 +241,7 @@ Let us run the sample project and do some verifications.
 
 First open up the command prompt and go the folder containing the sb.exe file
 
-A little bit about sb.exe first. The arguments we will be mostly using are -u, -n, -c and -h where -u represents the url to hit, -n represents the total number of calls to make to that endpoint, -c represents the concurrent number of calls to be made at a time and -h will show the response headers.
+A little bit about sb.exe (https://github.com/aliostad/SuperBenchmarker) first. The arguments we will be mostly using are -u, -n, -c and -h where -u represents the url to hit, -n represents the total number of calls to make to that endpoint, -c represents the concurrent number of calls to be made at a time and -h will show the response headers.
 
 So without further adeo let us get on with our exploration:
 
