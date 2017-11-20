@@ -25,56 +25,56 @@ namespace Domain.RateLimiting.Core.UnitTests
         }
 
         [Fact]
-        public async void ShouldFallbackToStaticallyAddedPolicyForMatchingRequestKeyRouteMethodFromManagerWhenPolicyWithNoAllowedCallRatesIsReturnedByCustomPolicyProvider()
+        public async void ShouldFallbackToStaticallyAddedPolicyForMatching_RequestKey_Route_Method_FromManagerWhenPolicyWithNoAllowedCallRatesIsReturnedByCustomPolicyProvider()
         {
             await ArangeActAndAssert("/api/values", "GET", "testclient_01", "RequestKey_Route_Method_MatchingPolicy_FromManager");
         }
 
         [Fact]
-        public async void ShouldFallbackToStaticallyAddedPolicyForRequestKeyRouteAllMethodsFromManagerWhenPolicyWithNoAllowedCallRatesIsReturnedByCustomPolicyProvider()
+        public async void ShouldFallbackToStaticallyAddedPolicyFor_RequestKey_Route_AllMethods_FromManagerWhenPolicyWithNoAllowedCallRatesIsReturnedByCustomPolicyProvider()
         {
             await ArangeActAndAssert("/api/values/{id}", "GET", "testclient_01", "RequestKey_Route_AllMethods_MatchingPolicy_FromManager");
         }
 
         [Fact]
-        public async void ShouldFallbackToStaticallyAddedPolicyForRequestKeyAllRoutesMethodFromManagerWhenPolicyWithNoAllowedCallRatesIsReturnedByCustomPolicyProvider()
+        public async void ShouldFallbackToStaticallyAddedPolicyFor_RequestKey_AllRoutes_Method_FromManagerWhenPolicyWithNoAllowedCallRatesIsReturnedByCustomPolicyProvider()
         {
             await ArangeActAndAssert("/api/values/test", "GET", "testclient_01", "RequestKey_AllRoutes_Method_MatchingPolicy_FromManager");
         }
 
         [Fact]
-        public async void ShouldFallbackToStaticallyAddedPolicyForRequestKeyAllRoutesAllMethodsFromManagerWhenPolicyWithNoAllowedCallRatesIsReturnedByCustomPolicyProvider()
+        public async void ShouldFallbackToStaticallyAddedPolicyFor_RequestKey_AllRoutes_AllMethods_FromManagerWhenPolicyWithNoAllowedCallRatesIsReturnedByCustomPolicyProvider()
         {
             await ArangeActAndAssert("/api/items", "POST", "testclient_01", "RequestKey_AllRoutes_AllMethods_MatchingPolicy_FromManager");
         }
 
         [Fact]
-        public async void ShouldFallbackToStaticallyAddedPolicyForAllRequestKeysRouteMethodFromManagerWhenPolicyWithNoAllowedCallRatesIsReturnedByCustomPolicyProvider()
+        public async void ShouldFallbackToStaticallyAddedPolicyFor_AllRequestKeys_Route_Method_FromManagerWhenPolicyWithNoAllowedCallRatesIsReturnedByCustomPolicyProvider()
         {
             await ArangeActAndAssert("/api/values", "GET", "testclient_02", "AllRequestKeys_Route_Method_MatchingPolicy_FromManager");
         }
 
 
         [Fact]
-        public async void ShouldFallbackToStaticallyAddedPolicyForAllRequestKeysRouteAllMethodsFromManagerWhenPolicyWithNoAllowedCallRatesIsReturnedByCustomPolicyProvider()
+        public async void ShouldFallbackToStaticallyAddedPolicyFor_AllRequestKeys_Route_AllMethods_FromManagerWhenPolicyWithNoAllowedCallRatesIsReturnedByCustomPolicyProvider()
         {
             await ArangeActAndAssert("/api/values", "POST", "testclient_02", "AllRequestKeys_Route_AllMethods_MatchingPolicy_FromManager");
         }
 
         [Fact]
-        public async void ShouldFallbackToStaticallyAddedPolicyForAllRequestKeysAllRoutesMethodFromManagerWhenPolicyWithNoAllowedCallRatesIsReturnedByCustomPolicyProvider()
+        public async void ShouldFallbackToStaticallyAddedPolicyFor_AllRequestKeys_AllRoutes_Method_FromManagerWhenPolicyWithNoAllowedCallRatesIsReturnedByCustomPolicyProvider()
         {
             await ArangeActAndAssert("/api/values/{id}", "GET", "testclient_02", "AllRequestKeys_AllRoutes_Method_MatchingPolicy_FromManager");
         }
 
         [Fact]
-        public async void ShouldFallbackToStaticallyAddedPolicyForAllRequestKeysAllRoutesAllMethodsFromManagerWhenPolicyWithNoAllowedCallRatesIsReturnedByCustomPolicyProvider()
+        public async void ShouldFallbackToStaticallyAddedPolicyFor_AllRequestKeys_AllRoutes_AllMethods_FromManagerWhenPolicyWithNoAllowedCallRatesIsReturnedByCustomPolicyProvider()
         {
             await ArangeActAndAssert("/api/values/{id}", "HEAD", "testclient_02", "AllRequestKeys_AllRoutes_AllMethods_MatchingPolicy_FromManager");
         }
 
         [Fact]
-        public async void ShouldNotFallbackToStaticallyAddedPolicyForAllRequestKeysAllRoutesAllMethodsFromManagerWhenPathIsWhiteListed()
+        public async void ShouldNotFallbackToStaticallyAddedPolicyFor_AllRequestKeys_AllRoutes_AllMethodsFromManagerWhenPathIsWhiteListed()
         {
             await ArangeActAndAssert("/api/values/{id}", "HEAD", "testclient_02", null, 
                 whiteListedPaths: new List<string>(){ "/api/values/{id}" }, isWhiteListedPathTest:true);

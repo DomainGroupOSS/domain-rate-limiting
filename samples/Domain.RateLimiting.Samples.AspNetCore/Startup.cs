@@ -152,7 +152,7 @@ namespace Domain.RateLimiting.Samples.AspNetCore
             // Add framework services
             services.AddMvc(options =>
             {
-                #region Adding the RateLimitingActionFilter
+                #region Adding the RateLimitingFilter
                 options.Filters.Add(new RateLimitingFilter(
                     new RateLimiter(rateLimitCacheProvider, globalRateLimitingClientPolicyManager)));
                 #endregion
