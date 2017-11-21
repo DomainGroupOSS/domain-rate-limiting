@@ -11,5 +11,9 @@
     <description>Rate limiting action filter for Web Api</description>
     <copyright>Copyright 2017</copyright>
     <tags>webapi, filters, ratelimiting, rate limiting, throttling, API throttling, request throttling</tags>
+    <dependencies>
+      <dependency id="Domain.RateLimiting.Core" version="1.0.1-alpha" />
+      <dependency id="Microsoft.AspNet.WebApi.Core" version="5.2.3" />
+    </dependencies>
   </metadata>
 </package>
