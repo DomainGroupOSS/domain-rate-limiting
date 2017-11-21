@@ -18,7 +18,7 @@ Both WebApi and AspnetCore versions are included.
 # Getting started
 
 First we need to reference the following packages from Nuget:
-(Note: All the packages are in alpha version now so please make sure to check the "Include prerelease" checkbox in the Nuget Package Manager)
+(NOTE: All the packages are in alpha version now so please make sure to check the "Include prerelease" checkbox in the Nuget Package Manager while searching in Nuget)
 * For AspnetCore apps: install the Domain.RateLimiting.AspNetCore package which contains the rate limiting filter which works     with Domain.RateLimiting.Core (skip for WebApi/Owin projects)
 * For WebApi/Owin projects: install the Domain.RateLimiting.WebApi package which contains the rate limiting filter which works with Domain.RateLimiting.Core (Skip for AspnetCore projects)
 * Domain.RateLimiting.Redis package which provides a distributed 
