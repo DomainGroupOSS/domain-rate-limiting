@@ -1,3 +1,5 @@
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg?style=flat-square)](https://opensource.org/licenses/Apache-2.0)
+
 # Introduction
 
 At its heart the idea of Rate Limiting is basically putting an upper limit on the number
