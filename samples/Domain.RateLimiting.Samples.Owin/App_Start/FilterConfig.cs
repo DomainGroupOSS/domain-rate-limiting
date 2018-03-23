@@ -19,15 +19,17 @@ namespace Domain.RateLimiting.Samples.Owin
         {
             { "api/globallylimited/{id}", "A"},
             { "api/globallylimited/{id}/sub/{subid}" , "B" },
-            { "api/globallylimited/{id}/sub/{subid}/test/{testid}", "C" }
+            { "api/globallylimited/{id}/sub/{subid}/test/{testid}", "C" },
+            { "api/globallylimited/{id}/free", "F" }
         };
 
-        public static Dictionary<string, Tuple<int, List<AllowedCallRate>>> CallRatesPerClass = 
-            new Dictionary<string, Tuple<int, List<AllowedCallRate>>>()
+        public static Dictionary<string, int> CostPerClass = 
+            new Dictionary<string, int>()
             {
-                { "A", new Tuple<int, List<AllowedCallRate>>(1, new  List<AllowedCallRate>() {new AllowedCallRate(1000, RateLimitUnit.PerMinute) }) },
-                { "B", new Tuple<int, List<AllowedCallRate>>(10, new  List<AllowedCallRate>() {new AllowedCallRate(100, RateLimitUnit.PerMinute) }) },
-                { "C", new Tuple<int, List<AllowedCallRate>>(100, new  List<AllowedCallRate>() {new AllowedCallRate(10, RateLimitUnit.PerMinute) }) }
+                { "A", 1},
+                { "B", 10 },
+                { "C", 100 },
+                { "F", 0 }
             };
     }
 
@@ -42,7 +44,7 @@ namespace Domain.RateLimiting.Samples.Owin
 
             var operationClass = CallClassification.RouteTemplateToClassMap[rateLimitingRequest.RouteTemplate];
 
-            var cost = CallClassification.CallRatesPerClass[operationClass].Item1;
+            var cost = CallClassification.CostPerClass[operationClass];
 
             return Task.FromResult(new RateLimitPolicy("Test_Client_01",
                 new List<AllowedCallRate>()
@@ -50,36 +52,11 @@ namespace Domain.RateLimiting.Samples.Owin
                     new AllowedCallRate(1000, RateLimitUnit.PerCustomPeriod, new LimitPeriod()
                     {
                         StartDate = new DateTime(2018,3,23,0,0,0),
-                        Duration = new TimeSpan(20,0,0),
+                        Duration = new TimeSpan(48,0,0),
                         Rolling = false
-                    })
-                    {
-                        Cost = cost
-                    }
-                }, name:"Quota_CustomPeriod"));
-        }
-    }
-
-
-
-    public class EndpointPolicyProvider : IRateLimitingPolicyProvider
-    {
-        //can be stored in a db
-
-
-        public Task<RateLimitPolicy> GetPolicyAsync(RateLimitingRequest rateLimitingRequest)
-
-        {
-            var clientId = rateLimitingRequest.ClaimsPrincipal?.Claims.FirstOrDefault(c => c.Type == "client_id");
-
-            //if (string.IsNullOrWhiteSpace(clientId?.Value)) return null;
-
-            var operationClass = CallClassification.RouteTemplateToClassMap[rateLimitingRequest.RouteTemplate];
-
-            var allowedCallRates = CallClassification.CallRatesPerClass[operationClass].Item2;
-
-            return Task.FromResult(new RateLimitPolicy($"{"Test_Client_01"}:{operationClass}", allowedCallRates, routeTemplate: rateLimitingRequest.RouteTemplate));
-
+                    }),
+                    new AllowedCallRate(100, RateLimitUnit.PerMinute)
+                }, name:"Quota_CustomPeriod") { CostPerCall = cost });
         }
     }
 
@@ -106,8 +83,6 @@ namespace Domain.RateLimiting.Samples.Owin
                     })
                 );
 
-
-
             #endregion
 
             var configSettings = new DomainElasticSearchLoggingOptions()
@@ -133,7 +108,7 @@ namespace Domain.RateLimiting.Samples.Owin
                 async (request, policy, result) =>
                 {
                     var operationClass = CallClassification.RouteTemplateToClassMap[request.RouteTemplate];
-                    var cost = CallClassification.CallRatesPerClass[operationClass].Item1;
+                    var cost = CallClassification.CostPerClass[operationClass];
 
                     auditLogger.Information(
                         "Throttled {Throttled}: Request success for client {ClientId} and endpoint {Endpoint} with route {RouteTemplate} which is Class {Class} with Cost {Cost}",
@@ -147,7 +122,7 @@ namespace Domain.RateLimiting.Samples.Owin
                 async (request, policy, result) =>
                 {
                     var operationClass = CallClassification.RouteTemplateToClassMap[request.RouteTemplate];
-                    var cost = CallClassification.CallRatesPerClass[operationClass].Item1;
+                    var cost = CallClassification.CostPerClass[operationClass];
 
                 auditLogger.Information(
                     "Throttled {Throttled}: throttled for client {ClientId} and endpoint {Endpoint} with route {RouteTemplate} which is Class {Class} with Cost {Cost}",
@@ -159,10 +134,7 @@ namespace Domain.RateLimiting.Samples.Owin
                         cost);
                 }));
 
-            filters.Add(new RateLimitingFilter(
-                new RateLimiter(rateLimitCacheProvider, new EndpointPolicyProvider())));
-
-            //filters.Add(new RateLimitingPostActionFilter());
+            filters.Add(new RateLimitingPostActionFilter());
         }
 
         private static void ConfigureRateLimitingSettings(RedisRateLimiterSettings redisRateLimiterSettings)

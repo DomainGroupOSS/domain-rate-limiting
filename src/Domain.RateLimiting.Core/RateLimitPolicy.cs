@@ -70,6 +70,8 @@ namespace Domain.RateLimiting.Core
         /// <value>The policies to apply</value>
         public IList<AllowedCallRate> AllowedCallRates { get; }
 
+        public int CostPerCall { get; set; } = 1;
+
         public bool AllowAttributeOverride { get; }
         public string Name { get; }
 

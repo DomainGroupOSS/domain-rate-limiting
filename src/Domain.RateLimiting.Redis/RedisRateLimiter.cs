@@ -67,7 +67,8 @@ namespace Domain.RateLimiting.Redis
         
         public async Task<RateLimitingResult> LimitRequestAsync(string requestId, string method, string host,
             string routeTemplate,
-            IList<AllowedCallRate> allowedCallRates)
+            IList<AllowedCallRate> allowedCallRates,
+            int costPerCall = 1)
         {
             return await _circuitBreakerPolicy.ExecuteAsync(async () =>
             {
@@ -85,7 +86,7 @@ namespace Domain.RateLimiting.Redis
                 {
                     numberOfRequestsMadePerAllowedCallRateAsync.Add(
                         GetNumberOfRequestsAsync(requestId, method, host, routeTemplate, allowedCallRate, cacheKeys,
-                            redisTransaction, utcNowTicks));
+                            redisTransaction, utcNowTicks, costPerCall));
                 }
 
                 await ExecuteTransactionAsync(redisTransaction).ConfigureAwait(false);
@@ -117,7 +118,7 @@ namespace Domain.RateLimiting.Redis
                 var postViolationTransaction = redisDb.CreateTransaction();
 
                 if (!_countThrottledRequests)
-                    UndoUnsuccessfulRequestCount(postViolationTransaction, cacheKeys, utcNowTicks);
+                    UndoUnsuccessfulRequestCount(postViolationTransaction, cacheKeys, utcNowTicks, costPerCall);
 
                 var violatedCacheKey = violatedCacheKeys.Last().Value;
 
@@ -136,6 +137,18 @@ namespace Domain.RateLimiting.Redis
                 return rateLimitingResult;
 
             }, new RateLimitingResult(false, 0));
+        }
+
+        public Task<RateLimitingResult> LimitRequestAsync(RateLimitCacheKey cacheKey)
+        {
+            return LimitRequestAsync(cacheKey.RequestId, cacheKey.Method, cacheKey.Host, cacheKey.RouteTemplate,
+                new List<AllowedCallRate>() { new AllowedCallRate(cacheKey.Limit, cacheKey.Unit) }, 1);
+        }
+
+        public async Task<RateLimitingResult> LimitRequestAsync(string requestId, string method, string host, string routeTemplate,
+            IList<AllowedCallRate> rateLimitPolicies)
+        {
+            return await LimitRequestAsync(requestId, method, host, routeTemplate, rateLimitPolicies, 1);
         }
 
         private async Task<long> GetWaitingIntervalInTicks(Task<SortedSetEntry[]> setupGetOldestRequestTimestampInTicks,
@@ -162,10 +175,10 @@ namespace Domain.RateLimiting.Redis
 
         private void UndoUnsuccessfulRequestCount(ITransaction undoUnsuccessfulRequestCountTransaction,
             IEnumerable<RateLimitCacheKey> cacheKeys,
-            long utcNowTicks)
+            long utcNowTicks, int costPerCall = 1)
         {
             foreach (var cacheKey in cacheKeys)
-                UndoUnsuccessfulRequestCount(undoUnsuccessfulRequestCountTransaction, cacheKey, utcNowTicks);
+                UndoUnsuccessfulRequestCount(undoUnsuccessfulRequestCountTransaction, cacheKey, utcNowTicks, costPerCall);
 
         }
 
@@ -174,11 +187,7 @@ namespace Domain.RateLimiting.Redis
         /// </summary>
         /// <param name="cacheKey">The cache key.</param>
         /// <returns></returns>
-        public Task<RateLimitingResult> LimitRequestAsync(RateLimitCacheKey cacheKey)
-        {
-            return LimitRequestAsync(cacheKey.RequestId, cacheKey.Method, cacheKey.Host, cacheKey.RouteTemplate,
-                new List<AllowedCallRate>() { new AllowedCallRate(cacheKey.Limit, cacheKey.Unit) });
-        }
+        
 
         protected abstract Task<long> GetNumberOfRequestsAsync(
             string requestId,
@@ -188,12 +197,13 @@ namespace Domain.RateLimiting.Redis
             AllowedCallRate policy,
             IList<RateLimitCacheKey> cacheKeys,
             ITransaction redisTransaction,
-            long utcNowTicks);
+            long utcNowTicks,
+            int costPerCall = 1);
 
         protected abstract void UndoUnsuccessfulRequestCount(
             ITransaction postViolationTransaction,
             RateLimitCacheKey cacheKey,
-            long utcNowTicks);
+            long utcNowTicks, int costPerCall = 1);
 
         protected abstract Task<SortedSetEntry[]> SetupGetOldestRequestTimestampInTicks(
             ITransaction postViolationTransaction,
@@ -203,6 +213,5 @@ namespace Domain.RateLimiting.Redis
         protected abstract Task<long> GetOldestRequestTimestampInTicks(
             Task<SortedSetEntry[]> task, RateLimitCacheKey cacheKey,
             long utcNowTicks);
-
     }
 }

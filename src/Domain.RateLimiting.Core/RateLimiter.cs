@@ -56,7 +56,7 @@ namespace Domain.RateLimiting.Core
             }
             
             var rateLimitingResult = await _rateLimitingCacheProvider.LimitRequestAsync(rateLimitingPolicy.RequestKey, httpMethod,
-                host, routeTemplate, allowedCallRates).ConfigureAwait(false);
+                host, routeTemplate, allowedCallRates, rateLimitingPolicy.CostPerCall).ConfigureAwait(false);
 
             if (!rateLimitingResult.Throttled)
             {

@@ -40,15 +40,8 @@ namespace Domain.RateLimiting.Core
         /// </summary>
         /// <value>The unit.</value>
         public RateLimitUnit Unit { get; }
-
-
-
+        
         public LimitPeriod Period { get; }
-
-        public int Cost { get; set; } = 1;
-
-
-
 
         public override string ToString()
         {

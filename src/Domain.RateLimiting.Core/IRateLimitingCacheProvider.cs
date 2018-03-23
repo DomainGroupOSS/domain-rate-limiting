@@ -18,5 +18,8 @@ namespace Domain.RateLimiting.Core
 
         Task<RateLimitingResult> LimitRequestAsync(string requestId, string method, string host, string routeTemplate,
             IList<AllowedCallRate> rateLimitPolicies);
+
+        Task<RateLimitingResult> LimitRequestAsync(string requestId, string method, string host, string routeTemplate,
+            IList<AllowedCallRate> rateLimitPolicies, int costPerCall = 1);
     }
 }

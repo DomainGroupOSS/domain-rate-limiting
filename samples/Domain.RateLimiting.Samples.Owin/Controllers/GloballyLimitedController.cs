@@ -29,6 +29,13 @@ namespace Domain.RateLimiting.Samples.Owin.Controllers
             return "value from sub test";
         }
 
+        [HttpGet]
+        [Route("api/globallylimited/{id}/free")]
+        public string Free(int id)
+        {
+            return "value";
+        }
+
         public void Post([FromBody]string value)
         {
         }

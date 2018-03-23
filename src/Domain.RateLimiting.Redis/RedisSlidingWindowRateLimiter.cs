@@ -42,9 +42,9 @@ namespace Domain.RateLimiting.Redis
 
         protected override Task<long> GetNumberOfRequestsAsync(string requestId, string method, string host, string routeTemplate,
              AllowedCallRate allowedCallRate, IList<RateLimitCacheKey> cacheKeys, 
-             ITransaction redisTransaction, long utcNowTicks)
+             ITransaction redisTransaction, long utcNowTicks, int costPerCall = 1)
         {
-            if (allowedCallRate.Cost != 1)
+            if (costPerCall != 1)
                 throw new ArgumentOutOfRangeException("Only cost of value 1 is currently supported by the sliding window rate limiter");
 
             var cacheKey =
@@ -65,8 +65,11 @@ namespace Domain.RateLimiting.Redis
             return numberOfRequestsInWindowAsyncList;
         }
 
-        protected override void UndoUnsuccessfulRequestCount(ITransaction postViolationTransaction, RateLimitCacheKey cacheKey, long now)
+        protected override void UndoUnsuccessfulRequestCount(ITransaction postViolationTransaction, RateLimitCacheKey cacheKey, long now, int costPerCall = 1)
         {
+            if (costPerCall != 1)
+                throw new ArgumentOutOfRangeException("Only cost of value 1 is currently supported by the sliding window rate limiter");
+
             var adjust = postViolationTransaction.SortedSetRemoveRangeByRankAsync(cacheKey.ToString(), -1, -1);
         }
 
