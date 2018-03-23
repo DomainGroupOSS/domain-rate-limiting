@@ -52,8 +52,8 @@ namespace Domain.RateLimiting.Samples.Owin
                     new AllowedCallRate(1000, RateLimitUnit.PerCustomPeriod, new LimitPeriod()
                     {
                         StartDate = new DateTime(2018,3,23,0,0,0),
-                        Duration = new TimeSpan(48,0,0),
-                        Rolling = false
+                        Duration = new TimeSpan(1,0,0),
+                        Rolling = true
                     }),
                     new AllowedCallRate(100, RateLimitUnit.PerMinute)
                 }, name:"Quota_CustomPeriod") { CostPerCall = cost });
@@ -125,13 +125,14 @@ namespace Domain.RateLimiting.Samples.Owin
                     var cost = CallClassification.CostPerClass[operationClass];
 
                 auditLogger.Information(
-                    "Throttled {Throttled}: throttled for client {ClientId} and endpoint {Endpoint} with route {RouteTemplate} which is Class {Class} with Cost {Cost}",
+                    "Throttled {Throttled}: throttled for client {ClientId} and endpoint {Endpoint} with route {RouteTemplate} which is Class {Class} with Cost {Cost} by violating policy {ViolatedPolicy}",
                         true,
                         result.CacheKey.RequestId,
                         request.Path,
                         request.RouteTemplate,
                         operationClass,
-                        cost);
+                        cost,
+                        $"{policy.Name}:{result.CacheKey.AllowedCallRate}");
                 }));
 
             filters.Add(new RateLimitingPostActionFilter());
