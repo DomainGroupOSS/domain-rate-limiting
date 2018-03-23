@@ -26,12 +26,12 @@ namespace Domain.RateLimiting.Core.UnitTests
             await rateLimiter.LimitRequestAsync(_rateLimitingRequest,
                 () => _allowedCallRates,
                 "localhost",
-                (rr) =>
+                (r,p,rr) =>
                 {
                     onSuccessFuncCalled = true;
                     return Task.CompletedTask;
                 },
-                (rr, vp) =>
+                (r,p,rr) =>
                 {
                     onThrottledFuncCalled = true;
                     return Task.CompletedTask;

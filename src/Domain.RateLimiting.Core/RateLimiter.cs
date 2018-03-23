@@ -19,8 +19,8 @@ namespace Domain.RateLimiting.Core
         }
         public async Task LimitRequestAsync(RateLimitingRequest rateLimitingRequest,
             Func<IList<AllowedCallRate>> getCustomAttributes, string host,
-            Func<RateLimitingResult, Task> onSuccessFunc,
-            Func<RateLimitingResult, string, Task> onThrottledFunc,
+            Func<RateLimitingRequest, RateLimitPolicy, RateLimitingResult, Task> onSuccessFunc,
+            Func<RateLimitingRequest, RateLimitPolicy, RateLimitingResult, Task> onThrottledFunc,
             Func<Task> onNotApplicableFunc)
         {
 
@@ -60,11 +60,11 @@ namespace Domain.RateLimiting.Core
 
             if (!rateLimitingResult.Throttled)
             {
-                await onSuccessFunc(rateLimitingResult);
+                await onSuccessFunc(rateLimitingRequest, rateLimitingPolicy, rateLimitingResult);
             }
             else
             {
-                await onThrottledFunc(rateLimitingResult, policyName);
+                await onThrottledFunc(rateLimitingRequest, rateLimitingPolicy, rateLimitingResult);
             }
         }
 

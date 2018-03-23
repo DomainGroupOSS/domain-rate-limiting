@@ -25,6 +25,20 @@ namespace Domain.RateLimiting.Core
         /// <summary>
         /// Limit requests per day
         /// </summary>
-        PerDay = TimeSpan.TicksPerDay
+        PerDay = TimeSpan.TicksPerDay,
+
+
+
+
+        PerCustomPeriod = TimeSpan.TicksPerDay * 365
+
+
+    }
+
+    public class LimitPeriod
+    {
+        public DateTime StartDate { get; set; }
+        public TimeSpan Duration { get; set; }
+        public bool Rolling { get; set; }
     }
 }

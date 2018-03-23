@@ -20,12 +20,14 @@ namespace Domain.RateLimiting.Core
 
         public string RouteTemplate { get; }
 
-        private static readonly IDictionary<RateLimitUnit, Func<int, TimeSpan>> RateLimitTypeExpirationMapping = new Dictionary<RateLimitUnit, Func<int, TimeSpan>>
+        private static readonly IDictionary<RateLimitUnit, Func<AllowedCallRate, TimeSpan>> RateLimitTypeExpirationMapping = 
+            new Dictionary<RateLimitUnit, Func<AllowedCallRate, TimeSpan>>
         {
             {RateLimitUnit.PerSecond, limit => TimeSpan.FromSeconds(1)},
             {RateLimitUnit.PerMinute, limit => TimeSpan.FromMinutes(1)},
             {RateLimitUnit.PerHour, limit => TimeSpan.FromHours(1)},
-            {RateLimitUnit.PerDay, limit => TimeSpan.FromDays(1)}
+            {RateLimitUnit.PerDay, limit => TimeSpan.FromDays(1)},
+            {RateLimitUnit.PerCustomPeriod, limit => limit.Period.Duration}
         };
 
         /// <summary>
@@ -56,7 +58,11 @@ namespace Domain.RateLimiting.Core
             Method = method;
             Host = host;
             RouteTemplate = routeTemplate.StartsWith(@"/") ? routeTemplate : @"/" + routeTemplate;
-            Expiration = RateLimitTypeExpirationMapping[allowedCallRate.Unit](allowedCallRate.Limit);
+
+            //////////////////////////////////////////////////////////////////////////////////
+            Expiration = RateLimitTypeExpirationMapping[allowedCallRate.Unit](allowedCallRate);
+
+
             RetryAfter = _dateTimeUtcNow.Add(Expiration).ToString("R");
             AllowedCallRate = allowedCallRate;
             _getSuffix = getSuffix ?? (_ => string.Empty); 

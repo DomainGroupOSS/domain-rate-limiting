@@ -9,8 +9,8 @@ namespace Domain.RateLimiting.Core
     {
         Task LimitRequestAsync(RateLimitingRequest rateLimitingRequest,
             Func<IList<AllowedCallRate>> getCustomAttributes, string host,
-            Func<RateLimitingResult, Task> onSuccessFunc,
-            Func<RateLimitingResult, string, Task> onThrottledFunc,
+            Func<RateLimitingRequest, RateLimitPolicy, RateLimitingResult, Task> onSuccessFunc,
+            Func<RateLimitingRequest, RateLimitPolicy, RateLimitingResult, Task> onThrottledFunc,
             Func<Task> onNotApplicableFunc);
     }
 }

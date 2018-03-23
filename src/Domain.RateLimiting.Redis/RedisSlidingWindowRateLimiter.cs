@@ -44,6 +44,9 @@ namespace Domain.RateLimiting.Redis
              AllowedCallRate allowedCallRate, IList<RateLimitCacheKey> cacheKeys, 
              ITransaction redisTransaction, long utcNowTicks)
         {
+            if (allowedCallRate.Cost != 1)
+                throw new ArgumentOutOfRangeException("Only cost of value 1 is currently supported by the sliding window rate limiter");
+
             var cacheKey =
                 new RateLimitCacheKey(requestId, method, host, routeTemplate, allowedCallRate, 
                 RateLimitTypeCacheKeyFormatMapping[allowedCallRate.Unit]);
@@ -54,7 +57,7 @@ namespace Domain.RateLimiting.Redis
             var sortedSetRemoveRangeByScoreAsync = redisTransaction.SortedSetRemoveRangeByScoreAsync(
                 cacheKeyString, 0, utcNowTicks - (long)cacheKey.Unit);
 
-            var sortedSetAddAsync = redisTransaction.SortedSetAddAsync(cacheKeyString, Guid.NewGuid().ToString(), utcNowTicks);
+            var sortedSetAddAsync = redisTransaction.SortedSetAddAsync(cacheKeyString, new SortedSetEntry[] { new SortedSetEntry(Guid.NewGuid().ToString(), utcNowTicks) });
             var numberOfRequestsInWindowAsyncList = redisTransaction.SortedSetLengthAsync(cacheKeyString);
             var expireTask = redisTransaction.KeyExpireAsync(cacheKeyString,
                 cacheKey.Expiration.Add(new TimeSpan(0, 1, 0)));

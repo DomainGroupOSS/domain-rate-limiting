@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -15,32 +16,53 @@ namespace Domain.RateLimiting.WebApi
     {
         private readonly IRateLimiter _rateLimiter;
 
-        public RateLimitingFilter(IRateLimiter rateLimiter)
+        public Func<RateLimitingRequest, RateLimitPolicy, RateLimitingResult, Task> OnSuccess { get; }
+        public Func<RateLimitingRequest, RateLimitPolicy, RateLimitingResult, Task> OnThrottled { get; }
+
+        public RateLimitingFilter(IRateLimiter rateLimiter, 
+            Func<RateLimitingRequest, RateLimitPolicy, RateLimitingResult,Task> onSuccess = null,
+            Func<RateLimitingRequest, RateLimitPolicy, RateLimitingResult,Task> onThrottled = null)
         { 
             _rateLimiter = rateLimiter;
+            OnSuccess = onSuccess;
+            OnThrottled = onThrottled;
         }
 
         public override async Task OnAuthorizationAsync(HttpActionContext actionContext, CancellationToken cancellationToken)
         {
             var context = actionContext;
-            await _rateLimiter.LimitRequestAsync(
-                new RateLimitingRequest(
+            var request = new RateLimitingRequest(
                     GetRouteTemplate(context),
                     context.Request.RequestUri.AbsolutePath,
                     context.Request.Method.Method,
                     (header) => context.Request.Headers.GetValues(header).ToArray(),
                     context.RequestContext.Principal as ClaimsPrincipal,
-                    await context.Request.Content.ReadAsStreamAsync().ConfigureAwait(false)),
+                    await context.Request.Content.ReadAsStreamAsync().ConfigureAwait(false));
+
+            await _rateLimiter.LimitRequestAsync(
+                request,
                 () => RateLimitingFilter.GetCustomAttributes(context),
                 context.Request.Headers.Host,
-                async rateLimitingResult =>
+                async (rateLimitingRequest, policy, rateLimitingResult) =>
                 {
-                    context.Request.Properties.Add("RateLimitingResult", rateLimitingResult);
+                    if (!context.Request.Properties.ContainsKey("RateLimitingResult"))
+                    {
+                        context.Request.Properties.Add("RateLimitingResult", rateLimitingResult);
+                    }
+
+                    ///////////////////
+                    if (OnSuccess != null)
+                        await OnSuccess.Invoke(rateLimitingRequest, policy, rateLimitingResult);
+
                     await base.OnAuthorizationAsync(context, cancellationToken);
                 },
-                async (rateLimitingResult, violatedPolicyName) =>
+                async (rateLimitingRequest, policy, rateLimitingResult) =>
                 {
-                    await RateLimitingFilter.TooManyRequests(context, rateLimitingResult, violatedPolicyName);
+                    //////////////////////
+                    if (OnThrottled != null)
+                        await OnThrottled.Invoke(rateLimitingRequest, policy, rateLimitingResult);
+
+                    await RateLimitingFilter.TooManyRequests(context, rateLimitingResult, policy.Name);
                 },
                 null).ConfigureAwait(false);
         }

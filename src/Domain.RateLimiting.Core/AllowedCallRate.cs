@@ -23,6 +23,12 @@ namespace Domain.RateLimiting.Core
             Limit = limit;
             Unit = unit;
         }
+
+
+        public AllowedCallRate(int limit, RateLimitUnit unit, LimitPeriod period):this(limit, unit)
+        {
+            Period = period;
+        }
         /// <summary>
         /// Gets the limit.
         /// </summary>
@@ -34,6 +40,15 @@ namespace Domain.RateLimiting.Core
         /// </summary>
         /// <value>The unit.</value>
         public RateLimitUnit Unit { get; }
+
+
+
+        public LimitPeriod Period { get; }
+
+        public int Cost { get; set; } = 1;
+
+
+
 
         public override string ToString()
         {

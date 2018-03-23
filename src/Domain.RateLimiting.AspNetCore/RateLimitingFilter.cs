@@ -97,14 +97,14 @@ namespace Domain.RateLimiting.AspNetCore
                     actionContext.HttpContext.Request.Body),
                 () => GetCustomAttributes(actionContext.ActionDescriptor),
                 actionContext.HttpContext.Request.Host.Value,
-                async rateLimitingResult =>
+                async (request, policy, rateLimitingResult) =>
                 {
                     AddUpdateRateLimitingSuccessHeaders(actionContext.HttpContext, rateLimitingResult);
                     await Task.FromResult<object>(null);
                 },
-                async (rateLimitingResult, violatedPolicyName) =>
+                async (request, policy, rateLimitingResult) =>
                 {
-                    TooManyRequests(actionContext, rateLimitingResult, violatedPolicyName);
+                    TooManyRequests(actionContext, rateLimitingResult, policy.Name);
                     await Task.FromResult<object>(null);
                 }, 
                 null).ConfigureAwait(false);

@@ -16,12 +16,19 @@ namespace Domain.RateLimiting.Samples.Owin.Controllers
         {
             return "value";
         }
-        
+
+        [Route("api/globallylimited/{id}/sub/{subid}")]
         public string Get(int id, int subid)
         {
             return "value from sub";
         }
-        
+
+        [Route("api/globallylimited/{id}/sub/{subid}/test/{testid}")]
+        public string Get(int id, int subid, int testid)
+        {
+            return "value from sub test";
+        }
+
         public void Post([FromBody]string value)
         {
         }
