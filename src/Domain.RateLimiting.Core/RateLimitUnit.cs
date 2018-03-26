@@ -37,7 +37,7 @@ namespace Domain.RateLimiting.Core
 
     public class LimitPeriod
     {
-        public DateTime StartDate { get; set; }
+        public DateTime StartDateUtc { get; set; }
         public TimeSpan Duration { get; set; }
         public bool Rolling { get; set; }
     }

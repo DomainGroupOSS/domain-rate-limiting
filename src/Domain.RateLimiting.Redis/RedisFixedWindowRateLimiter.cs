@@ -20,20 +20,21 @@ namespace Domain.RateLimiting.Redis
             {RateLimitUnit.PerDay, allowedCallRate => dateTime => dateTime.ToString("yyyyMMdd")},
             {RateLimitUnit.PerCustomPeriod, allowedCallRate => dateTime =>
                 {
-                    GetDateRange(allowedCallRate,dateTime, out DateTime from, out DateTime to);
-                    return $"{from.ToString("yyyyMMddHHmmss")}:{to.ToString("yyyyMMddHHmmss")}";
+                    GetDateRange(allowedCallRate, dateTime, out DateTime fromUtc, out DateTime toUtc);
+                    return $"{fromUtc.ToString("yyyyMMddHHmmss")}::{toUtc.ToString("yyyyMMddHHmmss")}";
                 }
             }
         };
 
-        private static void GetDateRange(AllowedCallRate allowedCallRate, DateTime dateTime, out DateTime from, out DateTime to)
+        private static void GetDateRange(AllowedCallRate allowedCallRate, DateTime dateTimeUtc, out DateTime fromUtc, out DateTime toUtc)
         {
             var periodUnits = allowedCallRate.Period.Rolling ?
-                                    Math.Floor(dateTime.Subtract(allowedCallRate.Period.StartDate).TotalSeconds / allowedCallRate.Period.Duration.TotalSeconds) : 0;
+                                    Math.Floor(dateTimeUtc.Subtract(allowedCallRate.Period.StartDateUtc).TotalHours 
+                                    / allowedCallRate.Period.Duration.TotalHours) : 0;
 
-            from = allowedCallRate.Period.StartDate.Add(
-                new TimeSpan(0, 0, Convert.ToInt32(allowedCallRate.Period.Duration.TotalSeconds * periodUnits)));
-            to = from.Add(allowedCallRate.Period.Duration);
+            fromUtc = allowedCallRate.Period.StartDateUtc.Add(
+                new TimeSpan(Convert.ToInt32(allowedCallRate.Period.Duration.TotalHours * periodUnits), 0 , 0));
+            toUtc = fromUtc.Add(allowedCallRate.Period.Duration);
         }
 
         public Func<string, string, string, string, Task<int>> CostFunction { get; }
@@ -73,12 +74,15 @@ namespace Domain.RateLimiting.Redis
 
             if (allowedCallRate.Unit == RateLimitUnit.PerCustomPeriod)
             {
-                GetDateRange(allowedCallRate, DateTime.Now, out DateTime from, out DateTime to);
-                if (!(DateTime.Now >= from && DateTime.Now <= to))
-                    return redisTransaction.StringIncrementAsync(cacheKeyString, allowedCallRate.Limit * costPerCall + 10);
+                var dateTimeNowUtc = new DateTime(utcNowTicks, DateTimeKind.Utc);
+                GetDateRange(allowedCallRate, dateTimeNowUtc, out DateTime fromUtc, out DateTime toUtc);
+                if (!(dateTimeNowUtc >= fromUtc && dateTimeNowUtc <= toUtc))
+                {
+                    redisTransaction.KeyExpireAsync($"{cacheKeyString}_temp", new TimeSpan(0,0,10));
+                    return redisTransaction.StringIncrementAsync($"{cacheKeyString}_temp", allowedCallRate.Limit  + 10);
+                }
             }
            
-
             var incrTask = redisTransaction.StringIncrementAsync(cacheKeyString, costPerCall);
             var getKeyTask = redisTransaction.StringGetAsync(cacheKeyString);
             var expireTask = redisTransaction.KeyExpireAsync(cacheKeyString, cacheKey.Expiration);

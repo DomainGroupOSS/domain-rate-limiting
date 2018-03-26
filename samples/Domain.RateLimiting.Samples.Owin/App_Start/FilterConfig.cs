@@ -51,7 +51,7 @@ namespace Domain.RateLimiting.Samples.Owin
                 {
                     new AllowedCallRate(1000, RateLimitUnit.PerCustomPeriod, new LimitPeriod()
                     {
-                        StartDate = new DateTime(2018,3,23,0,0,0),
+                        StartDateUtc = new DateTime(2018,3,23,0,0,0),
                         Duration = new TimeSpan(1,0,0),
                         Rolling = true
                     })

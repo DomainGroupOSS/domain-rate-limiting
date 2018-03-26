@@ -69,7 +69,7 @@ namespace Domain.RateLimiting.Redis
         protected override void UndoUnsuccessfulRequestCount(ITransaction postViolationTransaction, RateLimitCacheKey cacheKey, long now, int costPerCall = 1)
         {
             if (costPerCall != 1)
-                throw new ArgumentOutOfRangeException("Only cost of value 1 is currently supported by the sliding window rate limiter");
+                throw new NotSupportedException("Only cost of value 1 is currently supported by the sliding window rate limiter");
 
             var adjust = postViolationTransaction.SortedSetRemoveRangeByRankAsync(cacheKey.ToString(), -1, -1);
         }
