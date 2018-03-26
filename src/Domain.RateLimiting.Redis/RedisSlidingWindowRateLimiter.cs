@@ -17,7 +17,8 @@ namespace Domain.RateLimiting.Redis
             {RateLimitUnit.PerSecond, _ => RateLimitUnit.PerSecond.ToString()},
             {RateLimitUnit.PerMinute, _ => RateLimitUnit.PerMinute.ToString()},
             {RateLimitUnit.PerHour, _ => RateLimitUnit.PerHour.ToString()},
-            {RateLimitUnit.PerDay, _ => RateLimitUnit.PerDay.ToString()}
+            {RateLimitUnit.PerDay, _ => RateLimitUnit.PerDay.ToString()},
+            {RateLimitUnit.PerCustomPeriod, _ => throw new NotSupportedException("Custom Period is not supported by Sliding window yet")}
         };
 
         public RedisSlidingWindowRateLimiter(string redisEndpoint,
@@ -57,7 +58,7 @@ namespace Domain.RateLimiting.Redis
             var sortedSetRemoveRangeByScoreAsync = redisTransaction.SortedSetRemoveRangeByScoreAsync(
                 cacheKeyString, 0, utcNowTicks - (long)cacheKey.Unit);
 
-            var sortedSetAddAsync = redisTransaction.SortedSetAddAsync(cacheKeyString, new SortedSetEntry[] { new SortedSetEntry(Guid.NewGuid().ToString(), utcNowTicks) });
+            var sortedSetAddAsync = redisTransaction.SortedSetAddAsync(cacheKeyString, Guid.NewGuid().ToString(), utcNowTicks);
             var numberOfRequestsInWindowAsyncList = redisTransaction.SortedSetLengthAsync(cacheKeyString);
             var expireTask = redisTransaction.KeyExpireAsync(cacheKeyString,
                 cacheKey.Expiration.Add(new TimeSpan(0, 1, 0)));

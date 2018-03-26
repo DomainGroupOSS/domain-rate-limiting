@@ -104,7 +104,7 @@ namespace Domain.RateLimiting.Redis.UnitTests
                 "GET", "localhost", "/api/values", new List<AllowedCallRate>()
                 {
                     new AllowedCallRate(2, RateLimitUnit.PerMinute)
-                }).ConfigureAwait(false);
+                }, 1).ConfigureAwait(false);
 
             Assert.Equal(false, result.Throttled);
             Assert.Equal(0, result.WaitingIntervalInTicks);
@@ -148,7 +148,7 @@ namespace Domain.RateLimiting.Redis.UnitTests
                 "GET", "localhost", "/api/values", new List<AllowedCallRate>()
                 {
                     new AllowedCallRate(2, RateLimitUnit.PerMinute)
-                }).ConfigureAwait(false);
+                }, 1).ConfigureAwait(false);
 
             Assert.Equal(false, result.Throttled);
             Assert.Equal(0, result.WaitingIntervalInTicks);

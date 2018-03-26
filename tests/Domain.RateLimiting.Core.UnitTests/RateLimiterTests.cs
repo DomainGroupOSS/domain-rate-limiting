@@ -69,7 +69,7 @@ namespace Domain.RateLimiting.Core.UnitTests
             var rateLimitingCacheProviderMock = new Mock<IRateLimitingCacheProvider>();
             rateLimitingCacheProviderMock.Setup(provider => provider.LimitRequestAsync(
                 "testclient_01", "GET",
-                "localhost", "/api/values", _allowedCallRates))
+                "localhost", "/api/values", _allowedCallRates, 1))
                 .ReturnsAsync(new RateLimitingResult(false, 0));
             
             var rateLimiter = new RateLimiter(rateLimitingCacheProviderMock.Object, 
@@ -129,7 +129,7 @@ namespace Domain.RateLimiting.Core.UnitTests
             var rateLimitingCacheProviderMock = new Mock<IRateLimitingCacheProvider>(MockBehavior.Strict);
             rateLimitingCacheProviderMock.Setup(provider => provider.LimitRequestAsync(
                     "testclient_01", "GET",
-                    "localhost", "/api/values", _allowedCallRates))
+                    "localhost", "/api/values", _allowedCallRates, 1))
                 .ReturnsAsync(new RateLimitingResult(false, 0));
 
             var rateLimiter = new RateLimiter(rateLimitingCacheProviderMock.Object,
@@ -158,7 +158,7 @@ namespace Domain.RateLimiting.Core.UnitTests
 
             rateLimitingCacheProviderMock.Setup(provider => provider.LimitRequestAsync(
                     "testclient_01", "GET",
-                    "localhost", "/api/values", _allowedCallRates))
+                    "localhost", "/api/values", _allowedCallRates, 1))
                 .ReturnsAsync(rateLimitingResult);
 
             var rateLimiter = new RateLimiter(rateLimitingCacheProviderMock.Object,
