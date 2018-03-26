@@ -7,7 +7,7 @@
         public long WaitingIntervalInTicks { get; }
 
         public RateLimitCacheKey CacheKey { get; }
-        public int CallsRemaining { get; }
+        public int CallUnitsRemaining { get; }
         public string ViolatedPolicyName { get; }
 
         /// <summary>
@@ -23,7 +23,7 @@
             Throttled = throttled;
             WaitingIntervalInTicks = waitingIntervalInTicks;
             CacheKey = cacheKey;
-            CallsRemaining = callsRemaining;
+            CallUnitsRemaining = callsRemaining;
             ViolatedPolicyName = violatedPolicyName;
         }
 

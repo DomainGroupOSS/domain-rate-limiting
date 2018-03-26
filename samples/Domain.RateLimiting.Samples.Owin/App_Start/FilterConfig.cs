@@ -51,10 +51,11 @@ namespace Domain.RateLimiting.Samples.Owin
                 {
                     new AllowedCallRate(1000, RateLimitUnit.PerCustomPeriod, new LimitPeriod()
                     {
-                        StartDateUtc = new DateTime(2018,3,23,0,0,0),
+                        StartDateUtc = new DateTime(2018,3,23,0,0,0,DateTimeKind.Utc),
                         Duration = new TimeSpan(1,0,0),
                         Rolling = true
-                    })
+                    }),
+                    new AllowedCallRate(100, RateLimitUnit.PerMinute)
                 }, name:"Quota_CustomPeriod") { CostPerCall = cost });
         }
     }

@@ -45,7 +45,7 @@ namespace Domain.RateLimiting.Core
 
         public override string ToString()
         {
-            return $"{Limit} calls {Unit}";
+            return $"{Limit} call units {Unit}";
         }
 
         public override bool Equals(object obj)

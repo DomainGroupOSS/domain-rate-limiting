@@ -108,7 +108,7 @@ namespace Domain.RateLimiting.Redis.UnitTests
 
             Assert.Equal(false, result.Throttled);
             Assert.Equal(0, result.WaitingIntervalInTicks);
-            Assert.Equal(1, result.CallsRemaining);
+            Assert.Equal(1, result.CallUnitsRemaining);
             Assert.Equal(cacheKey.ToString(), result.CacheKey.ToString());
 
             setup.ConnectionMultiplexerMock.VerifyAll();
@@ -152,7 +152,7 @@ namespace Domain.RateLimiting.Redis.UnitTests
 
             Assert.Equal(false, result.Throttled);
             Assert.Equal(0, result.WaitingIntervalInTicks);
-            Assert.Equal(0, result.CallsRemaining);
+            Assert.Equal(0, result.CallUnitsRemaining);
             Assert.Equal(cacheKey.ToString(), result.CacheKey.ToString());
 
             setup.ConnectionMultiplexerMock.VerifyAll();
