@@ -78,8 +78,8 @@ namespace Domain.RateLimiting.Redis
                 GetDateRange(allowedCallRate, dateTimeNowUtc, out DateTime fromUtc, out DateTime toUtc);
                 if (!(dateTimeNowUtc >= fromUtc && dateTimeNowUtc <= toUtc))
                 {
-                    redisTransaction.KeyExpireAsync($"{cacheKeyString}_temp", new TimeSpan(0,0,10));
-                    return redisTransaction.StringIncrementAsync($"{cacheKeyString}_temp", allowedCallRate.Limit  + 10);
+                    redisTransaction.KeyExpireAsync($"{cacheKeyString}", new TimeSpan(0,0,10));
+                    return redisTransaction.StringIncrementAsync($"{cacheKeyString}", allowedCallRate.Limit  + 10);
                 }
             }
            

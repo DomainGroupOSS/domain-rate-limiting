@@ -20,7 +20,7 @@ namespace Domain.RateLimiting.Samples.Owin
             { "api/globallylimited/{id}", "A"},
             { "api/globallylimited/{id}/sub/{subid}" , "B" },
             { "api/globallylimited/{id}/sub/{subid}/test/{testid}", "C" },
-            { "api/globallylimited/{id}/free", "F" }
+            { "api/unlimited/{id}", "F" }
         };
 
         public static Dictionary<string, int> CostPerClass = 
@@ -44,6 +44,15 @@ namespace Domain.RateLimiting.Samples.Owin
 
             var operationClass = CallClassification.RouteTemplateToClassMap[rateLimitingRequest.RouteTemplate];
 
+            if(operationClass == "F")
+            {
+                return Task.FromResult(new RateLimitPolicy("Test_Client_01::ClassF",
+                new List<AllowedCallRate>()
+                {
+                    new AllowedCallRate(100, RateLimitUnit.PerMinute)
+                }, name: "QuotaFree_SafetyPolicy"));
+            }
+
             var cost = CallClassification.CostPerClass[operationClass];
 
             return Task.FromResult(new RateLimitPolicy("Test_Client_01",
@@ -53,10 +62,10 @@ namespace Domain.RateLimiting.Samples.Owin
                     {
                         StartDateUtc = new DateTime(2018,3,23,0,0,0,DateTimeKind.Utc),
                         Duration = new TimeSpan(1,0,0),
-                        Rolling = true
+                        Rolling = false
                     }),
                     new AllowedCallRate(100, RateLimitUnit.PerMinute)
-                }, name:"Quota_CustomPeriod") { CostPerCall = cost });
+                }, name:"Quota_Billed") { CostPerCall = cost });
         }
     }
 
