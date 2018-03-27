@@ -111,10 +111,7 @@ namespace Domain.RateLimiting.Redis
 
         public long Trim(long dateTimeInTicks, AllowedCallRate allowedCallRate)
         {
-            var ticksPerUnit = allowedCallRate.Unit != RateLimitUnit.PerCustomPeriod ?
-                (long)allowedCallRate.Unit : allowedCallRate.Period.Duration.Ticks; 
-
-            return dateTimeInTicks - (dateTimeInTicks % ticksPerUnit);
+            return dateTimeInTicks - (dateTimeInTicks % GetTicksPerUnit(allowedCallRate));
         }
     }
 }

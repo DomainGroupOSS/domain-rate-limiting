@@ -155,12 +155,9 @@ namespace Domain.RateLimiting.Redis
             RateLimitCacheKey violatedCacheKey,
             long utcNowTicks)
         {
-            var ticksPerUnit = violatedCacheKey.Unit != RateLimitUnit.PerCustomPeriod ?
-                (long)violatedCacheKey.Unit : violatedCacheKey.AllowedCallRate.Period.Duration.Ticks;
-
             return await GetOldestRequestTimestampInTicks(setupGetOldestRequestTimestampInTicks,
                        violatedCacheKey, utcNowTicks).ConfigureAwait(false) +
-                   ticksPerUnit - utcNowTicks;
+                   GetTicksPerUnit(violatedCacheKey.AllowedCallRate) - utcNowTicks;
         }
 
         private async Task ExecuteTransactionAsync(ITransaction redisTransaction)
@@ -185,12 +182,18 @@ namespace Domain.RateLimiting.Redis
 
         }
 
+        protected long GetTicksPerUnit(AllowedCallRate allowedCallRate)
+        {
+            return allowedCallRate.Unit != RateLimitUnit.PerCustomPeriod ?
+                            (long)allowedCallRate.Unit : allowedCallRate.Period.Duration.Ticks;
+        }
+
         /// <summary>
         /// Rate limits a request using to cache key provided
         /// </summary>
         /// <param name="cacheKey">The cache key.</param>
         /// <returns></returns>
-        
+
 
         protected abstract Task<long> GetNumberOfRequestsAsync(
             string requestId,
