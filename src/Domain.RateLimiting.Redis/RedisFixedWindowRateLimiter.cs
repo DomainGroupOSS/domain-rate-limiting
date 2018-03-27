@@ -78,8 +78,9 @@ namespace Domain.RateLimiting.Redis
                 GetDateRange(allowedCallRate, dateTimeNowUtc, out DateTime fromUtc, out DateTime toUtc);
                 if (!(dateTimeNowUtc >= fromUtc && dateTimeNowUtc <= toUtc))
                 {
-                    redisTransaction.KeyExpireAsync($"{cacheKeyString}", new TimeSpan(0,0,10));
-                    return redisTransaction.StringIncrementAsync($"{cacheKeyString}", allowedCallRate.Limit  + 10);
+                    var task = redisTransaction.StringIncrementAsync($"{cacheKeyString}", allowedCallRate.Limit  + costPerCall);
+                    redisTransaction.KeyExpireAsync($"{cacheKeyString}", new TimeSpan(0, 0, 10));
+                    return task;
                 }
             }
            
@@ -92,9 +93,8 @@ namespace Domain.RateLimiting.Redis
         protected override void UndoUnsuccessfulRequestCount(ITransaction postViolationTransaction, RateLimitCacheKey cacheKey, long utcNowTicks, 
             int costPerCall = 1)
         {
-            // do nothing
             postViolationTransaction.StringDecrementAsync(cacheKey.ToString(), costPerCall);
-            
+            postViolationTransaction.KeyExpireAsync(cacheKey.ToString(), new TimeSpan(0, 0, 10));
         }
 
         protected override Task<SortedSetEntry[]> SetupGetOldestRequestTimestampInTicks(ITransaction postViolationTransaction,
