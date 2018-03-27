@@ -106,11 +106,14 @@ namespace Domain.RateLimiting.Redis
 
         protected override Task<long> GetOldestRequestTimestampInTicks(Task<SortedSetEntry[]> task, RateLimitCacheKey cacheKey, long utcNowTicks)
         {
-            return Task.FromResult(Trim(utcNowTicks, (long)cacheKey.Unit));
+            return Task.FromResult(Trim(utcNowTicks, cacheKey.AllowedCallRate));
         }
 
-        public long Trim(long dateTimeInTicks, long ticksPerUnit)
+        public long Trim(long dateTimeInTicks, AllowedCallRate allowedCallRate)
         {
+            var ticksPerUnit = allowedCallRate.Unit != RateLimitUnit.PerCustomPeriod ?
+                (long)allowedCallRate.Unit : allowedCallRate.Period.Duration.Ticks; 
+
             return dateTimeInTicks - (dateTimeInTicks % ticksPerUnit);
         }
     }

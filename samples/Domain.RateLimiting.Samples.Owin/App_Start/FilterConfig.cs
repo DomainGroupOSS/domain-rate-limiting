@@ -58,13 +58,9 @@ namespace Domain.RateLimiting.Samples.Owin
             return Task.FromResult(new RateLimitPolicy("Test_Client_01",
                 new List<AllowedCallRate>()
                 {
-                    new AllowedCallRate(1000, RateLimitUnit.PerCustomPeriod, new LimitPeriod()
-                    {
-                        StartDateUtc = new DateTime(2018,3,23,0,0,0,DateTimeKind.Utc),
-                        Duration = new TimeSpan(1,0,0),
-                        Rolling = false
-                    }),
-                    new AllowedCallRate(100, RateLimitUnit.PerMinute)
+                    new AllowedCallRate(1000, RateLimitUnit.PerCustomPeriod,
+                        new LimitPeriod(new DateTime(2018,3,23,0,0,0,DateTimeKind.Utc), 3600, true))
+                    //new AllowedCallRate(100, RateLimitUnit.PerMinute)
                 }, name:"Quota_Billed") { CostPerCall = cost });
         }
     }
