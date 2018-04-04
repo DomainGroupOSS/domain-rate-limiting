@@ -20,8 +20,8 @@ namespace Domain.RateLimiting.Core
 
         public string RouteTemplate { get; }
 
-        private static readonly IDictionary<RateLimitUnit, Func<AllowedCallRate, TimeSpan>> RateLimitTypeExpirationMapping = 
-            new Dictionary<RateLimitUnit, Func<AllowedCallRate, TimeSpan>>
+        private static readonly IDictionary<RateLimitUnit, Func<AllowedConsumptionRate, TimeSpan>> RateLimitTypeExpirationMapping = 
+            new Dictionary<RateLimitUnit, Func<AllowedConsumptionRate, TimeSpan>>
         {
             {RateLimitUnit.PerSecond, limit => TimeSpan.FromSeconds(1)},
             {RateLimitUnit.PerMinute, limit => TimeSpan.FromMinutes(1)},
@@ -45,7 +45,7 @@ namespace Domain.RateLimiting.Core
         /// <exception cref="ArgumentNullException">requestId or host or pathToLimit or expirationKey or httpMethod</exception>
         /// <exception cref="ArgumentOutOfRangeException">requestId;requestId cannot be empty or host;host cannot be empty or pathToLimit;requestId cannot be empty or  expirationKey;expirationKey cannot be empty or httpMethod;httpMethod cannot be empty</exception>
         public RateLimitCacheKey(string requestId, string method, string host, string routeTemplate, 
-            AllowedCallRate allowedCallRate, Func<DateTime, string> getSuffix, IClock clock = null)
+            AllowedConsumptionRate allowedCallRate, Func<DateTime, string> getSuffix, IClock clock = null)
         {
             if (requestId == null) throw new ArgumentNullException(nameof(requestId));
             if (requestId.Length == 0) throw new ArgumentOutOfRangeException(nameof(requestId), "requestId cannot be empty");
@@ -91,7 +91,7 @@ namespace Domain.RateLimiting.Core
         /// <summary>
         /// The rate limiting policy for this key
         /// </summary>
-        public readonly AllowedCallRate AllowedCallRate;
+        public readonly AllowedConsumptionRate AllowedCallRate;
         
         /// <summary>
         /// Returns a string that represents the current object.

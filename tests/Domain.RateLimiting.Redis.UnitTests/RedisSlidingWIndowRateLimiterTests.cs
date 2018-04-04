@@ -19,7 +19,7 @@ namespace Domain.RateLimiting.Redis.UnitTests
             Mock<ITransaction> PostViolationTransactionMock,
             Mock<IClock> clockMock) 
             Arrange(string requestId, string method, string routeTemplate,
-            AllowedCallRate allowedCallRate,
+            AllowedConsumptionRate allowedCallRate,
             DateTime utcDateTime, long numberOfRequestsMadeSoFar)
         {
             var clockMock = GetClockMock(utcDateTime);
@@ -94,16 +94,16 @@ namespace Domain.RateLimiting.Redis.UnitTests
             var clockMock = GetClockMock(utcDateTime);
 
             var cacheKey = new RateLimitCacheKey("testclient_01", "GET", "localhost", "/api/values", 
-                new AllowedCallRate(2, RateLimitUnit.PerMinute),
+                new AllowedConsumptionRate(2, RateLimitUnit.PerMinute),
                 _ => RateLimitUnit.PerMinute.ToString(), clockMock.Object);
 
-            var setup = Arrange("testclient_01", "GET", "/api/values", new AllowedCallRate(2, RateLimitUnit.PerMinute),
+            var setup = Arrange("testclient_01", "GET", "/api/values", new AllowedConsumptionRate(2, RateLimitUnit.PerMinute),
                 utcDateTime, 1);
 
             var result = await setup.RedisRateLimiter.LimitRequestAsync("testclient_01",
-                "GET", "localhost", "/api/values", new List<AllowedCallRate>()
+                "GET", "localhost", "/api/values", new List<AllowedConsumptionRate>()
                 {
-                    new AllowedCallRate(2, RateLimitUnit.PerMinute)
+                    new AllowedConsumptionRate(2, RateLimitUnit.PerMinute)
                 }, 1).ConfigureAwait(false);
 
             Assert.Equal(false, result.Throttled);
@@ -138,16 +138,16 @@ namespace Domain.RateLimiting.Redis.UnitTests
             var clockMock = GetClockMock(utcDateTime);
 
             var cacheKey = new RateLimitCacheKey("testclient_01", "GET", "localhost", "/api/values",
-                new AllowedCallRate(2, RateLimitUnit.PerMinute),
+                new AllowedConsumptionRate(2, RateLimitUnit.PerMinute),
                 _ => RateLimitUnit.PerMinute.ToString(), clockMock.Object);
 
-            var setup = Arrange("testclient_01", "GET", "/api/values", new AllowedCallRate(2, RateLimitUnit.PerMinute),
+            var setup = Arrange("testclient_01", "GET", "/api/values", new AllowedConsumptionRate(2, RateLimitUnit.PerMinute),
                 utcDateTime, 2);
 
             var result = await setup.RedisRateLimiter.LimitRequestAsync("testclient_01",
-                "GET", "localhost", "/api/values", new List<AllowedCallRate>()
+                "GET", "localhost", "/api/values", new List<AllowedConsumptionRate>()
                 {
-                    new AllowedCallRate(2, RateLimitUnit.PerMinute)
+                    new AllowedConsumptionRate(2, RateLimitUnit.PerMinute)
                 }, 1).ConfigureAwait(false);
 
             Assert.Equal(false, result.Throttled);
@@ -174,16 +174,16 @@ namespace Domain.RateLimiting.Redis.UnitTests
             var clockMock = GetClockMock(utcDateTime);
 
             var cacheKey = new RateLimitCacheKey("testclient_01", "GET", "localhost", "/api/values",
-                new AllowedCallRate(2, RateLimitUnit.PerMinute),
+                new AllowedConsumptionRate(2, RateLimitUnit.PerMinute),
                 _ => RateLimitUnit.PerMinute.ToString(), clockMock.Object);
 
-            var setup = Arrange("testclient_01", "GET", "/api/values", new AllowedCallRate(2, RateLimitUnit.PerMinute),
+            var setup = Arrange("testclient_01", "GET", "/api/values", new AllowedConsumptionRate(2, RateLimitUnit.PerMinute),
                 utcDateTime, 3);
 
             var result = await setup.RedisRateLimiter.LimitRequestAsync("testclient_01",
-                "GET", "localhost", "/api/values", new List<AllowedCallRate>()
+                "GET", "localhost", "/api/values", new List<AllowedConsumptionRate>()
                 {
-                    new AllowedCallRate(2, RateLimitUnit.PerMinute)
+                    new AllowedConsumptionRate(2, RateLimitUnit.PerMinute)
                 }).ConfigureAwait(false);
 
             Assert.Equal(true, result.Throttled);

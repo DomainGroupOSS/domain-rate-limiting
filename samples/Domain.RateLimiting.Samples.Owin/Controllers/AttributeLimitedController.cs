@@ -7,7 +7,7 @@ using Domain.RateLimiting.Core;
 namespace Domain.RateLimiting.Samples.Owin.Controllers
 {
     //System.Web.Http.Route("api/[controller]")]
-    [AllowedCallRate(20, RateLimitUnit.PerMinute)]
+    [AllowedConsumptionRate(20, RateLimitUnit.PerMinute)]
     public class AttributeLimitedController : ApiController
     {
         // Since no rate limiting policies are mentioned this will be limited
@@ -17,8 +17,8 @@ namespace Domain.RateLimiting.Samples.Owin.Controllers
             return new string[] { "value1", "value2" };
         }
         
-        [AllowedCallRate(25, RateLimitUnit.PerHour)]
-        [AllowedCallRate(15, RateLimitUnit.PerMinute)]
+        [AllowedConsumptionRate(25, RateLimitUnit.PerHour)]
+        [AllowedConsumptionRate(15, RateLimitUnit.PerMinute)]
         public string Get(int id)
         {
             return "value";

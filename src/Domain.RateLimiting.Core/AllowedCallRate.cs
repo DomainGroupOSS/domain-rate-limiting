@@ -8,14 +8,14 @@ namespace Domain.RateLimiting.Core
     /// Rate Limit Policy Attribute
     /// </summary>
     [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class, Inherited = true, AllowMultiple = true)]
-    public class AllowedCallRate : Attribute
+    public class AllowedConsumptionRate : Attribute
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="T:System.Attribute" /> class.
         /// </summary>
         /// <param name="limit">The limit.</param>
         /// <param name="unit">The unit.</param>
-        public AllowedCallRate(int limit, RateLimitUnit unit)
+        public AllowedConsumptionRate(int limit, RateLimitUnit unit)
         {
             if (limit <= 0)
                 throw new ArgumentOutOfRangeException($"{nameof(limit)} has to be greater than 0");
@@ -23,12 +23,12 @@ namespace Domain.RateLimiting.Core
             Limit = limit;
             Unit = unit;
         }
-
-
-        public AllowedCallRate(int limit, RateLimitUnit unit, LimitPeriod period):this(limit, unit)
+        
+        public AllowedConsumptionRate(int limit, RateLimitUnit unit, LimitPeriod period):this(limit, unit)
         {
             Period = period;
         }
+
         /// <summary>
         /// Gets the limit.
         /// </summary>
@@ -52,7 +52,7 @@ namespace Domain.RateLimiting.Core
         {
             if (obj == null || GetType() != obj.GetType()) return false;
 
-            var compareObj = (AllowedCallRate)obj;
+            var compareObj = (AllowedConsumptionRate)obj;
 
             return compareObj.ToString() == ToString();
         }

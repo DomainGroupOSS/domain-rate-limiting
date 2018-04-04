@@ -47,9 +47,9 @@ namespace Domain.RateLimiting.Samples.AspNetCore
             if (_index > 600)
                 _index = 1;
 
-            return Task.FromResult(new RateLimitPolicy(userId, new List<AllowedCallRate>()
+            return Task.FromResult(new RateLimitPolicy(userId, new List<AllowedConsumptionRate>()
             {
-                new AllowedCallRate(100, RateLimitUnit.PerHour)
+                new AllowedConsumptionRate(100, RateLimitUnit.PerHour)
             }));
         }
     }
@@ -58,9 +58,9 @@ namespace Domain.RateLimiting.Samples.AspNetCore
     {
         public Task<RateLimitPolicy> GetPolicyAsync(RateLimitingRequest rateLimitingRequest)
         {
-            return Task.FromResult(new RateLimitPolicy("test_oganization_01", new List<AllowedCallRate>()
+            return Task.FromResult(new RateLimitPolicy("test_oganization_01", new List<AllowedConsumptionRate>()
             {
-                new AllowedCallRate(200, RateLimitUnit.PerHour)
+                new AllowedConsumptionRate(200, RateLimitUnit.PerHour)
             }));
         }
     }
@@ -98,19 +98,19 @@ namespace Domain.RateLimiting.Samples.AspNetCore
             var globalRateLimitingClientPolicyManager =
                 new RateLimitingPolicyManager(rateLimitingPolicyParametersProvider)
                     .AddPathToWhiteList("/api/unlimited")
-                    .AddPoliciesForAllEndpoints(new List<AllowedCallRate>()
+                    .AddPoliciesForAllEndpoints(new List<AllowedConsumptionRate>()
                     {
-                        new AllowedCallRate(1000, RateLimitUnit.PerMinute)
+                        new AllowedConsumptionRate(1000, RateLimitUnit.PerMinute)
                     }, allowAttributeOverride: true, name: "StaticPolicy_2")
-                    .AddEndpointPolicy("/api/globallylimited/{id}", "GET", new List<AllowedCallRate>()
+                    .AddEndpointPolicy("/api/globallylimited/{id}", "GET", new List<AllowedConsumptionRate>()
                     {
-                        new AllowedCallRate(5, RateLimitUnit.PerMinute),
-                        new AllowedCallRate(8, RateLimitUnit.PerHour)
+                        new AllowedConsumptionRate(5, RateLimitUnit.PerMinute),
+                        new AllowedConsumptionRate(8, RateLimitUnit.PerHour)
                     }, true, "StaticPolicy_0")
                     .AddEndpointPolicy("/api/globallylimited/{id}/sub/{subid}", RateLimitPolicy.AllHttpMethods, 
-                    new List<AllowedCallRate>()
+                    new List<AllowedConsumptionRate>()
                     {
-                        new AllowedCallRate(2, RateLimitUnit.PerMinute)
+                        new AllowedConsumptionRate(2, RateLimitUnit.PerMinute)
                     }, true, "StaticPolicy_1");
 
             #endregion

@@ -41,26 +41,26 @@ namespace Domain.RateLimiting.Core.UnitTests
 
             Assert.Equal(4, rateLimitPolicies.Count());
 
-            var policy0 = new RateLimitPolicy("*", "api/globallylimited/{id}", "GET", new List<AllowedCallRate>()
+            var policy0 = new RateLimitPolicy("*", "api/globallylimited/{id}", "GET", new List<AllowedConsumptionRate>()
             {
-                new AllowedCallRate(5, RateLimitUnit.PerMinute),
-                new AllowedCallRate(8, RateLimitUnit.PerHour)
+                new AllowedConsumptionRate(5, RateLimitUnit.PerMinute),
+                new AllowedConsumptionRate(8, RateLimitUnit.PerHour)
             }, true, "StaticPolicy_0");
 
-            var policy1 = new RateLimitPolicy("*", "/api/globallylimited/{id}/sub/{subid}", "*", new List<AllowedCallRate>()
+            var policy1 = new RateLimitPolicy("*", "/api/globallylimited/{id}/sub/{subid}", "*", new List<AllowedConsumptionRate>()
             {
-                new AllowedCallRate(2, RateLimitUnit.PerMinute)
+                new AllowedConsumptionRate(2, RateLimitUnit.PerMinute)
             }, true, "StaticPolicy_1");
 
-            var policy2 = new RateLimitPolicy("*", "*", "*", new List<AllowedCallRate>()
+            var policy2 = new RateLimitPolicy("*", "*", "*", new List<AllowedConsumptionRate>()
             {
-                new AllowedCallRate(100, RateLimitUnit.PerMinute)
+                new AllowedConsumptionRate(100, RateLimitUnit.PerMinute)
             }, true, "StaticPolicy_2");
 
 
-            var policy3 = new RateLimitPolicy("*", "api/globallylimited", "POST", new List<AllowedCallRate>()
+            var policy3 = new RateLimitPolicy("*", "api/globallylimited", "POST", new List<AllowedConsumptionRate>()
             {
-                new AllowedCallRate(3, RateLimitUnit.PerMinute)
+                new AllowedConsumptionRate(3, RateLimitUnit.PerMinute)
             }, true, "GlobalPostRate");
 
             Assert.Equal(true, ContainsPolicy(policy0, rateLimitPolicies));

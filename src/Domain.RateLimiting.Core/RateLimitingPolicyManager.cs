@@ -59,7 +59,7 @@ namespace Domain.RateLimiting.Core
         /// <param name="allowAttributeOverride"></param>
         /// <param name="name"></param>
         /// <returns></returns>
-        public RateLimitingPolicyManager AddPoliciesForAllEndpoints(IList<AllowedCallRate> allowedCallRates, 
+        public RateLimitingPolicyManager AddPoliciesForAllEndpoints(IList<AllowedConsumptionRate> allowedCallRates, 
             string requestKey=AllRequestKeys, bool allowAttributeOverride = false, string name = "")
         {
             AddEndpointPolicy(new RateLimitPolicy(requestKey, AllRequestPaths, AllHttpMethods, allowedCallRates,
@@ -77,7 +77,7 @@ namespace Domain.RateLimiting.Core
         /// <param name="allowAttributeOverride"></param>
         /// <param name="name"></param>
         /// <returns></returns>
-        public RateLimitingPolicyManager AddPoliciesForAllEndpointsForSpecifiedMethod(IList<AllowedCallRate> policies, 
+        public RateLimitingPolicyManager AddPoliciesForAllEndpointsForSpecifiedMethod(IList<AllowedConsumptionRate> policies, 
             string httpMethod, string requestKey = AllRequestKeys, bool allowAttributeOverride = false, string name = "")
         {
             AddEndpointPolicy(new RateLimitPolicy(requestKey, AllRequestPaths, AllHttpMethods, policies,
@@ -94,7 +94,7 @@ namespace Domain.RateLimiting.Core
         /// <param name="allowAttributeOverride"></param>
         /// <param name="name"></param>
         /// <returns></returns>
-        public RateLimitingPolicyManager AddPoliciesForAllGetRequests(IList<AllowedCallRate> policies, 
+        public RateLimitingPolicyManager AddPoliciesForAllGetRequests(IList<AllowedConsumptionRate> policies, 
             string requestKey = AllRequestKeys, bool allowAttributeOverride = false, string name = "")
         {
             AddEndpointPolicy(new RateLimitPolicy(requestKey, AllRequestPaths, AllHttpMethods, policies,
@@ -111,7 +111,7 @@ namespace Domain.RateLimiting.Core
         /// <param name="allowAttributeOverride"></param>
         /// <param name="name"></param>
         /// <returns></returns>
-        public RateLimitingPolicyManager AddPoliciesForAllPutRequests(IList<AllowedCallRate> policies, 
+        public RateLimitingPolicyManager AddPoliciesForAllPutRequests(IList<AllowedConsumptionRate> policies, 
             string requestKey = AllRequestKeys, bool allowAttributeOverride = false, string name = "")
         {
             AddEndpointPolicy(new RateLimitPolicy(requestKey, AllRequestPaths, AllHttpMethods, policies,
@@ -128,7 +128,7 @@ namespace Domain.RateLimiting.Core
         /// <param name="allowAttributeOverride"></param>
         /// <param name="name"></param>
         /// <returns></returns>
-        public RateLimitingPolicyManager AddPoliciesForAllPostRequests(IList<AllowedCallRate> policies, 
+        public RateLimitingPolicyManager AddPoliciesForAllPostRequests(IList<AllowedConsumptionRate> policies, 
             string requestKey = AllRequestKeys, bool allowAttributeOverride = false, string name = "")
         {
             AddEndpointPolicy(new RateLimitPolicy(requestKey, AllRequestPaths, AllHttpMethods, policies,
@@ -144,7 +144,7 @@ namespace Domain.RateLimiting.Core
         /// <param name="requestKey"></param>
         /// <param name="allowAttributeOverride"></param>
         /// <returns></returns>
-        public RateLimitingPolicyManager AddPoliciesForAllDeleteRequests(IList<AllowedCallRate> policies, 
+        public RateLimitingPolicyManager AddPoliciesForAllDeleteRequests(IList<AllowedConsumptionRate> policies, 
             string requestKey = AllRequestKeys, bool allowAttributeOverride = false, string name = "")
         {
             AddEndpointPolicy(new RateLimitPolicy(requestKey, AllRequestPaths, AllHttpMethods, policies,
@@ -161,7 +161,7 @@ namespace Domain.RateLimiting.Core
         /// <param name="allowAttributeOverride"></param>
         /// <param name="name"></param>
         /// <returns></returns>
-        public RateLimitingPolicyManager AddPoliciesForAllHeadRequests(IList<AllowedCallRate> policies, 
+        public RateLimitingPolicyManager AddPoliciesForAllHeadRequests(IList<AllowedConsumptionRate> policies, 
             string requestKey = AllRequestKeys, bool allowAttributeOverride = false, string name = "")
         {
             AddEndpointPolicy(new RateLimitPolicy(requestKey, AllRequestPaths, AllHttpMethods, policies,
@@ -178,7 +178,7 @@ namespace Domain.RateLimiting.Core
         /// <param name="allowAttributeOverride"></param>
         /// <param name="name"></param>
         /// <returns></returns>
-        public RateLimitingPolicyManager AddPoliciesForAllOptionsRequests(IList<AllowedCallRate> policies, 
+        public RateLimitingPolicyManager AddPoliciesForAllOptionsRequests(IList<AllowedConsumptionRate> policies, 
             string requestKey = AllRequestKeys, bool allowAttributeOverride = false, string name = "")
         {
             AddEndpointPolicy(new RateLimitPolicy(requestKey, AllRequestPaths, AllHttpMethods, policies,
@@ -195,7 +195,7 @@ namespace Domain.RateLimiting.Core
         /// <param name="allowAttributeOverride"></param>
         /// <param name="name"></param>
         /// <returns></returns>
-        public RateLimitingPolicyManager AddPoliciesForAllTraceRequests(IList<AllowedCallRate> policies, 
+        public RateLimitingPolicyManager AddPoliciesForAllTraceRequests(IList<AllowedConsumptionRate> policies, 
             string requestKey = AllRequestKeys, bool allowAttributeOverride = false, string name = "")
         {
             AddEndpointPolicy(new RateLimitPolicy(requestKey, AllRequestPaths, AllHttpMethods, policies,
@@ -350,7 +350,7 @@ namespace Domain.RateLimiting.Core
         }
 
         public RateLimitingPolicyManager AddEndpointPolicy(string routeTemplate, string method, 
-            IList<AllowedCallRate> allowedCallRates,
+            IList<AllowedConsumptionRate> allowedCallRates,
             bool allowAttributeOverride = false, string name = "")
         {
             return AddEndpointPolicy(new RateLimitPolicy(AllRequestKeys, routeTemplate, method, allowedCallRates, 

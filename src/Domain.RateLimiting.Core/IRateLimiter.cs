@@ -7,10 +7,12 @@ namespace Domain.RateLimiting.Core
 {
     public interface IRateLimiter
     {
-        Task LimitRequestAsync(RateLimitingRequest rateLimitingRequest,
-            Func<IList<AllowedCallRate>> getCustomAttributes, string host,
+        Task LimitRequestAsync(
+            RateLimitingRequest rateLimitingRequest,
+            Func<IList<AllowedConsumptionRate>> getCustomAttributes, string host,
             Func<RateLimitingRequest, RateLimitPolicy, RateLimitingResult, Task> onSuccessFunc,
             Func<RateLimitingRequest, RateLimitPolicy, RateLimitingResult, Task> onThrottledFunc,
-            Func<Task> onNotApplicableFunc);
+            Func<RateLimitingRequest, Task> onNotApplicableFunc,
+            Func<RateLimitingRequest, Task<RateLimitPolicy>> getPolicyAsyncFunc = null);
     }
 }

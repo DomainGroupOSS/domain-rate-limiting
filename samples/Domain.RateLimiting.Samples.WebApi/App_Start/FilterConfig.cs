@@ -34,19 +34,19 @@ namespace Domain.RateLimiting.Samples.WebApi
             var globalRateLimitingClientPolicyManager =
                 new RateLimitingPolicyManager(rateLimitingPolicyParametersProvider)
                     .AddPathToWhiteList("/api/unlimited")
-                    .AddPoliciesForAllEndpoints(new List<AllowedCallRate>()
+                    .AddPoliciesForAllEndpoints(new List<AllowedConsumptionRate>()
                     {
-                        new AllowedCallRate(100, RateLimitUnit.PerMinute)
+                        new AllowedConsumptionRate(100, RateLimitUnit.PerMinute)
                     }, allowAttributeOverride: true, name: "StaticPolicy_2")
-                    .AddEndpointPolicy("/api/globallylimited/{id}", "GET", new List<AllowedCallRate>()
+                    .AddEndpointPolicy("/api/globallylimited/{id}", "GET", new List<AllowedConsumptionRate>()
                     {
-                        new AllowedCallRate(5, RateLimitUnit.PerMinute),
-                        new AllowedCallRate(8, RateLimitUnit.PerHour)
+                        new AllowedConsumptionRate(5, RateLimitUnit.PerMinute),
+                        new AllowedConsumptionRate(8, RateLimitUnit.PerHour)
                     }, true, "StaticPolicy_0")
                     .AddEndpointPolicy("/api/globallylimited/{id}/sub/{subid}", RateLimitPolicy.AllHttpMethods,
-                        new List<AllowedCallRate>()
+                        new List<AllowedConsumptionRate>()
                         {
-                            new AllowedCallRate(2, RateLimitUnit.PerMinute)
+                            new AllowedConsumptionRate(2, RateLimitUnit.PerMinute)
                         }, true, "StaticPolicy_1");
 
             #region Setting up the Redis rate limiter

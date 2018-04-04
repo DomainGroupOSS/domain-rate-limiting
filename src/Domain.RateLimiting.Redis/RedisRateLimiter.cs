@@ -67,7 +67,7 @@ namespace Domain.RateLimiting.Redis
         
         public async Task<RateLimitingResult> LimitRequestAsync(string requestId, string method, string host,
             string routeTemplate,
-            IList<AllowedCallRate> allowedCallRates,
+            IList<AllowedConsumptionRate> allowedCallRates,
             int costPerCall = 1)
         {
             return await _circuitBreakerPolicy.ExecuteAsync(async () =>
@@ -136,17 +136,17 @@ namespace Domain.RateLimiting.Redis
 
                 return rateLimitingResult;
 
-            }, new RateLimitingResult(false, 0));
+            }, new RateLimitingResult(true));
         }
 
         public Task<RateLimitingResult> LimitRequestAsync(RateLimitCacheKey cacheKey)
         {
             return LimitRequestAsync(cacheKey.RequestId, cacheKey.Method, cacheKey.Host, cacheKey.RouteTemplate,
-                new List<AllowedCallRate>() { new AllowedCallRate(cacheKey.Limit, cacheKey.Unit) }, 1);
+                new List<AllowedConsumptionRate>() { new AllowedConsumptionRate(cacheKey.Limit, cacheKey.Unit) }, 1);
         }
 
         public async Task<RateLimitingResult> LimitRequestAsync(string requestId, string method, string host, string routeTemplate,
-            IList<AllowedCallRate> rateLimitPolicies)
+            IList<AllowedConsumptionRate> rateLimitPolicies)
         {
             return await LimitRequestAsync(requestId, method, host, routeTemplate, rateLimitPolicies, 1);
         }
@@ -182,7 +182,7 @@ namespace Domain.RateLimiting.Redis
 
         }
 
-        protected long GetTicksPerUnit(AllowedCallRate allowedCallRate)
+        protected long GetTicksPerUnit(AllowedConsumptionRate allowedCallRate)
         {
             return allowedCallRate.Unit != RateLimitUnit.PerCustomPeriod ?
                             (long)allowedCallRate.Unit : allowedCallRate.Period.Duration.Ticks;
@@ -200,7 +200,7 @@ namespace Domain.RateLimiting.Redis
             string method,
             string host,
             string routeTemplate,
-            AllowedCallRate policy,
+            AllowedConsumptionRate policy,
             IList<RateLimitCacheKey> cacheKeys,
             ITransaction redisTransaction,
             long utcNowTicks,

@@ -12,14 +12,19 @@ namespace Domain.RateLimiting.Redis
     /// </summary>
     public class RedisSlidingWindowRateLimiter : RedisRateLimiter
     {
-        private static readonly IDictionary<RateLimitUnit, Func<DateTime, string>> RateLimitTypeCacheKeyFormatMapping = new Dictionary<RateLimitUnit, Func<DateTime, string>>
+        private static readonly IDictionary<RateLimitUnit, Func<AllowedConsumptionRate, Func<DateTime, string>>> RateLimitTypeCacheKeyFormatMapping =
+            new Dictionary<RateLimitUnit, Func<AllowedConsumptionRate, Func<DateTime, string>>>
         {
-            {RateLimitUnit.PerSecond, _ => RateLimitUnit.PerSecond.ToString()},
-            {RateLimitUnit.PerMinute, _ => RateLimitUnit.PerMinute.ToString()},
-            {RateLimitUnit.PerHour, _ => RateLimitUnit.PerHour.ToString()},
-            {RateLimitUnit.PerDay, _ => RateLimitUnit.PerDay.ToString()},
-            {RateLimitUnit.PerCustomPeriod, _ => throw new NotSupportedException("Custom Period is not supported by Sliding window yet")}
-        };
+            {RateLimitUnit.PerSecond, allowedCallrate => _ => RateLimitUnit.PerSecond.ToString()},
+            {RateLimitUnit.PerMinute, allowedCallrate => _ => RateLimitUnit.PerMinute.ToString()},
+            {RateLimitUnit.PerHour, allowedCallrate => _ => RateLimitUnit.PerHour.ToString()},
+            {RateLimitUnit.PerDay, allowedCallrate => _ => RateLimitUnit.PerDay.ToString()},
+            {RateLimitUnit.PerCustomPeriod, allowedCallRate => _ =>
+                {
+                    return $"{allowedCallRate.Period.StartDateUtc.ToString("yyyyMMddHHmmss")}::{allowedCallRate.Period.Duration.TotalSeconds}";
+                }
+            }
+       };
 
         public RedisSlidingWindowRateLimiter(string redisEndpoint,
             Action<Exception> onException = null,
@@ -42,15 +47,15 @@ namespace Domain.RateLimiting.Redis
         }
 
         protected override Task<long> GetNumberOfRequestsAsync(string requestId, string method, string host, string routeTemplate,
-             AllowedCallRate allowedCallRate, IList<RateLimitCacheKey> cacheKeys, 
+             AllowedConsumptionRate allowedCallRate, IList<RateLimitCacheKey> cacheKeys, 
              ITransaction redisTransaction, long utcNowTicks, int costPerCall = 1)
         {
             if (costPerCall != 1)
                 throw new ArgumentOutOfRangeException("Only cost of value 1 is currently supported by the sliding window rate limiter");
 
             var cacheKey =
-                new RateLimitCacheKey(requestId, method, host, routeTemplate, allowedCallRate, 
-                RateLimitTypeCacheKeyFormatMapping[allowedCallRate.Unit]);
+                new RateLimitCacheKey(requestId, method, host, routeTemplate, allowedCallRate,
+                RateLimitTypeCacheKeyFormatMapping[allowedCallRate.Unit].Invoke(allowedCallRate));
 
             var cacheKeyString = cacheKey.ToString();
             cacheKeys.Add(cacheKey);

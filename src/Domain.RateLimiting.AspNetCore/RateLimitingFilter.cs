@@ -21,10 +21,14 @@ namespace Domain.RateLimiting.AspNetCore
     public class RateLimitingFilter : IAsyncAuthorizationFilter
     {
         private readonly IRateLimiter _rateLimiter;
-        
-        public RateLimitingFilter(IRateLimiter rateLimiter)
+
+        private Func<RateLimitingRequest, AuthorizationFilterContext, Task<RateLimitPolicy>> GetPolicyAsyncFunc { get; }
+
+        public RateLimitingFilter(IRateLimiter rateLimiter,
+             Func<RateLimitingRequest, AuthorizationFilterContext, Task<RateLimitPolicy>> getPolicyAsyncFunc = null)
         {
             _rateLimiter = rateLimiter ?? throw new ArgumentNullException(nameof(rateLimiter));
+            GetPolicyAsyncFunc = getPolicyAsyncFunc;
         }
 
         private static void AddUpdateRateLimitingSuccessHeaders(HttpContext context, RateLimitingResult result)
@@ -70,16 +74,16 @@ namespace Domain.RateLimiting.AspNetCore
             };
         }
         
-        private static IList<AllowedCallRate> GetCustomAttributes(ActionDescriptor actionDescriptor)
+        private static IList<AllowedConsumptionRate> GetCustomAttributes(ActionDescriptor actionDescriptor)
         {
             var controllerActionDescriptor = actionDescriptor as ControllerActionDescriptor;
             if (controllerActionDescriptor == null)
                 return null;
 
-            var policies = controllerActionDescriptor.MethodInfo.GetCustomAttributes<AllowedCallRate>(true)?.ToList();
+            var policies = controllerActionDescriptor.MethodInfo.GetCustomAttributes<AllowedConsumptionRate>(true)?.ToList();
             if (policies == null || !policies.Any())
                 policies = controllerActionDescriptor.ControllerTypeInfo.
-                    GetCustomAttributes<AllowedCallRate>(true)?.ToList();
+                    GetCustomAttributes<AllowedConsumptionRate>(true)?.ToList();
 
             return policies;
         }
@@ -107,7 +111,11 @@ namespace Domain.RateLimiting.AspNetCore
                     TooManyRequests(actionContext, rateLimitingResult, policy.Name);
                     await Task.FromResult<object>(null);
                 }, 
-                null).ConfigureAwait(false);
+                null,
+                async (rlr) =>
+                {
+                    return await GetPolicyAsyncFunc(rlr, actionContext);
+                }).ConfigureAwait(false);
         }
     }
 }

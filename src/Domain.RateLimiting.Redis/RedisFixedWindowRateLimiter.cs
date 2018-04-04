@@ -11,8 +11,8 @@ namespace Domain.RateLimiting.Redis
     /// </summary>
     public class RedisFixedWindowRateLimiter : RedisRateLimiter
     {
-        private static readonly IDictionary<RateLimitUnit, Func<AllowedCallRate, Func<DateTime, string>>> RateLimitTypeCacheKeyFormatMapping =
-            new Dictionary<RateLimitUnit, Func<AllowedCallRate, Func<DateTime, string>>>
+        private static readonly IDictionary<RateLimitUnit, Func<AllowedConsumptionRate, Func<DateTime, string>>> RateLimitTypeCacheKeyFormatMapping =
+            new Dictionary<RateLimitUnit, Func<AllowedConsumptionRate, Func<DateTime, string>>>
         {
             {RateLimitUnit.PerSecond, allowedCallRate => dateTime => dateTime.ToString("yyyyMMddHHmmss")},
             {RateLimitUnit.PerMinute, allowedCallRate => dateTime => dateTime.ToString("yyyyMMddHHmm")},
@@ -26,14 +26,14 @@ namespace Domain.RateLimiting.Redis
             }
         };
 
-        private static void GetDateRange(AllowedCallRate allowedCallRate, DateTime dateTimeUtc, out DateTime fromUtc, out DateTime toUtc)
+        private static void GetDateRange(AllowedConsumptionRate allowedCallRate, DateTime dateTimeUtc, out DateTime fromUtc, out DateTime toUtc)
         {
             var periodUnits = allowedCallRate.Period.Rolling ?
-                                    Math.Floor(dateTimeUtc.Subtract(allowedCallRate.Period.StartDateUtc).TotalHours 
+                                    Math.Floor(dateTimeUtc.Subtract(allowedCallRate.Period.StartDateUtc).TotalHours
                                     / allowedCallRate.Period.Duration.TotalHours) : 0;
 
             fromUtc = allowedCallRate.Period.StartDateUtc.Add(
-                new TimeSpan(Convert.ToInt32(allowedCallRate.Period.Duration.TotalHours * periodUnits), 0 , 0));
+                new TimeSpan(Convert.ToInt32(allowedCallRate.Period.Duration.TotalHours * periodUnits), 0, 0));
             toUtc = fromUtc.Add(allowedCallRate.Period.Duration);
         }
 
@@ -61,7 +61,7 @@ namespace Domain.RateLimiting.Redis
 
         protected override Task<long> GetNumberOfRequestsAsync(string requestId, string method, string host,
             string routeTemplate,
-            AllowedCallRate allowedCallRate,
+            AllowedConsumptionRate allowedCallRate,
             IList<RateLimitCacheKey> cacheKeys,
             ITransaction redisTransaction, long utcNowTicks, int costPerCall = 1)
         {
@@ -78,15 +78,15 @@ namespace Domain.RateLimiting.Redis
                 GetDateRange(allowedCallRate, dateTimeNowUtc, out DateTime fromUtc, out DateTime toUtc);
                 if (!(dateTimeNowUtc >= fromUtc && dateTimeNowUtc <= toUtc))
                 {
-                    var task = redisTransaction.StringIncrementAsync($"{cacheKeyString}", allowedCallRate.Limit  + costPerCall);
-                    redisTransaction.KeyExpireAsync($"{cacheKeyString}", new TimeSpan(0, 0, 10));
+                    var task = redisTransaction.StringIncrementAsync($"{cacheKeyString}_OFP", allowedCallRate.Limit  + costPerCall);
+                    redisTransaction.KeyExpireAsync($"{cacheKeyString}_OFP", new TimeSpan(0, 0, 10));
                     return task;
                 }
             }
            
             var incrTask = redisTransaction.StringIncrementAsync(cacheKeyString, costPerCall);
-            var getKeyTask = redisTransaction.StringGetAsync(cacheKeyString);
-            var expireTask = redisTransaction.KeyExpireAsync(cacheKeyString, cacheKey.Expiration);
+            //var getKeyTask = redisTransaction.StringGetAsync(cacheKeyString);
+            redisTransaction.KeyExpireAsync(cacheKeyString, cacheKey.Expiration);
             return incrTask;
         }
 
@@ -109,7 +109,7 @@ namespace Domain.RateLimiting.Redis
             return Task.FromResult(Trim(utcNowTicks, cacheKey.AllowedCallRate));
         }
 
-        public long Trim(long dateTimeInTicks, AllowedCallRate allowedCallRate)
+        public long Trim(long dateTimeInTicks, AllowedConsumptionRate allowedCallRate)
         {
             return dateTimeInTicks - (dateTimeInTicks % GetTicksPerUnit(allowedCallRate));
         }

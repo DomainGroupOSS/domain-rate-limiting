@@ -14,21 +14,24 @@ namespace Domain.RateLimiting.Core
         public RateLimiter(IRateLimitingCacheProvider rateLimitingCacheProvider,
             IRateLimitingPolicyProvider policyProvider)
         {
-            _rateLimitingCacheProvider = rateLimitingCacheProvider;
+            _rateLimitingCacheProvider = rateLimitingCacheProvider ?? throw new ArgumentNullException(nameof(rateLimitingCacheProvider));
             _policyProvider = policyProvider;
         }
-        public async Task LimitRequestAsync(RateLimitingRequest rateLimitingRequest,
-            Func<IList<AllowedCallRate>> getCustomAttributes, string host,
+        public async Task LimitRequestAsync( 
+            RateLimitingRequest rateLimitingRequest,
+            Func<IList<AllowedConsumptionRate>> getCustomAttributes, string host,
             Func<RateLimitingRequest, RateLimitPolicy, RateLimitingResult, Task> onSuccessFunc,
             Func<RateLimitingRequest, RateLimitPolicy, RateLimitingResult, Task> onThrottledFunc,
-            Func<Task> onNotApplicableFunc)
+            Func<RateLimitingRequest, Task> onNotApplicableFunc,
+            Func<RateLimitingRequest, Task<RateLimitPolicy>> getPolicyAsyncFunc = null)
         {
+            var getPolicyAsync = getPolicyAsyncFunc ?? _policyProvider.GetPolicyAsync;
 
-            var rateLimitingPolicy = await _policyProvider.GetPolicyAsync(rateLimitingRequest).ConfigureAwait(false);
+            var rateLimitingPolicy = await getPolicyAsync(rateLimitingRequest).ConfigureAwait(false);
 
             if (rateLimitingPolicy == null)
             {
-                onNotApplicableFunc?.Invoke();
+                await onNotApplicableFunc?.Invoke(rateLimitingRequest);
                 return;
             }
 
@@ -49,16 +52,20 @@ namespace Domain.RateLimiting.Core
                 }
             }
 
-            if (allowedCallRates == null || !Enumerable.Any<AllowedCallRate>(allowedCallRates))
+            if (allowedCallRates == null || !Enumerable.Any<AllowedConsumptionRate>(allowedCallRates))
             {
-                onNotApplicableFunc?.Invoke();
+                await onNotApplicableFunc?.Invoke(rateLimitingRequest);
                 return;
             }
             
             var rateLimitingResult = await _rateLimitingCacheProvider.LimitRequestAsync(rateLimitingPolicy.RequestKey, httpMethod,
                 host, routeTemplate, allowedCallRates, rateLimitingPolicy.CostPerCall).ConfigureAwait(false);
 
-            if (!rateLimitingResult.Throttled)
+            if(rateLimitingResult.NotApplicable)
+            {
+                await onNotApplicableFunc(rateLimitingRequest);
+            }
+            else if (!rateLimitingResult.Throttled)
             {
                 await onSuccessFunc(rateLimitingRequest, rateLimitingPolicy, rateLimitingResult);
             }

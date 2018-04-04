@@ -11,9 +11,9 @@ namespace Domain.RateLimiting.Core.UnitTests
         public async void ShouldApplyPolicyReturnedByCustomPolicyProviderWhenAllowedCallRatesIsNonEmptyAndSamePolicyHasBeenAddedStaticallyInManager()
         {
             await ArangeActAndAssert("/api/values", "GET", "testclient_01", "CustomProviderPolicy",
-                new List<AllowedCallRate>()
+                new List<AllowedConsumptionRate>()
                 {
-                    new AllowedCallRate(5, RateLimitUnit.PerMinute)
+                    new AllowedConsumptionRate(5, RateLimitUnit.PerMinute)
                 });
         }
 
@@ -97,9 +97,9 @@ namespace Domain.RateLimiting.Core.UnitTests
             RateLimitingRequest rateLimtingRequest, 
             IList<string> whiteListedRequestKeys = null, IList<string> whiteListedPaths = null)
         {
-            var allowedCallRates = new List<AllowedCallRate>()
+            var allowedCallRates = new List<AllowedConsumptionRate>()
             {
-                new AllowedCallRate(5, RateLimitUnit.PerMinute)
+                new AllowedConsumptionRate(5, RateLimitUnit.PerMinute)
             };
 
             policyManager.AddRequestKeysToWhiteList(whiteListedRequestKeys ?? new List<string>());
@@ -132,7 +132,7 @@ namespace Domain.RateLimiting.Core.UnitTests
         }
 
         private static async Task ArangeActAndAssert(string routeTemplate, string method, string requestKey,
-            string expectedPolicyNameToApply, IList<AllowedCallRate> allowedCallRates = null, bool allowAttributeOverride=false,
+            string expectedPolicyNameToApply, IList<AllowedConsumptionRate> allowedCallRates = null, bool allowAttributeOverride=false,
             bool returnNullPolicy = false, IList<string> whiteListedRequestKeys = null, IList<string> whiteListedPaths = null,
             bool isWhiteListedPathTest = false)
         {

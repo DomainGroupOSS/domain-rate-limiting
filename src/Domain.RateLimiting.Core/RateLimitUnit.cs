@@ -27,6 +27,6 @@ namespace Domain.RateLimiting.Core
         /// </summary>
         PerDay = TimeSpan.TicksPerDay,
         
-        PerCustomPeriod = TimeSpan.TicksPerDay * 365
+        PerCustomPeriod = 0
     }
 }

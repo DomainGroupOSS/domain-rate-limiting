@@ -17,9 +17,9 @@ namespace Domain.RateLimiting.Core
         Task<RateLimitingResult> LimitRequestAsync(RateLimitCacheKey cacheKey);
 
         Task<RateLimitingResult> LimitRequestAsync(string requestId, string method, string host, string routeTemplate,
-            IList<AllowedCallRate> rateLimitPolicies);
+            IList<AllowedConsumptionRate> rateLimitPolicies);
 
         Task<RateLimitingResult> LimitRequestAsync(string requestId, string method, string host, string routeTemplate,
-            IList<AllowedCallRate> rateLimitPolicies, int costPerCall = 1);
+            IList<AllowedConsumptionRate> rateLimitPolicies, int costPerCall = 1);
     }
 }

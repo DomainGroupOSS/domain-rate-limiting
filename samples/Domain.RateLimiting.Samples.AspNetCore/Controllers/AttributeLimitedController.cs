@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Domain.RateLimiting.Samples.AspNetCore.Controllers
 {
     [Route("api/[controller]")]
-    [AllowedCallRate(20, RateLimitUnit.PerMinute)]
+    [AllowedConsumptionRate(20, RateLimitUnit.PerMinute)]
     public class AttributeLimitedController : Controller
     {
         // GET: api/values
@@ -21,8 +21,8 @@ namespace Domain.RateLimiting.Samples.AspNetCore.Controllers
 
         // GET api/values/5
         [HttpGet("{id}")]
-        [AllowedCallRate(25, RateLimitUnit.PerHour)]
-        [AllowedCallRate(15, RateLimitUnit.PerMinute)]
+        [AllowedConsumptionRate(25, RateLimitUnit.PerHour)]
+        [AllowedConsumptionRate(15, RateLimitUnit.PerMinute)]
         public string Get(int id)
         {
             return "value";

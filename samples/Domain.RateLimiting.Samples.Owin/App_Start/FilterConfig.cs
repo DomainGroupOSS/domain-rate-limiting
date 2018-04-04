@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Web.Http.Controllers;
 using System.Web.Http.Filters;
 using Domain.Logging.Shippers.Elasticsearch.Serilog;
 using Domain.RateLimiting.Core;
@@ -35,7 +36,7 @@ namespace Domain.RateLimiting.Samples.Owin
 
     public class ClientQuotaPolicyProvider : IRateLimitingPolicyProvider
     {
-        public Task<RateLimitPolicy> GetPolicyAsync(RateLimitingRequest rateLimitingRequest)
+        public Task<RateLimitPolicy> GetPolicyAsync(RateLimitingRequest rateLimitingRequest, HttpActionContext actionContext)
         {
 
             var clientId = rateLimitingRequest.ClaimsPrincipal?.Claims.FirstOrDefault(c => c.Type == "client_id");
@@ -47,21 +48,26 @@ namespace Domain.RateLimiting.Samples.Owin
             if(operationClass == "F")
             {
                 return Task.FromResult(new RateLimitPolicy("Test_Client_01::ClassF",
-                new List<AllowedCallRate>()
+                new List<AllowedConsumptionRate>()
                 {
-                    new AllowedCallRate(100, RateLimitUnit.PerMinute)
+                    new AllowedConsumptionRate(100, RateLimitUnit.PerMinute)
                 }, name: "QuotaFree_SafetyPolicy"));
             }
 
-            var cost = CallClassification.CostPerClass[operationClass];
+            var cost = 1;// CallClassification.CostPerClass[operationClass];
 
             return Task.FromResult(new RateLimitPolicy("Test_Client_01",
-                new List<AllowedCallRate>()
+                new List<AllowedConsumptionRate>()
                 {
-                    new AllowedCallRate(1000, RateLimitUnit.PerCustomPeriod,
+                    new AllowedConsumptionRate(1000, RateLimitUnit.PerCustomPeriod,
                         new LimitPeriod(new DateTime(2018,3,23,0,0,0,DateTimeKind.Utc), 3600, true))
                     //new AllowedCallRate(100, RateLimitUnit.PerMinute)
                 }, name:"Quota_Billed") { CostPerCall = cost });
+        }
+
+        public Task<RateLimitPolicy> GetPolicyAsync(RateLimitingRequest rateLimitingRequest)
+        {
+            return GetPolicyAsync(rateLimitingRequest, null);
         }
     }
 
@@ -74,7 +80,7 @@ namespace Domain.RateLimiting.Samples.Owin
 
             ConfigureRateLimitingSettings(redisRateLimiterSettings);
 
-            var rateLimitCacheProvider = new RedisFixedWindowRateLimiter(
+            var rateLimitCacheProvider = new RedisSlidingWindowRateLimiter(
                 redisRateLimiterSettings.RateLimitRedisCacheConnectionString,
                 circuitBreaker: new DefaultCircuitBreaker(redisRateLimiterSettings.FaultThreshholdPerWindowDuration,
                     redisRateLimiterSettings.FaultWindowDurationInMilliseconds, redisRateLimiterSettings.CircuitOpenIntervalInSecs,
@@ -108,8 +114,12 @@ namespace Domain.RateLimiting.Samples.Owin
 
             var auditLogger = loggerConfig.CreateLogger();
 
+            var policyProvider = new ClientQuotaPolicyProvider();
+
             filters.Add(new RateLimitingFilter(
-                new RateLimiter(rateLimitCacheProvider, new ClientQuotaPolicyProvider()),
+
+                new RateLimiter(rateLimitCacheProvider, policyProvider),
+
                 async (request, policy, result) =>
                 {
                     var operationClass = CallClassification.RouteTemplateToClassMap[request.RouteTemplate];
@@ -124,12 +134,13 @@ namespace Domain.RateLimiting.Samples.Owin
                         operationClass,
                         cost);
                 },
+
                 async (request, policy, result) =>
                 {
                     var operationClass = CallClassification.RouteTemplateToClassMap[request.RouteTemplate];
                     var cost = CallClassification.CostPerClass[operationClass];
 
-                auditLogger.Information(
+                    auditLogger.Information(
                     "Throttled {Throttled}: throttled for client {ClientId} and endpoint {Endpoint} with route {RouteTemplate} which is Class {Class} with Cost {Cost} by violating policy {ViolatedPolicy}",
                         true,
                         result.CacheKey.RequestId,
@@ -138,7 +149,14 @@ namespace Domain.RateLimiting.Samples.Owin
                         operationClass,
                         cost,
                         $"{policy.Name}:{result.CacheKey.AllowedCallRate}");
-                }));
+                },
+
+                async (request) =>
+                {
+                   // No policy meaning not applicable
+                },
+
+                getPolicyAsyncFunc: policyProvider.GetPolicyAsync));
 
             filters.Add(new RateLimitingPostActionFilter());
         }

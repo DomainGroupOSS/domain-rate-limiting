@@ -17,23 +17,23 @@ namespace Domain.RateLimiting.Samples.ConsoleCore
             
             var policies = new List<RateLimitPolicy>() {
                 new RateLimitPolicy("test_client_throttle_1",
-                    new List<AllowedCallRate>() {
-                        new AllowedCallRate(2, RateLimitUnit.PerSecond)
+                    new List<AllowedConsumptionRate>() {
+                        new AllowedConsumptionRate(2, RateLimitUnit.PerSecond)
                     }),
                 new RateLimitPolicy("test_client_throttle_2", 
-                    new List<AllowedCallRate>() {
-                        new AllowedCallRate(2, RateLimitUnit.PerSecond),
-                        new AllowedCallRate(10, RateLimitUnit.PerMinute)
+                    new List<AllowedConsumptionRate>() {
+                        new AllowedConsumptionRate(2, RateLimitUnit.PerSecond),
+                        new AllowedConsumptionRate(10, RateLimitUnit.PerMinute)
                     }),
                 new RateLimitPolicy("test_client_throttle_3",
-                    new List<AllowedCallRate>() {
-                        new AllowedCallRate(3, RateLimitUnit.PerSecond),
-                        new AllowedCallRate(10, RateLimitUnit.PerMinute)
+                    new List<AllowedConsumptionRate>() {
+                        new AllowedConsumptionRate(3, RateLimitUnit.PerSecond),
+                        new AllowedConsumptionRate(10, RateLimitUnit.PerMinute)
                     }),
                 new RateLimitPolicy("test_client_throttle_4",
-                    new List<AllowedCallRate>() {
-                        new AllowedCallRate(3, RateLimitUnit.PerSecond),
-                        new AllowedCallRate(10, RateLimitUnit.PerMinute)
+                    new List<AllowedConsumptionRate>() {
+                        new AllowedConsumptionRate(3, RateLimitUnit.PerSecond),
+                        new AllowedConsumptionRate(10, RateLimitUnit.PerMinute)
                     })
                 };
 
@@ -52,8 +52,8 @@ namespace Domain.RateLimiting.Samples.ConsoleCore
                     TotalNumberOfCalls = 100,
                     RateLimiter = rateLimiter,
                     Policy = new RateLimitPolicy("test_client_perf",
-                        new List<AllowedCallRate>() {
-                            new AllowedCallRate(2, RateLimitUnit.PerMinute)
+                        new List<AllowedConsumptionRate>() {
+                            new AllowedConsumptionRate(2, RateLimitUnit.PerMinute)
                         })
                 });
             });

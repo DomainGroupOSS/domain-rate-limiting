@@ -8,9 +8,9 @@ namespace Domain.RateLimiting.Core.UnitTests
 {
     public class RateLimiterTests
     {
-        private readonly IList<AllowedCallRate> _allowedCallRates = new List<AllowedCallRate>()
+        private readonly IList<AllowedConsumptionRate> _allowedCallRates = new List<AllowedConsumptionRate>()
         {
-            new AllowedCallRate(5, RateLimitUnit.PerMinute)
+            new AllowedConsumptionRate(5, RateLimitUnit.PerMinute)
         };
         
         private readonly RateLimitingRequest _rateLimitingRequest = new RateLimitingRequest("/api/values",
@@ -36,7 +36,7 @@ namespace Domain.RateLimiting.Core.UnitTests
                     onThrottledFuncCalled = true;
                     return Task.CompletedTask;
                 },
-                () =>
+                (r) =>
                 {
                     onNotApplicableFuncCalled = true;
                     return Task.CompletedTask;

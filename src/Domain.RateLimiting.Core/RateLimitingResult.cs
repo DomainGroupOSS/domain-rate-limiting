@@ -9,6 +9,7 @@
         public RateLimitCacheKey CacheKey { get; }
         public int TokensRemaining { get; }
         public string ViolatedPolicyName { get; }
+        public bool NotApplicable { get; }
 
         /// <summary>
         /// 
@@ -36,6 +37,11 @@
         {
             Throttled = throttled;
             WaitingIntervalInTicks = waitingIntervalInTicks;
+        }
+
+        public RateLimitingResult(bool notApplicable)
+        {
+            NotApplicable = notApplicable;
         }
     }
 }

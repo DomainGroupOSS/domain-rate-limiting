@@ -27,7 +27,7 @@ namespace Domain.RateLimiting.Core.Configuration
                 var allowedRatesStrings = policyStringParameters[3]
                     .Split(new char[] { '&' }, StringSplitOptions.RemoveEmptyEntries);
 
-                IList<AllowedCallRate> allowedRates = new List<AllowedCallRate>();
+                IList<AllowedConsumptionRate> allowedRates = new List<AllowedConsumptionRate>();
                 foreach (var allowedRateString in allowedRatesStrings)
                 {
                     var allowedRateParameters = allowedRateString.Split(new char[] { '_' });
@@ -35,7 +35,7 @@ namespace Domain.RateLimiting.Core.Configuration
                         throw new ArgumentException(
                             "The allowed rate format is not valid...must be of form 60_PerMinute&200_PerHour");
 
-                    allowedRates.Add(new AllowedCallRate(int.Parse(allowedRateParameters[0]),
+                    allowedRates.Add(new AllowedConsumptionRate(int.Parse(allowedRateParameters[0]),
                         (RateLimitUnit)Enum.Parse(typeof(RateLimitUnit), allowedRateParameters[1])));
                 }
 
@@ -48,10 +48,10 @@ namespace Domain.RateLimiting.Core.Configuration
 
             foreach (var policyOption in RateLimitPolicyOptions)
             {
-                IList<AllowedCallRate> allowedRates = new List<AllowedCallRate>();
+                IList<AllowedConsumptionRate> allowedRates = new List<AllowedConsumptionRate>();
                 foreach (var allowedCallRate in policyOption.AllowedCallRates)
                 {
-                    allowedRates.Add(new AllowedCallRate(allowedCallRate.Value, 
+                    allowedRates.Add(new AllowedConsumptionRate(allowedCallRate.Value, 
                         (RateLimitUnit)Enum.Parse(typeof(RateLimitUnit), allowedCallRate.Key)));
                 }
                 _rateLimitPolicies.Add(new RateLimitPolicy(policyOption.RequestKey,

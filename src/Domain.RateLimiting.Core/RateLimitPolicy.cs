@@ -13,28 +13,28 @@ namespace Domain.RateLimiting.Core
         public const string AllHttpMethods = "*";
         public const string AllRequestPaths = "*";
 
-        public RateLimitPolicy(string requestKey, IList<AllowedCallRate> policies,
+        public RateLimitPolicy(string requestKey, IList<AllowedConsumptionRate> policies,
             bool allowAttributeOverride = false, string name = "") :
             this(requestKey, AllRequestPaths, AllHttpMethods, policies, allowAttributeOverride, name)
         { }
         public RateLimitPolicy(string requestKey, bool allowAttributeOverride = false, string name = "") :
-            this(requestKey, AllRequestPaths, AllHttpMethods, new List<AllowedCallRate>(),
+            this(requestKey, AllRequestPaths, AllHttpMethods, new List<AllowedConsumptionRate>(),
                 allowAttributeOverride, name)
         { }
 
-        public RateLimitPolicy(string requestKey, string httpMethod, IList<AllowedCallRate> policies,
+        public RateLimitPolicy(string requestKey, string httpMethod, IList<AllowedConsumptionRate> policies,
             bool allowAttributeOverride = false, string name = "") :
             this(requestKey, AllRequestPaths, httpMethod, policies, allowAttributeOverride, name)
         { }
 
-        public RateLimitPolicy(string requestKey, IList<AllowedCallRate> policies, string routeTemplate,
+        public RateLimitPolicy(string requestKey, IList<AllowedConsumptionRate> policies, string routeTemplate,
             bool allowAttributeOverride = false, string name = "") :
             this(requestKey, routeTemplate, AllHttpMethods, policies, allowAttributeOverride, name)
         { }
 
 
         public RateLimitPolicy(string requestKey, string routeTemplate, string httpMethod,
-            IList<AllowedCallRate> allowedCallRates, bool allowAttributeOverride = false, string name = "")
+            IList<AllowedConsumptionRate> allowedCallRates, bool allowAttributeOverride = false, string name = "")
         {
             if (string.IsNullOrWhiteSpace(requestKey)) throw new ArgumentNullException(nameof(requestKey),
                 "requestKey cannot be null or whitespace");
@@ -68,7 +68,7 @@ namespace Domain.RateLimiting.Core
         /// The policies to apply
         /// </summary>
         /// <value>The policies to apply</value>
-        public IList<AllowedCallRate> AllowedCallRates { get; }
+        public IList<AllowedConsumptionRate> AllowedCallRates { get; }
 
         public int CostPerCall { get; set; } = 1;
 
