@@ -1,7 +1,9 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Web.Http.Controllers;
 using System.Web.Http.Filters;
 using Domain.RateLimiting.Core;
 
@@ -9,13 +11,21 @@ namespace Domain.RateLimiting.WebApi
 {
     public class RateLimitingPostActionFilter : ActionFilterAttribute
     {
-        public override Task OnActionExecutedAsync(HttpActionExecutedContext actionExecutedContext, CancellationToken cancellationToken)
+        public override async Task OnActionExecutedAsync(HttpActionExecutedContext actionExecutedContext, CancellationToken cancellationToken)
         {
             if (actionExecutedContext.Request.Properties.ContainsKey("RateLimitingResult"))
                 AddUpdateRateLimitingSuccessHeaders(actionExecutedContext,
                     (RateLimitingResult)actionExecutedContext.Request.Properties["RateLimitingResult"]);
 
-            return base.OnActionExecutedAsync(actionExecutedContext, cancellationToken);
+            if (actionExecutedContext.Request.Properties.ContainsKey("PostActionFilterFuncAsync"))
+            {
+                var func = actionExecutedContext.Request.Properties["PostActionFilterFuncAsync"]
+                    as Func<Task>;
+
+                await func?.Invoke();
+            }
+
+            await base.OnActionExecutedAsync(actionExecutedContext, cancellationToken);
         }
 
         private static void AddUpdateRateLimitingSuccessHeaders(HttpActionExecutedContext context, RateLimitingResult result)

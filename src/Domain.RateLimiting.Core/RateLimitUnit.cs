@@ -29,4 +29,12 @@ namespace Domain.RateLimiting.Core
         
         PerCustomPeriod = 0
     }
+
+    public enum ResultState
+    {
+        Success,
+        Throttled,
+        NotApplicable,
+        Exception
+    }
 }

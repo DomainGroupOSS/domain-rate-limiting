@@ -120,7 +120,7 @@ namespace Domain.RateLimiting.Samples.Owin
 
                 new RateLimiter(rateLimitCacheProvider, policyProvider),
 
-                async (request, policy, result) =>
+                async (request, policy, result, actionContext) =>
                 {
                     var operationClass = CallClassification.RouteTemplateToClassMap[request.RouteTemplate];
                     var cost = CallClassification.CostPerClass[operationClass];
@@ -135,7 +135,7 @@ namespace Domain.RateLimiting.Samples.Owin
                         cost);
                 },
 
-                async (request, policy, result) =>
+                async (request, policy, result, actionContext) =>
                 {
                     var operationClass = CallClassification.RouteTemplateToClassMap[request.RouteTemplate];
                     var cost = CallClassification.CostPerClass[operationClass];
@@ -151,7 +151,7 @@ namespace Domain.RateLimiting.Samples.Owin
                         $"{policy.Name}:{result.CacheKey.AllowedCallRate}");
                 },
 
-                async (request) =>
+                async (request, actionContext) =>
                 {
                    // No policy meaning not applicable
                 },

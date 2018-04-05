@@ -17,7 +17,8 @@ namespace Domain.RateLimiting.Core.UnitTests
             "/api/values", "GET", s => new string[] { "s_value" }, null, null);
         
 
-        private async Task<(bool OnSuccessFuncCalled, bool OnThrottledFuncCalled, bool OnNotApplicableFuncCalled)> LimitRequestAync(IRateLimiter rateLimiter)
+        private async Task<(bool OnSuccessFuncCalled, bool OnThrottledFuncCalled, bool OnNotApplicableFuncCalled)> 
+            LimitRequestAync(IRateLimiter rateLimiter)
         {
             var onSuccessFuncCalled = false;
             var onThrottledFuncCalled = false;

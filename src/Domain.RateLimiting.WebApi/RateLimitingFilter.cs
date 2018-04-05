@@ -12,25 +12,34 @@ using Domain.RateLimiting.Core;
 
 namespace Domain.RateLimiting.WebApi
 {
+    public enum Decision
+    {
+        OK,
+        REVERT
+    }
+
     public class RateLimitingFilter : AuthorizationFilterAttribute
     {
         private readonly IRateLimiter _rateLimiter;
 
         private Func<RateLimitingRequest, HttpActionContext, Task<RateLimitPolicy>> GetPolicyAsyncFunc { get; }
-        private Func<RateLimitingRequest, RateLimitPolicy, RateLimitingResult, Task> OnSuccess { get; }
-        private Func<RateLimitingRequest, RateLimitPolicy, RateLimitingResult, Task> OnThrottled { get; }
-        private Func<RateLimitingRequest, Task> OnNotApplicableFunc { get; }
+        private Func<RateLimitingRequest, RateLimitPolicy, RateLimitingResult, HttpActionContext, Task> OnSuccess { get; }
+        private Func<RateLimitingRequest, RateLimitPolicy, RateLimitingResult, HttpActionContext, Task> OnThrottled { get; }
+        private Func<RateLimitingRequest, HttpActionContext, Task> OnNotApplicableFunc { get; }
+        public Func<RateLimitingRequest, RateLimitPolicy, RateLimitingResult, HttpActionContext, Task<Decision>> PostActionFuncAsync { get; }
 
         public RateLimitingFilter(IRateLimiter rateLimiter,
-            Func<RateLimitingRequest, RateLimitPolicy, RateLimitingResult,Task> onSuccess = null,
-            Func<RateLimitingRequest, RateLimitPolicy, RateLimitingResult,Task> onThrottled = null,
-            Func<RateLimitingRequest, Task> onNotApplicableFunc = null,
+            Func<RateLimitingRequest, RateLimitPolicy, RateLimitingResult, HttpActionContext, Task> onSuccess = null,
+            Func<RateLimitingRequest, RateLimitPolicy, RateLimitingResult, HttpActionContext, Task> onThrottled = null,
+            Func<RateLimitingRequest, HttpActionContext, Task> onNotApplicableFunc = null,
+            Func<RateLimitingRequest, RateLimitPolicy, RateLimitingResult, HttpActionContext, Task<Decision>> postActionFuncAsync = null,
             Func<RateLimitingRequest, HttpActionContext, Task<RateLimitPolicy>> getPolicyAsyncFunc = null)
         { 
             _rateLimiter = rateLimiter;
             OnSuccess = onSuccess;
             OnThrottled = onThrottled;
             OnNotApplicableFunc = onNotApplicableFunc;
+            PostActionFuncAsync = postActionFuncAsync;
             GetPolicyAsyncFunc = getPolicyAsyncFunc;
         }
 
@@ -47,8 +56,11 @@ namespace Domain.RateLimiting.WebApi
 
             await _rateLimiter.LimitRequestAsync(
                 request,
+
                 () => RateLimitingFilter.GetCustomAttributes(context),
+
                 context.Request.Headers.Host,
+
                 async (rateLimitingRequest, policy, rateLimitingResult) =>
                 {
                     if (!context.Request.Properties.ContainsKey("RateLimitingResult"))
@@ -56,19 +68,40 @@ namespace Domain.RateLimiting.WebApi
                         context.Request.Properties.Add("RateLimitingResult", rateLimitingResult);
                     }
 
+                    if (!context.Request.Properties.ContainsKey("PostActionFilterFuncAsync"))
+                    {
+                        context.Request.Properties.Add("PostActionFilterFuncAsync", 
+                            new Func<Task> (async ()=> 
+                            {
+                                var decision = await PostActionFuncAsync(rateLimitingRequest,policy,rateLimitingResult, actionContext);
+                                if (decision == Decision.REVERT)
+                                    await _rateLimiter.LimitRequestAsync(request, 
+                                        () => RateLimitingFilter.GetCustomAttributes(context),
+                                        context.Request.Headers.Host,
+                                        revert: true);
+                            }));
+                    }
+
                     ///////////////////
-                    await OnSuccess?.Invoke(rateLimitingRequest, policy, rateLimitingResult);
+                    await OnSuccess?.Invoke(rateLimitingRequest, policy, rateLimitingResult, actionContext);
 
                     await base.OnAuthorizationAsync(context, cancellationToken);
                 },
+
                 async (rateLimitingRequest, policy, rateLimitingResult) =>
                 {
                     //////////////////////
-                    await OnThrottled?.Invoke(rateLimitingRequest, policy, rateLimitingResult);
+                    await OnThrottled?.Invoke(rateLimitingRequest, policy, rateLimitingResult, actionContext);
 
                     await RateLimitingFilter.TooManyRequests(context, rateLimitingResult, policy.Name);
                 },
-                OnNotApplicableFunc,
+
+                async (rateLimitingRequest) =>
+                {
+                    //////////////////////
+                    await OnNotApplicableFunc?.Invoke(rateLimitingRequest, actionContext);
+                },
+
                 async (rlr) =>
                 {
                     return await GetPolicyAsyncFunc?.Invoke(rlr, actionContext);

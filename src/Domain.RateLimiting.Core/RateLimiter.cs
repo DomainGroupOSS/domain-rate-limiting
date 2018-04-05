@@ -20,12 +20,13 @@ namespace Domain.RateLimiting.Core
         public async Task LimitRequestAsync( 
             RateLimitingRequest rateLimitingRequest,
             Func<IList<AllowedConsumptionRate>> getCustomAttributes, string host,
-            Func<RateLimitingRequest, RateLimitPolicy, RateLimitingResult, Task> onSuccessFunc,
-            Func<RateLimitingRequest, RateLimitPolicy, RateLimitingResult, Task> onThrottledFunc,
-            Func<RateLimitingRequest, Task> onNotApplicableFunc,
-            Func<RateLimitingRequest, Task<RateLimitPolicy>> getPolicyAsyncFunc = null)
+            Func<RateLimitingRequest, RateLimitPolicy, RateLimitingResult, Task> onSuccessFunc = null,
+            Func<RateLimitingRequest, RateLimitPolicy, RateLimitingResult, Task> onThrottledFunc = null,
+            Func<RateLimitingRequest, Task> onNotApplicableFunc = null,
+            Func<RateLimitingRequest, Task<RateLimitPolicy>> getPolicyAsyncFunc = null,
+            bool revert = false)
         {
-            var getPolicyAsync = getPolicyAsyncFunc ?? _policyProvider.GetPolicyAsync;
+            var getPolicyAsync = getPolicyAsyncFunc ??  _policyProvider.GetPolicyAsync;
 
             var rateLimitingPolicy = await getPolicyAsync(rateLimitingRequest).ConfigureAwait(false);
 
@@ -59,19 +60,20 @@ namespace Domain.RateLimiting.Core
             }
             
             var rateLimitingResult = await _rateLimitingCacheProvider.LimitRequestAsync(rateLimitingPolicy.RequestKey, httpMethod,
-                host, routeTemplate, allowedCallRates, rateLimitingPolicy.CostPerCall).ConfigureAwait(false);
+                host, routeTemplate, allowedCallRates, 
+                revert ? -rateLimitingPolicy.CostPerCall : rateLimitingPolicy.CostPerCall).ConfigureAwait(false);
 
             if(rateLimitingResult.NotApplicable)
             {
-                await onNotApplicableFunc(rateLimitingRequest);
+                await onNotApplicableFunc?.Invoke(rateLimitingRequest);
             }
             else if (!rateLimitingResult.Throttled)
             {
-                await onSuccessFunc(rateLimitingRequest, rateLimitingPolicy, rateLimitingResult);
+                await onSuccessFunc?.Invoke(rateLimitingRequest, rateLimitingPolicy, rateLimitingResult);
             }
             else
             {
-                await onThrottledFunc(rateLimitingRequest, rateLimitingPolicy, rateLimitingResult);
+                await onThrottledFunc?.Invoke(rateLimitingRequest, rateLimitingPolicy, rateLimitingResult);
             }
         }
 
