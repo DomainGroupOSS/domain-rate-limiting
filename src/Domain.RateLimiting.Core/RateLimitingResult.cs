@@ -2,6 +2,8 @@
 {
     public class RateLimitingResult
     {
+        public ResultState State { get; }
+
         public bool Throttled { get; }
 
         public long WaitingIntervalInTicks { get; }
@@ -19,29 +21,18 @@
         /// <param name="waitingIntervalInTicks"></param>
         /// <param name="callsRemaining"></param>
         /// <param name="violatedPolicyName"></param>
-        public RateLimitingResult(bool throttled, long waitingIntervalInTicks, RateLimitCacheKey cacheKey, int callsRemaining, string violatedPolicyName = "")
+        public RateLimitingResult(ResultState state, long waitingIntervalInTicks, RateLimitCacheKey cacheKey, int callsRemaining, string violatedPolicyName = "")
         {
-            Throttled = throttled;
+            State = state;
             WaitingIntervalInTicks = waitingIntervalInTicks;
             CacheKey = cacheKey;
             TokensRemaining = callsRemaining;
             ViolatedPolicyName = violatedPolicyName;
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="throttled"></param>
-        /// <param name="waitingIntervalInTicks"></param>
-        public RateLimitingResult(bool throttled, long waitingIntervalInTicks)
+        public RateLimitingResult(ResultState state)
         {
-            Throttled = throttled;
-            WaitingIntervalInTicks = waitingIntervalInTicks;
-        }
-
-        public RateLimitingResult(bool notApplicable)
-        {
-            NotApplicable = notApplicable;
+            State = state;
         }
     }
 }

@@ -186,7 +186,7 @@ namespace Domain.RateLimiting.Redis.UnitTests
                     new AllowedConsumptionRate(2, RateLimitUnit.PerMinute)
                 }).ConfigureAwait(false);
 
-            Assert.Equal(true, result.Throttled);
+            Assert.Equal(result.State, ResultState.Throttled);
             Assert.Equal(cacheKey.ToString(), result.CacheKey.ToString());
 
             setup.ConnectionMultiplexerMock.VerifyAll();

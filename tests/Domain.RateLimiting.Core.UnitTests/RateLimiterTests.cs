@@ -29,17 +29,13 @@ namespace Domain.RateLimiting.Core.UnitTests
                 "localhost",
                 (r,p,rr) =>
                 {
-                    onSuccessFuncCalled = true;
-                    return Task.CompletedTask;
-                },
-                (r,p,rr) =>
-                {
-                    onThrottledFuncCalled = true;
-                    return Task.CompletedTask;
-                },
-                (r) =>
-                {
-                    onNotApplicableFuncCalled = true;
+                    if(rr.State == ResultState.Success)
+                        onSuccessFuncCalled = true;
+                    else if(rr.State == ResultState.Throttled)
+                        onThrottledFuncCalled = true;
+                    else if(rr.State == ResultState.NotApplicable)
+                        onNotApplicableFuncCalled = true;
+
                     return Task.CompletedTask;
                 });
 
@@ -71,7 +67,7 @@ namespace Domain.RateLimiting.Core.UnitTests
             rateLimitingCacheProviderMock.Setup(provider => provider.LimitRequestAsync(
                 "testclient_01", "GET",
                 "localhost", "/api/values", _allowedCallRates, 1))
-                .ReturnsAsync(new RateLimitingResult(false, 0));
+                .ReturnsAsync(new RateLimitingResult(ResultState.Success));
             
             var rateLimiter = new RateLimiter(rateLimitingCacheProviderMock.Object, 
                 policyProviderMock.Object);
@@ -131,7 +127,7 @@ namespace Domain.RateLimiting.Core.UnitTests
             rateLimitingCacheProviderMock.Setup(provider => provider.LimitRequestAsync(
                     "testclient_01", "GET",
                     "localhost", "/api/values", _allowedCallRates, 1))
-                .ReturnsAsync(new RateLimitingResult(false, 0));
+                .ReturnsAsync(new RateLimitingResult(ResultState.Success));
 
             var rateLimiter = new RateLimiter(rateLimitingCacheProviderMock.Object,
                 policyProviderMock.Object);
@@ -154,7 +150,7 @@ namespace Domain.RateLimiting.Core.UnitTests
                 .ReturnsAsync(rateLimitPolicy);
 
             var rateLimitingCacheProviderMock = new Mock<IRateLimitingCacheProvider>();
-            var rateLimitingResult = new RateLimitingResult(true, 1000,
+            var rateLimitingResult = new RateLimitingResult(ResultState.Throttled, 1000,
                 default(RateLimitCacheKey), 0, "Policy_01");
 
             rateLimitingCacheProviderMock.Setup(provider => provider.LimitRequestAsync(

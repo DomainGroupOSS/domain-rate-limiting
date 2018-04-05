@@ -103,15 +103,23 @@ namespace Domain.RateLimiting.AspNetCore
                 actionContext.HttpContext.Request.Host.Value,
                 async (request, policy, rateLimitingResult) =>
                 {
-                    AddUpdateRateLimitingSuccessHeaders(actionContext.HttpContext, rateLimitingResult);
-                    await Task.FromResult<object>(null);
+                    if (rateLimitingResult.State == ResultState.Success)
+                    {
+                        AddUpdateRateLimitingSuccessHeaders(actionContext.HttpContext, rateLimitingResult);
+                        await Task.FromResult<object>(null);
+                    }
+                    else if(rateLimitingResult.State == ResultState.Throttled)
+                    {
+                        TooManyRequests(actionContext, rateLimitingResult, policy.Name);
+                        await Task.FromResult<object>(null);
+                    }
                 },
-                async (request, policy, rateLimitingResult) =>
-                {
-                    TooManyRequests(actionContext, rateLimitingResult, policy.Name);
-                    await Task.FromResult<object>(null);
-                }, 
-                null,
+                //async (request, policy, rateLimitingResult) =>
+                //{
+                //    TooManyRequests(actionContext, rateLimitingResult, policy.Name);
+                //    await Task.FromResult<object>(null);
+                //}, 
+                //null,
                 async (rlr) =>
                 {
                     return await GetPolicyAsyncFunc(rlr, actionContext);

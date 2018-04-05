@@ -113,7 +113,7 @@ namespace Domain.RateLimiting.Redis
                 }
 
                 if (!violatedCacheKeys.Any())
-                    return new RateLimitingResult(false, 0, minCallsCacheKey, minCallsRemaining);
+                    return new RateLimitingResult(ResultState.Success, 0, minCallsCacheKey, minCallsRemaining);
 
                 var postViolationTransaction = redisDb.CreateTransaction();
 
@@ -128,7 +128,7 @@ namespace Domain.RateLimiting.Redis
 
                 await ExecuteTransactionAsync(postViolationTransaction).ConfigureAwait(false);
 
-                var rateLimitingResult = new RateLimitingResult(true,
+                var rateLimitingResult = new RateLimitingResult(ResultState.Throttled,
                     await GetWaitingIntervalInTicks(setupGetOldestRequestTimestampInTicks,
                         violatedCacheKey, utcNowTicks), violatedCacheKey, 0);
 
@@ -136,7 +136,7 @@ namespace Domain.RateLimiting.Redis
 
                 return rateLimitingResult;
 
-            }, new RateLimitingResult(true));
+            }, new RateLimitingResult(ResultState.Exception));
         }
 
         public Task<RateLimitingResult> LimitRequestAsync(RateLimitCacheKey cacheKey)

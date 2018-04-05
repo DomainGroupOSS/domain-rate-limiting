@@ -24,7 +24,7 @@ namespace Domain.RateLimiting.Samples.Owin
             { "api/unlimited/{id}", "F" }
         };
 
-        public static Dictionary<string, int> CostPerClass = 
+        public static Dictionary<string, int> CostPerClass =
             new Dictionary<string, int>()
             {
                 { "A", 1},
@@ -45,7 +45,7 @@ namespace Domain.RateLimiting.Samples.Owin
 
             var operationClass = CallClassification.RouteTemplateToClassMap[rateLimitingRequest.RouteTemplate];
 
-            if(operationClass == "F")
+            if (operationClass == "F")
             {
                 return Task.FromResult(new RateLimitPolicy("Test_Client_01::ClassF",
                 new List<AllowedConsumptionRate>()
@@ -62,7 +62,8 @@ namespace Domain.RateLimiting.Samples.Owin
                     new AllowedConsumptionRate(1000, RateLimitUnit.PerCustomPeriod,
                         new LimitPeriod(new DateTime(2018,3,23,0,0,0,DateTimeKind.Utc), 3600, true))
                     //new AllowedCallRate(100, RateLimitUnit.PerMinute)
-                }, name:"Quota_Billed") { CostPerCall = cost });
+                }, name: "Quota_Billed")
+            { CostPerCall = cost });
         }
 
         public Task<RateLimitPolicy> GetPolicyAsync(RateLimitingRequest rateLimitingRequest)
@@ -125,25 +126,21 @@ namespace Domain.RateLimiting.Samples.Owin
                     var operationClass = CallClassification.RouteTemplateToClassMap[request.RouteTemplate];
                     var cost = CallClassification.CostPerClass[operationClass];
 
-                    auditLogger.Information(
-                        "Throttled {Throttled}: Request success for client {ClientId} and endpoint {Endpoint} with route {RouteTemplate} which is Class {Class} with Cost {Cost}",
-                        false,
-                        result.CacheKey.RequestId,
-                        request.Path,
-                        request.RouteTemplate,
-                        operationClass,
-                        cost);
-
-                    return Decision.OK;
-                },
-
-                async (request, policy, result, actionContext) =>
-                {
-                    var operationClass = CallClassification.RouteTemplateToClassMap[request.RouteTemplate];
-                    var cost = CallClassification.CostPerClass[operationClass];
-
-                    auditLogger.Information(
-                    "Throttled {Throttled}: throttled for client {ClientId} and endpoint {Endpoint} with route {RouteTemplate} which is Class {Class} with Cost {Cost} by violating policy {ViolatedPolicy}",
+                    if (result.State == ResultState.Success)
+                    {
+                        auditLogger.Information(
+                            "Throttled {Throttled}: Request success for client {ClientId} and endpoint {Endpoint} with route {RouteTemplate} which is Class {Class} with Cost {Cost}",
+                            false,
+                            result.CacheKey.RequestId,
+                            request.Path,
+                            request.RouteTemplate,
+                            operationClass,
+                            cost);
+                    }
+                    else if (result.State == ResultState.Throttled)
+                    {
+                        auditLogger.Information(
+                        "Throttled {Throttled}: throttled for client {ClientId} and endpoint {Endpoint} with route {RouteTemplate} which is Class {Class} with Cost {Cost} by violating policy {ViolatedPolicy}",
                         true,
                         result.CacheKey.RequestId,
                         request.Path,
@@ -151,14 +148,22 @@ namespace Domain.RateLimiting.Samples.Owin
                         operationClass,
                         cost,
                         $"{policy.Name}:{result.CacheKey.AllowedCallRate}");
+                    }
+                    else if (result.State == ResultState.Exception)
+                    {
+
+                    }
+                    else if (result.State == ResultState.NotApplicable)
+                    {
+
+                    }
+
+
+                    return Decision.OK;
                 },
 
-                async (request, actionContext) =>
+                postActionFilterFuncAsync: async (request, policy, result, actionExecutedContext) =>
                 {
-                   // No policy meaning not applicable
-                },
-
-                postActionFilterFuncAsync: async (request, policy, result, actionExecutedContext) => {
                     if (actionExecutedContext.Exception != null || (int)actionExecutedContext.Response.StatusCode >= 400)
                         return Decision.REVERT;
 
