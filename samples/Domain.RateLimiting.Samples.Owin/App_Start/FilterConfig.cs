@@ -54,7 +54,7 @@ namespace Domain.RateLimiting.Samples.Owin
                 }, name: "QuotaFree_SafetyPolicy"));
             }
 
-            var cost = 1;// CallClassification.CostPerClass[operationClass];
+            var cost = CallClassification.CostPerClass[operationClass];
 
             return Task.FromResult(new RateLimitPolicy("Test_Client_01",
                 new List<AllowedConsumptionRate>()
@@ -80,7 +80,7 @@ namespace Domain.RateLimiting.Samples.Owin
 
             ConfigureRateLimitingSettings(redisRateLimiterSettings);
 
-            var rateLimitCacheProvider = new RedisSlidingWindowRateLimiter(
+            var rateLimitCacheProvider = new RedisFixedWindowRateLimiter(
                 redisRateLimiterSettings.RateLimitRedisCacheConnectionString,
                 circuitBreaker: new DefaultCircuitBreaker(redisRateLimiterSettings.FaultThreshholdPerWindowDuration,
                     redisRateLimiterSettings.FaultWindowDurationInMilliseconds, redisRateLimiterSettings.CircuitOpenIntervalInSecs,
@@ -133,6 +133,8 @@ namespace Domain.RateLimiting.Samples.Owin
                         request.RouteTemplate,
                         operationClass,
                         cost);
+
+                    return Decision.OK;
                 },
 
                 async (request, policy, result, actionContext) =>
@@ -154,6 +156,13 @@ namespace Domain.RateLimiting.Samples.Owin
                 async (request, actionContext) =>
                 {
                    // No policy meaning not applicable
+                },
+
+                postActionFilterFuncAsync: async (request, policy, result, actionExecutedContext) => {
+                    if (actionExecutedContext.Exception != null || (int)actionExecutedContext.Response.StatusCode >= 400)
+                        return Decision.REVERT;
+
+                    return Decision.OK;
                 },
 
                 getPolicyAsyncFunc: policyProvider.GetPolicyAsync));

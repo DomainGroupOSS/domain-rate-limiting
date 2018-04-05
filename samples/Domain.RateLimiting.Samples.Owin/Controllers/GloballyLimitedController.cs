@@ -24,9 +24,10 @@ namespace Domain.RateLimiting.Samples.Owin.Controllers
         }
 
         [Route("api/globallylimited/{id}/sub/{subid}/test/{testid}")]
-        public string Get(int id, int subid, int testid)
+        public IHttpActionResult Get(int id, int subid, int testid)
         {
-            return "value from sub test";
+            throw new System.Exception("Test");
+            return Content( System.Net.HttpStatusCode.InternalServerError, "value from sub test");
         }
 
         [HttpGet]

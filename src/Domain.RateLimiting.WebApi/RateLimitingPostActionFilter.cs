@@ -13,17 +13,19 @@ namespace Domain.RateLimiting.WebApi
     {
         public override async Task OnActionExecutedAsync(HttpActionExecutedContext actionExecutedContext, CancellationToken cancellationToken)
         {
-            if (actionExecutedContext.Request.Properties.ContainsKey("RateLimitingResult"))
-                AddUpdateRateLimitingSuccessHeaders(actionExecutedContext,
-                    (RateLimitingResult)actionExecutedContext.Request.Properties["RateLimitingResult"]);
+           
 
             if (actionExecutedContext.Request.Properties.ContainsKey("PostActionFilterFuncAsync"))
             {
                 var func = actionExecutedContext.Request.Properties["PostActionFilterFuncAsync"]
-                    as Func<Task>;
+                    as Func<HttpActionExecutedContext,Task>;
 
-                await func?.Invoke();
+                await func?.Invoke(actionExecutedContext);
             }
+
+            if (actionExecutedContext.Request.Properties.ContainsKey("RateLimitingResult"))
+                AddUpdateRateLimitingSuccessHeaders(actionExecutedContext,
+                    (RateLimitingResult)actionExecutedContext.Request.Properties["RateLimitingResult"]);
 
             await base.OnActionExecutedAsync(actionExecutedContext, cancellationToken);
         }
@@ -37,6 +39,9 @@ namespace Domain.RateLimiting.WebApi
             };
 
             var response = context.Response;
+            if (response == null)
+                return;
+
             foreach (var successheader in successheaders.Keys)
             {
                 if (response.Headers.Contains(successheader))
