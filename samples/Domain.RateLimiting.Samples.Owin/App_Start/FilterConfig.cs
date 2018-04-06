@@ -41,10 +41,17 @@ namespace Domain.RateLimiting.Samples.Owin
 
             var clientId = rateLimitingRequest.ClaimsPrincipal?.Claims.FirstOrDefault(c => c.Type == "client_id");
 
-            //if (string.IsNullOrWhiteSpace(clientId?.Value)) return null;
-
             var operationClass = CallClassification.RouteTemplateToClassMap[rateLimitingRequest.RouteTemplate];
 
+            if (actionContext != null)
+            {
+                var operationId = actionContext.ActionDescriptor.GetCustomAttributes<OperationInfo>(true).ToList();
+                if (operationId.Count != 0)
+                    operationClass = CallClassification.RouteTemplateToClassMap[operationId[0].Id];
+            }
+
+            //if (string.IsNullOrWhiteSpace(clientId?.Value)) return null;
+            
             if (operationClass == "F")
             {
                 return Task.FromResult(new RateLimitPolicy("Test_Client_01::ClassF",
@@ -166,14 +173,14 @@ namespace Domain.RateLimiting.Samples.Owin
                     }
                     else if (result.State == ResultState.NotApplicable)
                     {
-                       auditLogger.Information(
-                          "Result {Result}: Free pass for client {ClientId} and endpoint {Endpoint} with route {RouteTemplate} which is Class {Class} with Cost {Cost}",
-                          ResultState.NotApplicable,
-                          clientId,
-                          request.Path,
-                          request.RouteTemplate,
-                          operationClass,
-                          cost);
+                        auditLogger.Information(
+                           "Result {Result}: Free pass for client {ClientId} and endpoint {Endpoint} with route {RouteTemplate} which is Class {Class} with Cost {Cost}",
+                           ResultState.NotApplicable,
+                           clientId,
+                           request.Path,
+                           request.RouteTemplate,
+                           operationClass,
+                           cost);
                     }
 
 
@@ -191,7 +198,7 @@ namespace Domain.RateLimiting.Samples.Owin
                 onPostLimitRevert: async (request, policy, result, actionContext) =>
                 {
                     var operationClass = CallClassification.RouteTemplateToClassMap[request.RouteTemplate];
-                    
+
                     if (result.State == ResultState.Success || result.State == ResultState.Throttled)
                     {
                         auditLogger.Information(
@@ -219,7 +226,7 @@ namespace Domain.RateLimiting.Samples.Owin
                 },
 
                 getPolicyAsyncFunc: policyProvider.GetPolicyAsync,
-                simulationMode:false));
+                simulationMode: false));
 
             filters.Add(new RateLimitingPostActionFilter());
         }
@@ -240,4 +247,16 @@ namespace Domain.RateLimiting.Samples.Owin
                 Boolean.Parse(ConfigurationManager.AppSettings["RedisRateLimiterSettings:CountThrottledRequests"]);
         }
     }
+
+    [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class, Inherited = true, AllowMultiple = false)]
+    public class OperationInfo : Attribute
+    {
+        public OperationInfo(string id)
+        {
+            Id = id;
+        }
+
+        public string Id { get; }
+    }
+
 }

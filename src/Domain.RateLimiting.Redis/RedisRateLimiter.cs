@@ -112,7 +112,7 @@ namespace Domain.RateLimiting.Redis
                         violatedCacheKeys.Add((long)allowedCallRates[i].Unit, cacheKey);
                 }
 
-                if (!violatedCacheKeys.Any())
+                if (!violatedCacheKeys.Any() || costPerCall < 0)
                     return new RateLimitingResult(ResultState.Success, 0, minCallsCacheKey, minCallsRemaining);
 
                 var postViolationTransaction = redisDb.CreateTransaction();

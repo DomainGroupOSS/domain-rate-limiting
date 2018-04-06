@@ -18,12 +18,14 @@ namespace Domain.RateLimiting.Samples.Owin.Controllers
         }
 
         [Route("api/globallylimited/{id}/sub/{subid}")]
+        
         public string Get(int id, int subid)
         {
             return "value from sub";
         }
 
         [Route("api/globallylimited/{id}/sub/{subid}/test/{testid}")]
+        [OperationInfo("api/globallylimited/{id}/sub/{subid}/test/{testid}")]
         public IHttpActionResult Get(int id, int subid, int testid)
         {
             throw new System.Exception("Test");

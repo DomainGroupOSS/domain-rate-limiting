@@ -72,7 +72,10 @@ namespace Domain.RateLimiting.WebApi
                     await RevertIfRequired(rateLimitingResult, context, request, clientDecision);
 
                     if (clientDecision == Decision.REVERT)
+                    {
+                        await base.OnAuthorizationAsync(context, cancellationToken);
                         return;
+                    }
 
                     if (rateLimitingResult.State == ResultState.Success)
                     {

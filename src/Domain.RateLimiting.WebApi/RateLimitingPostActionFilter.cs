@@ -16,7 +16,7 @@ namespace Domain.RateLimiting.WebApi
             if (actionExecutedContext.Request.Properties.ContainsKey("PostActionFilterFuncAsync"))
             {
                 var func = actionExecutedContext.Request.Properties["PostActionFilterFuncAsync"]
-                    as Func<HttpActionExecutedContext,Task>;
+                    as Func<HttpActionExecutedContext, Task>;
 
                 await func?.Invoke(actionExecutedContext);
             }
