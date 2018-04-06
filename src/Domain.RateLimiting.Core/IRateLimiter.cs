@@ -11,10 +11,7 @@ namespace Domain.RateLimiting.Core
             RateLimitingRequest rateLimitingRequest,
             Func<IList<AllowedConsumptionRate>> getCustomAttributes, string host,
             Func<RateLimitingRequest, RateLimitPolicy, RateLimitingResult, Task> onPostLimitFuncAsync = null,
-            //Func<RateLimitingRequest, RateLimitPolicy, RateLimitingResult, Task> onSuccessFunc = null,
-            //Func<RateLimitingRequest, RateLimitPolicy, RateLimitingResult, Task> onThrottledFunc = null,
-            //Func<RateLimitingRequest, Task> onNotApplicableFunc = null,
-            Func<RateLimitingRequest, Task<RateLimitPolicy>> getPolicyAsyncFunc = null,
+            Func<RateLimitingRequest, Task<RateLimitPolicy>> getPolicyFuncAsync = null,
             bool revert = false);
     }
 }

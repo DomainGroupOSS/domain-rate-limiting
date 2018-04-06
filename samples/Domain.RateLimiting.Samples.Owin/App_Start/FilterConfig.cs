@@ -128,7 +128,7 @@ namespace Domain.RateLimiting.Samples.Owin
 
                 new RateLimiter(rateLimitCacheProvider, policyProvider),
 
-                async (request, policy, result, actionContext) =>
+                onPostLimit: async (request, policy, result, actionContext) =>
                 {
                     var operationClass = CallClassification.RouteTemplateToClassMap[request.RouteTemplate];
                     var cost = CallClassification.CostPerClass[operationClass];
@@ -187,14 +187,6 @@ namespace Domain.RateLimiting.Samples.Owin
                     return Decision.OK;
                 },
 
-                postOperationDecisionFuncAsync: async (request, policy, result, actionExecutedContext) =>
-                {
-                    if (actionExecutedContext.Exception != null || (int)actionExecutedContext.Response.StatusCode >= 400)
-                        return Decision.REVERT;
-
-                    return Decision.OK;
-                },
-
                 onPostLimitRevert: async (request, policy, result, actionContext) =>
                 {
                     var operationClass = CallClassification.RouteTemplateToClassMap[request.RouteTemplate];
@@ -210,7 +202,7 @@ namespace Domain.RateLimiting.Samples.Owin
                           operationClass,
                           -policy.CostPerCall);
                     }
-                    else
+                    else if(result.State == ResultState.Exception)
                     {
                         auditLogger.Information(
                           "Result {Result}: Limit Reverting failed for client {ClientId} and endpoint {Endpoint} with route {RouteTemplate} which is Class {Class} with Cost {Cost}",
@@ -225,7 +217,15 @@ namespace Domain.RateLimiting.Samples.Owin
                     return Decision.OK;
                 },
 
-                getPolicyAsyncFunc: policyProvider.GetPolicyAsync,
+                 postOperationDecisionFuncAsync: async (request, policy, result, actionExecutedContext) =>
+                 {
+                     if (actionExecutedContext.Exception != null || (int)actionExecutedContext.Response.StatusCode >= 400)
+                         return Decision.REVERT;
+
+                     return Decision.OK;
+                 },
+
+                getPolicyFuncAsync: policyProvider.GetPolicyAsync,
                 simulationMode: false));
 
             filters.Add(new RateLimitingPostActionFilter());

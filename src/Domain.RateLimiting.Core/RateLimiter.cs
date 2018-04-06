@@ -21,10 +21,10 @@ namespace Domain.RateLimiting.Core
             RateLimitingRequest rateLimitingRequest,
             Func<IList<AllowedConsumptionRate>> getCustomAttributes, string host,
             Func<RateLimitingRequest, RateLimitPolicy, RateLimitingResult, Task> onPostLimitFuncAsync = null,
-            Func<RateLimitingRequest, Task<RateLimitPolicy>> getPolicyAsyncFunc = null,
+            Func<RateLimitingRequest, Task<RateLimitPolicy>> getPolicyFuncAsync = null,
             bool revert = false)
         {
-            var getPolicyAsync = getPolicyAsyncFunc ??  _policyProvider.GetPolicyAsync;
+            var getPolicyAsync = getPolicyFuncAsync ??  _policyProvider.GetPolicyAsync;
 
             var rateLimitingPolicy = await getPolicyAsync(rateLimitingRequest).ConfigureAwait(false);
 

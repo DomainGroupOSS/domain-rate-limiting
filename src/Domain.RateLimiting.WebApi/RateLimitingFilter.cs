@@ -22,7 +22,7 @@ namespace Domain.RateLimiting.WebApi
     {
         private readonly IRateLimiter _rateLimiter;
 
-        private Func<RateLimitingRequest, HttpActionContext, Task<RateLimitPolicy>> GetPolicyAsyncFunc { get; }
+        private Func<RateLimitingRequest, HttpActionContext, Task<RateLimitPolicy>> GetPolicyFuncAsync { get; }
         public bool SimulationMode { get; }
         public Func<RateLimitingRequest, RateLimitPolicy, RateLimitingResult, HttpActionContext, Task<Decision>> OnPostLimit { get; }
         public Func<RateLimitingRequest, RateLimitPolicy, RateLimitingResult, HttpActionContext, Task<Decision>> OnPostLimitRevert { get; }
@@ -32,14 +32,14 @@ namespace Domain.RateLimiting.WebApi
             Func<RateLimitingRequest, RateLimitPolicy, RateLimitingResult, HttpActionContext, Task<Decision>> onPostLimit = null,
             Func<RateLimitingRequest, RateLimitPolicy, RateLimitingResult, HttpActionContext, Task<Decision>> onPostLimitRevert = null,
             Func<RateLimitingRequest, RateLimitPolicy, RateLimitingResult, HttpActionExecutedContext, Task<Decision>> postOperationDecisionFuncAsync = null,
-            Func<RateLimitingRequest, HttpActionContext, Task<RateLimitPolicy>> getPolicyAsyncFunc = null,
+            Func<RateLimitingRequest, HttpActionContext, Task<RateLimitPolicy>> getPolicyFuncAsync = null,
             bool simulationMode = false)
         {
             _rateLimiter = rateLimiter;
             OnPostLimit = onPostLimit;
             OnPostLimitRevert = onPostLimitRevert;
             PostOperationDecisionFuncAsync = postOperationDecisionFuncAsync;
-            GetPolicyAsyncFunc = getPolicyAsyncFunc;
+            GetPolicyFuncAsync = getPolicyFuncAsync;
             SimulationMode = simulationMode;
         }
 
@@ -101,7 +101,7 @@ namespace Domain.RateLimiting.WebApi
                 },
                 async (rlr) =>
                 {
-                    return await GetPolicyAsyncFunc?.Invoke(rlr, actionContext);
+                    return await GetPolicyFuncAsync?.Invoke(rlr, actionContext);
                 }).ConfigureAwait(false);
         }
 
