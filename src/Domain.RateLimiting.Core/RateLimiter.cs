@@ -21,9 +21,6 @@ namespace Domain.RateLimiting.Core
             RateLimitingRequest rateLimitingRequest,
             Func<IList<AllowedConsumptionRate>> getCustomAttributes, string host,
             Func<RateLimitingRequest, RateLimitPolicy, RateLimitingResult, Task> onPostLimitFuncAsync = null,
-            //Func<RateLimitingRequest, RateLimitPolicy, RateLimitingResult, Task> onSuccessFunc = null,
-            //Func<RateLimitingRequest, RateLimitPolicy, RateLimitingResult, Task> onThrottledFunc = null,
-            //Func<RateLimitingRequest, Task> onNotApplicableFunc = null,
             Func<RateLimitingRequest, Task<RateLimitPolicy>> getPolicyAsyncFunc = null,
             bool revert = false)
         {
@@ -63,19 +60,6 @@ namespace Domain.RateLimiting.Core
             var rateLimitingResult = await _rateLimitingCacheProvider.LimitRequestAsync(rateLimitingPolicy.RequestKey, httpMethod,
                 host, routeTemplate, allowedCallRates, 
                 revert ? -rateLimitingPolicy.CostPerCall : rateLimitingPolicy.CostPerCall).ConfigureAwait(false);
-
-            //if(rateLimitingResult.State == ResultState.NotApplicable)
-            //{
-            //    await onNotApplicableFunc?.Invoke(rateLimitingRequest);
-            //}
-            //else if (rateLimitingResult.State == ResultState.Success)
-            //{
-            //    await onSuccessFunc?.Invoke(rateLimitingRequest, rateLimitingPolicy, rateLimitingResult);
-            //}
-            //else if (rateLimitingResult.State == ResultState.Throttled)
-            //{
-            //    await onThrottledFunc?.Invoke(rateLimitingRequest, rateLimitingPolicy, rateLimitingResult);
-            //}
 
             await onPostLimitFuncAsync?.Invoke(rateLimitingRequest, rateLimitingPolicy, rateLimitingResult);
         }

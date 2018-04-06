@@ -126,11 +126,14 @@ namespace Domain.RateLimiting.Samples.Owin
                     var operationClass = CallClassification.RouteTemplateToClassMap[request.RouteTemplate];
                     var cost = CallClassification.CostPerClass[operationClass];
 
+                    // sns publish
+
                     if (result.State == ResultState.Success)
                     {
+                        // sns publish
                         auditLogger.Information(
-                            "Throttled {Throttled}: Request success for client {ClientId} and endpoint {Endpoint} with route {RouteTemplate} which is Class {Class} with Cost {Cost}",
-                            false,
+                            "Result {Result}: Request success for client {ClientId} and endpoint {Endpoint} with route {RouteTemplate} which is Class {Class} with Cost {Cost}",
+                            "Success",
                             result.CacheKey.RequestId,
                             request.Path,
                             request.RouteTemplate,
@@ -140,32 +143,76 @@ namespace Domain.RateLimiting.Samples.Owin
                     else if (result.State == ResultState.Throttled)
                     {
                         auditLogger.Information(
-                        "Throttled {Throttled}: throttled for client {ClientId} and endpoint {Endpoint} with route {RouteTemplate} which is Class {Class} with Cost {Cost} by violating policy {ViolatedPolicy}",
-                        true,
-                        result.CacheKey.RequestId,
-                        request.Path,
-                        request.RouteTemplate,
-                        operationClass,
-                        cost,
-                        $"{policy.Name}:{result.CacheKey.AllowedCallRate}");
+                            "Result {Result}: throttled for client {ClientId} and endpoint {Endpoint} with route {RouteTemplate} which is Class {Class} with Cost {Cost} by violating policy {ViolatedPolicy}",
+                            "Throttled",
+                            result.CacheKey.RequestId,
+                            request.Path,
+                            request.RouteTemplate,
+                            operationClass,
+                            cost,
+                            $"{policy.Name}:{result.CacheKey.AllowedCallRate}");
                     }
                     else if (result.State == ResultState.Exception)
                     {
-
+                        auditLogger.Information(
+                            "Result {Result}: Free pass for client {ClientId} and endpoint {Endpoint} with route {RouteTemplate} which is Class {Class} with Cost {Cost}",
+                            "FreePass",
+                            result.CacheKey.RequestId,
+                            request.Path,
+                            request.RouteTemplate,
+                            operationClass,
+                            cost);
                     }
                     else if (result.State == ResultState.NotApplicable)
                     {
-
+                       auditLogger.Information(
+                          "Result {Result}: Free pass for client {ClientId} and endpoint {Endpoint} with route {RouteTemplate} which is Class {Class} with Cost {Cost}",
+                          ResultState.NotApplicable,
+                          result.CacheKey.RequestId,
+                          request.Path,
+                          request.RouteTemplate,
+                          operationClass,
+                          cost);
                     }
 
 
                     return Decision.OK;
                 },
 
-                postActionFilterFuncAsync: async (request, policy, result, actionExecutedContext) =>
+                postOperationDecisionFuncAsync: async (request, policy, result, actionExecutedContext) =>
                 {
                     if (actionExecutedContext.Exception != null || (int)actionExecutedContext.Response.StatusCode >= 400)
                         return Decision.REVERT;
+
+                    return Decision.OK;
+                },
+
+                onPostLimitRevert: async (request, policy, result, actionContext) =>
+                {
+                    var operationClass = CallClassification.RouteTemplateToClassMap[request.RouteTemplate];
+                    
+                    if (result.State == ResultState.Success || result.State == ResultState.Throttled)
+                    {
+                        auditLogger.Information(
+                          "Result {Result}: Limit Reverted for client {ClientId} and endpoint {Endpoint} with route {RouteTemplate} which is Class {Class} with Cost {Cost}",
+                          "Reverted",
+                          result.CacheKey.RequestId,
+                          request.Path,
+                          request.RouteTemplate,
+                          operationClass,
+                          -policy.CostPerCall);
+                    }
+                    else
+                    {
+                        auditLogger.Information(
+                          "Result {Result}: Limit Reverting failed for client {ClientId} and endpoint {Endpoint} with route {RouteTemplate} which is Class {Class} with Cost {Cost}",
+                          "RevertFailed",
+                          result.CacheKey.RequestId,
+                          request.Path,
+                          request.RouteTemplate,
+                          operationClass,
+                          -policy.CostPerCall);
+                    }
 
                     return Decision.OK;
                 },
