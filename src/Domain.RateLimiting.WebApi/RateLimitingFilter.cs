@@ -23,6 +23,7 @@ namespace Domain.RateLimiting.WebApi
         private readonly IRateLimiter _rateLimiter;
 
         private Func<RateLimitingRequest, HttpActionContext, Task<RateLimitPolicy>> GetPolicyAsyncFunc { get; }
+        public bool SimulationMode { get; }
         public Func<RateLimitingRequest, RateLimitPolicy, RateLimitingResult, HttpActionContext, Task<Decision>> OnPostLimit { get; }
         public Func<RateLimitingRequest, RateLimitPolicy, RateLimitingResult, HttpActionContext, Task<Decision>> OnPostLimitRevert { get; }
         public Func<RateLimitingRequest, RateLimitPolicy, RateLimitingResult, HttpActionExecutedContext, Task<Decision>> PostOperationDecisionFuncAsync { get; }
@@ -31,13 +32,15 @@ namespace Domain.RateLimiting.WebApi
             Func<RateLimitingRequest, RateLimitPolicy, RateLimitingResult, HttpActionContext, Task<Decision>> onPostLimit = null,
             Func<RateLimitingRequest, RateLimitPolicy, RateLimitingResult, HttpActionContext, Task<Decision>> onPostLimitRevert = null,
             Func<RateLimitingRequest, RateLimitPolicy, RateLimitingResult, HttpActionExecutedContext, Task<Decision>> postOperationDecisionFuncAsync = null,
-            Func<RateLimitingRequest, HttpActionContext, Task<RateLimitPolicy>> getPolicyAsyncFunc = null)
+            Func<RateLimitingRequest, HttpActionContext, Task<RateLimitPolicy>> getPolicyAsyncFunc = null,
+            bool simulationMode = false)
         {
             _rateLimiter = rateLimiter;
             OnPostLimit = onPostLimit;
             OnPostLimitRevert = onPostLimitRevert;
             PostOperationDecisionFuncAsync = postOperationDecisionFuncAsync;
             GetPolicyAsyncFunc = getPolicyAsyncFunc;
+            SimulationMode = simulationMode;
         }
 
         public override async Task OnAuthorizationAsync(HttpActionContext actionContext, CancellationToken cancellationToken)
@@ -86,7 +89,7 @@ namespace Domain.RateLimiting.WebApi
 
                         await base.OnAuthorizationAsync(context, cancellationToken);
                     }
-                    else if (rateLimitingResult.State == ResultState.Throttled)
+                    else if (rateLimitingResult.State == ResultState.Throttled && !SimulationMode)
                     {
                         await RateLimitingFilter.TooManyRequests(context, rateLimitingResult, policy.Name);
                     }

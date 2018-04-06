@@ -13,8 +13,6 @@ namespace Domain.RateLimiting.WebApi
     {
         public override async Task OnActionExecutedAsync(HttpActionExecutedContext actionExecutedContext, CancellationToken cancellationToken)
         {
-           
-
             if (actionExecutedContext.Request.Properties.ContainsKey("PostActionFilterFuncAsync"))
             {
                 var func = actionExecutedContext.Request.Properties["PostActionFilterFuncAsync"]
@@ -32,6 +30,9 @@ namespace Domain.RateLimiting.WebApi
 
         private static void AddUpdateRateLimitingSuccessHeaders(HttpActionExecutedContext context, RateLimitingResult result)
         {
+            if (result.State == ResultState.Exception)
+                return;
+
             var successheaders = new Dictionary<string, string>()
             {
                 {RateLimitHeaders.TokensRemaining, result.TokensRemaining.ToString()},

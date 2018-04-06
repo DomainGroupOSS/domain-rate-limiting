@@ -126,6 +126,7 @@ namespace Domain.RateLimiting.Samples.Owin
                     var operationClass = CallClassification.RouteTemplateToClassMap[request.RouteTemplate];
                     var cost = CallClassification.CostPerClass[operationClass];
 
+                    var clientId = result.CacheKey.RequestId;
                     // sns publish
 
                     if (result.State == ResultState.Success)
@@ -134,7 +135,7 @@ namespace Domain.RateLimiting.Samples.Owin
                         auditLogger.Information(
                             "Result {Result}: Request success for client {ClientId} and endpoint {Endpoint} with route {RouteTemplate} which is Class {Class} with Cost {Cost}",
                             "Success",
-                            result.CacheKey.RequestId,
+                            clientId,
                             request.Path,
                             request.RouteTemplate,
                             operationClass,
@@ -145,7 +146,7 @@ namespace Domain.RateLimiting.Samples.Owin
                         auditLogger.Information(
                             "Result {Result}: throttled for client {ClientId} and endpoint {Endpoint} with route {RouteTemplate} which is Class {Class} with Cost {Cost} by violating policy {ViolatedPolicy}",
                             "Throttled",
-                            result.CacheKey.RequestId,
+                            clientId,
                             request.Path,
                             request.RouteTemplate,
                             operationClass,
@@ -157,7 +158,7 @@ namespace Domain.RateLimiting.Samples.Owin
                         auditLogger.Information(
                             "Result {Result}: Free pass for client {ClientId} and endpoint {Endpoint} with route {RouteTemplate} which is Class {Class} with Cost {Cost}",
                             "FreePass",
-                            result.CacheKey.RequestId,
+                            clientId,
                             request.Path,
                             request.RouteTemplate,
                             operationClass,
@@ -168,7 +169,7 @@ namespace Domain.RateLimiting.Samples.Owin
                        auditLogger.Information(
                           "Result {Result}: Free pass for client {ClientId} and endpoint {Endpoint} with route {RouteTemplate} which is Class {Class} with Cost {Cost}",
                           ResultState.NotApplicable,
-                          result.CacheKey.RequestId,
+                          clientId,
                           request.Path,
                           request.RouteTemplate,
                           operationClass,
@@ -217,7 +218,8 @@ namespace Domain.RateLimiting.Samples.Owin
                     return Decision.OK;
                 },
 
-                getPolicyAsyncFunc: policyProvider.GetPolicyAsync));
+                getPolicyAsyncFunc: policyProvider.GetPolicyAsync,
+                simulationMode:false));
 
             filters.Add(new RateLimitingPostActionFilter());
         }

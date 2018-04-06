@@ -79,7 +79,10 @@ namespace Domain.RateLimiting.Core
 
                 _consecutiveFaultsCount++;
                 if (_consecutiveFaultsCount <= _faultThreshholdPerWindowDuration)
+                {
+                    _circuitLock.Release();
                     return defaultResult;
+                }
 
                 if (DateTime.Now.Subtract(_faultWindowOpenTime).TotalMilliseconds <= _faultWindowDurationInMilliseconds)
                 {
