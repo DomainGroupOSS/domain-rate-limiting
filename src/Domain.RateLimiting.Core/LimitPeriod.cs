@@ -4,15 +4,15 @@ namespace Domain.RateLimiting.Core
 {
     public class LimitPeriod
     {
-        public DateTime StartDateUtc { get;  }
+        public DateTime StartDateTimeUtc { get;  }
         public TimeSpan Duration { get;  }
-        public bool Rolling { get;  }
+        public bool OnGoing { get; } = true;
 
-        public LimitPeriod(DateTime startDateUtc, int durationInSecs, bool rolling)
+        public LimitPeriod(DateTime startDateTimeUtc, int durationInSecs, bool onGoing)
         {
-            StartDateUtc = startDateUtc;
+            StartDateTimeUtc = startDateTimeUtc;
             Duration = new TimeSpan(0, 0, durationInSecs);
-            Rolling = rolling;
+            OnGoing = onGoing;
         }
     }
 }

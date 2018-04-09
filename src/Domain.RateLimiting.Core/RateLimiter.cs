@@ -24,6 +24,9 @@ namespace Domain.RateLimiting.Core
             Func<RateLimitingRequest, Task<RateLimitPolicy>> getPolicyFuncAsync = null,
             bool revert = false)
         {
+            if (_policyProvider == null && getPolicyFuncAsync == null)
+                throw new ArgumentNullException("There are no valid policy providers");
+
             var getPolicyAsync = getPolicyFuncAsync ??  _policyProvider.GetPolicyAsync;
 
             var rateLimitingPolicy = await getPolicyAsync(rateLimitingRequest).ConfigureAwait(false);

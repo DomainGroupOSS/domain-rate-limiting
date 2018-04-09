@@ -21,7 +21,8 @@ namespace Domain.RateLimiting.Redis
             {RateLimitUnit.PerDay, allowedCallrate => _ => RateLimitUnit.PerDay.ToString()},
             {RateLimitUnit.PerCustomPeriod, allowedCallRate => _ =>
                 {
-                    return $"{allowedCallRate.Period.StartDateUtc.ToString("yyyyMMddHHmmss")}::{allowedCallRate.Period.Duration.TotalSeconds}";
+                    //return $"{allowedCallRate.Period.StartDateTimeUtc.ToString("yyyyMMddHHmmss")}::{allowedCallRate.Period.Duration.TotalSeconds}";
+                    throw new NotSupportedException("Custom Period is NOT currently supported by the sliding window rate limiter. Consider using the Fixed Window rate limiter.");
                 }
             }
        };

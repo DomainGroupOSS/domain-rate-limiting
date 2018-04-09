@@ -220,7 +220,7 @@ namespace Domain.RateLimiting.Samples.Owin
                  postOperationDecisionFuncAsync: async (request, policy, result, actionExecutedContext) =>
                  {
                      if (actionExecutedContext.Exception != null || (int)actionExecutedContext.Response.StatusCode >= 400)
-                         return Decision.REVERT;
+                         return Decision.REVERTSUCCESS;
 
                      return Decision.OK;
                  },

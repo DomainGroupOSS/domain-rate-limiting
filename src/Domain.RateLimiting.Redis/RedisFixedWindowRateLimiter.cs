@@ -28,11 +28,11 @@ namespace Domain.RateLimiting.Redis
 
         private static void GetDateRange(AllowedConsumptionRate allowedCallRate, DateTime dateTimeUtc, out DateTime fromUtc, out DateTime toUtc)
         {
-            var periodUnits = allowedCallRate.Period.Rolling ?
-                                    Math.Floor(dateTimeUtc.Subtract(allowedCallRate.Period.StartDateUtc).TotalHours
+            var periodUnits = allowedCallRate.Period.OnGoing ?
+                                    Math.Floor(dateTimeUtc.Subtract(allowedCallRate.Period.StartDateTimeUtc).TotalHours
                                     / allowedCallRate.Period.Duration.TotalHours) : 0;
 
-            fromUtc = allowedCallRate.Period.StartDateUtc.Add(
+            fromUtc = allowedCallRate.Period.StartDateTimeUtc.Add(
                 new TimeSpan(Convert.ToInt32(allowedCallRate.Period.Duration.TotalHours * periodUnits), 0, 0));
             toUtc = fromUtc.Add(allowedCallRate.Period.Duration);
         }
@@ -85,7 +85,6 @@ namespace Domain.RateLimiting.Redis
             }
            
             var incrTask = redisTransaction.StringIncrementAsync(cacheKeyString, costPerCall);
-            //var getKeyTask = redisTransaction.StringGetAsync(cacheKeyString);
             redisTransaction.KeyExpireAsync(cacheKeyString, cacheKey.Expiration);
             return incrTask;
         }
@@ -94,7 +93,6 @@ namespace Domain.RateLimiting.Redis
             int costPerCall = 1)
         {
             postViolationTransaction.StringDecrementAsync(cacheKey.ToString(), costPerCall);
-            postViolationTransaction.KeyExpireAsync(cacheKey.ToString(), new TimeSpan(0, 0, 10));
         }
 
         protected override Task<SortedSetEntry[]> SetupGetOldestRequestTimestampInTicks(ITransaction postViolationTransaction,
