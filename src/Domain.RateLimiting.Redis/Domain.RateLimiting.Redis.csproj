@@ -13,6 +13,7 @@ either one or even add your own implementation by implementing the IRateLimiting
     <PackageIconUrl>http://www.domain.com.au/content/files/99x99.png</PackageIconUrl>
     <RepositoryUrl>https://github.com/DomainGroupOSS/domain-rate-limiting.git</RepositoryUrl>
     <PackageTags>ratelimiting, rate limiting, throttling, API throttling, request throttling, redis, ratelimiting redis</PackageTags>
+    <AssemblyName>Domain.RateLimiting.Redis.Experimental</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>

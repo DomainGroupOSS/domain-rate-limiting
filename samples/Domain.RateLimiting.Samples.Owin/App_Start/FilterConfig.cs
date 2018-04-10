@@ -99,8 +99,9 @@ namespace Domain.RateLimiting.Samples.Owin
                     onCircuitClosed: () =>
                     {
                         //logger.LogWarning("Rate limiting circuit closed")
-                    })
-                );
+                    }),
+                countThrottledRequests:true
+            );
 
             #endregion
 

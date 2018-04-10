@@ -8,7 +8,7 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Domain.RateLimiting.WebApi</RootNamespace>
-    <AssemblyName>Domain.RateLimiting.WebApi</AssemblyName>
+    <AssemblyName>Domain.RateLimiting.WebApi.Experimental</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>

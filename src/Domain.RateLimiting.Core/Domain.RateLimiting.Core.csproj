@@ -13,6 +13,7 @@
     <RepositoryUrl>https://github.com/DomainGroupOSS/domain-rate-limiting.git</RepositoryUrl>
     <RepositoryType />
     <PackageTags>ratelimiting, rate limiting, throttling, API throttling, request throttling</PackageTags>
+    <PackageId>Domain.RateLimiting.Core.Experimental</PackageId>
   </PropertyGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard1.3' ">
