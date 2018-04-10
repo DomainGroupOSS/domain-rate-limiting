@@ -3,7 +3,7 @@
   <metadata>
     <id>Domain.RateLimiting.WebApi.Experimental</id>
     <version>1.0.2-alpha</version>
-    <title>Domain.RateLimiting.WebApi</title>
+    <title>Domain.RateLimiting.WebApi.Experimental</title>
     <authors>kazi.zahir</authors>
     <owners>Domain Group</owners>
     <iconUrl>http://www.domain.com.au/content/files/99x99.png</iconUrl>
