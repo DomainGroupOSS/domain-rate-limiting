@@ -28,7 +28,7 @@ namespace Domain.RateLimiting.Redis
 
         private static void GetDateRange(AllowedConsumptionRate allowedCallRate, DateTime dateTimeUtc, out DateTime fromUtc, out DateTime toUtc)
         {
-            var periodUnits = allowedCallRate.Period.OnGoing ?
+            var periodUnits = allowedCallRate.Period.Repeating ?
                                     Math.Floor(dateTimeUtc.Subtract(allowedCallRate.Period.StartDateTimeUtc).TotalHours
                                     / allowedCallRate.Period.Duration.TotalHours) : 0;
 
@@ -104,7 +104,7 @@ namespace Domain.RateLimiting.Redis
 
         protected override Task<long> GetOldestRequestTimestampInTicks(Task<SortedSetEntry[]> task, RateLimitCacheKey cacheKey, long utcNowTicks)
         {
-            return Task.FromResult(Trim(utcNowTicks, cacheKey.AllowedCallRate));
+            return Task.FromResult(Trim(utcNowTicks, cacheKey.allowedConsumptionRate));
         }
 
         public long Trim(long dateTimeInTicks, AllowedConsumptionRate allowedCallRate)

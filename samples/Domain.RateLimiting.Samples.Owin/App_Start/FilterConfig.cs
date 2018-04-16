@@ -66,9 +66,9 @@ namespace Domain.RateLimiting.Samples.Owin
             return Task.FromResult(new RateLimitPolicy("Test_Client_01",
                 new List<AllowedConsumptionRate>()
                 {
-                    new AllowedConsumptionRate(1000, RateLimitUnit.PerCustomPeriod,
-                        new LimitPeriod(new DateTime(2018,3,23,0,0,0,DateTimeKind.Utc), 3600, true))
-                    //new AllowedCallRate(100, RateLimitUnit.PerMinute)
+                    //new AllowedConsumptionRate(200, RateLimitUnit.PerCustomPeriod,
+                    //    new LimitPeriod(new DateTime(2018,3,23,0,0,0,DateTimeKind.Utc), 600, true)),
+                    new AllowedConsumptionRate(200, RateLimitUnit.PerMinute)
                 }, name: "Quota_Billed")
             { CostPerCall = cost });
         }
@@ -159,9 +159,21 @@ namespace Domain.RateLimiting.Samples.Owin
                             request.RouteTemplate,
                             operationClass,
                             cost,
-                            $"{policy.Name}:{result.CacheKey.AllowedCallRate}");
+                            $"{policy.Name}:{result.CacheKey.allowedConsumptionRate}");
                     }
-                    else if (result.State == ResultState.Exception)
+                    else if (result.State == ResultState.ThrottledButCompensationFailed)
+                    {
+                        auditLogger.Information(
+                            "Result {Result}: throttled but failed to compensate for client {ClientId} and endpoint {Endpoint} with route {RouteTemplate} which is Class {Class} with Cost {Cost} by violating policy {ViolatedPolicy}",
+                            result.State,
+                            clientId,
+                            request.Path,
+                            request.RouteTemplate,
+                            operationClass,
+                            cost,
+                            $"{policy.Name}:{result.CacheKey.allowedConsumptionRate}");
+                    }
+                    else if (result.State == ResultState.LimitApplicationFailed)
                     {
                         auditLogger.Information(
                             "Result {Result}: Free pass for client {ClientId} and endpoint {Endpoint} with route {RouteTemplate} which is Class {Class} with Cost {Cost}",
@@ -175,7 +187,7 @@ namespace Domain.RateLimiting.Samples.Owin
                     else if (result.State == ResultState.NotApplicable)
                     {
                         auditLogger.Information(
-                           "Result {Result}: Free pass for client {ClientId} and endpoint {Endpoint} with route {RouteTemplate} which is Class {Class} with Cost {Cost}",
+                           "Result {Result}: Not Applicable for client {ClientId} and endpoint {Endpoint} with route {RouteTemplate} which is Class {Class} with Cost {Cost}",
                            ResultState.NotApplicable,
                            clientId,
                            request.Path,
@@ -195,19 +207,19 @@ namespace Domain.RateLimiting.Samples.Owin
                     if (result.State == ResultState.Success || result.State == ResultState.Throttled)
                     {
                         auditLogger.Information(
-                          "Result {Result}: Limit Reverted for client {ClientId} and endpoint {Endpoint} with route {RouteTemplate} which is Class {Class} with Cost {Cost}",
-                          "Reverted",
+                          "Result {Result}: Limit Cost Reverted for client {ClientId} and endpoint {Endpoint} with route {RouteTemplate} which is Class {Class} with Cost {Cost}",
+                          "SuccessCostReverted",
                           result.CacheKey.RequestId,
                           request.Path,
                           request.RouteTemplate,
                           operationClass,
                           -policy.CostPerCall);
                     }
-                    else if(result.State == ResultState.Exception)
+                    else if(result.State == ResultState.LimitApplicationFailed)
                     {
                         auditLogger.Information(
-                          "Result {Result}: Limit Reverting failed for client {ClientId} and endpoint {Endpoint} with route {RouteTemplate} which is Class {Class} with Cost {Cost}",
-                          "RevertFailed",
+                          "Result {Result}: Limit Cost Reverting failed for client {ClientId} and endpoint {Endpoint} with route {RouteTemplate} which is Class {Class} with Cost {Cost}",
+                          "SuccessCostRevertingFailed",
                           result.CacheKey.RequestId,
                           request.Path,
                           request.RouteTemplate,
@@ -221,7 +233,7 @@ namespace Domain.RateLimiting.Samples.Owin
                  postOperationDecisionFuncAsync: async (request, policy, result, actionExecutedContext) =>
                  {
                      if (actionExecutedContext.Exception != null || (int)actionExecutedContext.Response.StatusCode >= 400)
-                         return Decision.REVERTSUCCESS;
+                         return Decision.REVERTSUCCESSCOST;
 
                      return Decision.OK;
                  },

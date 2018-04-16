@@ -74,12 +74,12 @@ namespace Domain.RateLimiting.Core
             var retryAfter = new TimeSpan(result.WaitingIntervalInTicks).TotalSeconds.ToString(CultureInfo.InvariantCulture);
             return new ThrottledResponseParameters(
                 $"Request limit was exceeded for {violatedPolicyName} policy " +
-                $"for the {result.CacheKey.AllowedCallRate} rate. " +
+                $"for the {result.CacheKey.allowedConsumptionRate} rate. " +
                 $"Please retry after {retryAfter} seconds from now.", new Dictionary<string, string>()
                 {
                     { RateLimitHeaders.RetryAfter, retryAfter },
                     { RateLimitHeaders.ViolatedPolicyName, violatedPolicyName },
-                    { RateLimitHeaders.ViolatedCallRate, result.CacheKey.AllowedCallRate.ToString()}
+                    { RateLimitHeaders.ViolatedCallRate, result.CacheKey.allowedConsumptionRate.ToString()}
                 });
         }
     }

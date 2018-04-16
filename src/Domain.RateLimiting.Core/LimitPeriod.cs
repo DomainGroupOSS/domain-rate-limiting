@@ -6,13 +6,13 @@ namespace Domain.RateLimiting.Core
     {
         public DateTime StartDateTimeUtc { get;  }
         public TimeSpan Duration { get;  }
-        public bool OnGoing { get; } = true;
+        public bool Repeating { get; } = true;
 
-        public LimitPeriod(DateTime startDateTimeUtc, int durationInSecs, bool onGoing)
+        public LimitPeriod(DateTime startDateTimeUtc, int durationInSecs, bool repeating)
         {
             StartDateTimeUtc = startDateTimeUtc;
             Duration = new TimeSpan(0, 0, durationInSecs);
-            OnGoing = onGoing;
+            Repeating = repeating;
         }
     }
 }

@@ -126,9 +126,18 @@ namespace Domain.RateLimiting.Redis
                     SetupGetOldestRequestTimestampInTicks(postViolationTransaction,
                         violatedCacheKey, utcNowTicks);
 
-                await ExecuteTransactionAsync(postViolationTransaction).ConfigureAwait(false);
+                var throttleState = ResultState.Throttled;
 
-                var rateLimitingResult = new RateLimitingResult(ResultState.Throttled,
+                try
+                {
+                    await ExecuteTransactionAsync(postViolationTransaction).ConfigureAwait(false);
+                }
+                catch
+                {
+                    throttleState = ResultState.ThrottledButCompensationFailed;
+                }
+
+                var rateLimitingResult = new RateLimitingResult(throttleState,
                     await GetWaitingIntervalInTicks(setupGetOldestRequestTimestampInTicks,
                         violatedCacheKey, utcNowTicks), violatedCacheKey, 0);
 
@@ -136,7 +145,7 @@ namespace Domain.RateLimiting.Redis
 
                 return rateLimitingResult;
 
-            }, new RateLimitingResult(ResultState.Exception));
+            }, new RateLimitingResult(ResultState.LimitApplicationFailed));
         }
 
         public Task<RateLimitingResult> LimitRequestAsync(RateLimitCacheKey cacheKey)
@@ -157,7 +166,7 @@ namespace Domain.RateLimiting.Redis
         {
             return await GetOldestRequestTimestampInTicks(setupGetOldestRequestTimestampInTicks,
                        violatedCacheKey, utcNowTicks).ConfigureAwait(false) +
-                   GetTicksPerUnit(violatedCacheKey.AllowedCallRate) - utcNowTicks;
+                   GetTicksPerUnit(violatedCacheKey.allowedConsumptionRate) - utcNowTicks;
         }
 
         private async Task ExecuteTransactionAsync(ITransaction redisTransaction)

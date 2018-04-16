@@ -15,7 +15,7 @@ namespace Domain.RateLimiting.WebApi
     public enum Decision
     {
         OK,
-        REVERTSUCCESS
+        REVERTSUCCESSCOST
     }
 
     public class RateLimitingFilter : AuthorizationFilterAttribute
@@ -71,7 +71,7 @@ namespace Domain.RateLimiting.WebApi
                     var clientDecision = await OnPostLimit?.Invoke(rateLimitingRequest, policy, rateLimitingResult, actionContext);
                     await RevertIfRequired(rateLimitingResult, context, request, clientDecision);
 
-                    if (clientDecision == Decision.REVERTSUCCESS)
+                    if (clientDecision == Decision.REVERTSUCCESSCOST)
                     {
                         await base.OnAuthorizationAsync(context, cancellationToken);
                         return;
@@ -108,7 +108,7 @@ namespace Domain.RateLimiting.WebApi
         private async Task RevertIfRequired(RateLimitingResult rateLimitingResult, HttpActionContext context,
             RateLimitingRequest request, Decision decision)
         {
-            if (decision == Decision.REVERTSUCCESS && rateLimitingResult.State == ResultState.Success)
+            if (decision == Decision.REVERTSUCCESSCOST && rateLimitingResult.State == ResultState.Success)
                 await _rateLimiter.LimitRequestAsync(request,
                     () => RateLimitingFilter.GetCustomAttributes(context),
                     context.Request.Headers.Host,

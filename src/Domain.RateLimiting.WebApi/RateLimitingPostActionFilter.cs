@@ -30,13 +30,13 @@ namespace Domain.RateLimiting.WebApi
 
         private static void AddUpdateRateLimitingSuccessHeaders(HttpActionExecutedContext context, RateLimitingResult result)
         {
-            if (result.State == ResultState.Exception)
+            if (result.State == ResultState.LimitApplicationFailed)
                 return;
 
             var successheaders = new Dictionary<string, string>()
             {
                 {RateLimitHeaders.TokensRemaining, result.TokensRemaining.ToString()},
-                {RateLimitHeaders.Limit, result.CacheKey.AllowedCallRate.ToString() }
+                {RateLimitHeaders.Limit, result.CacheKey.allowedConsumptionRate.ToString() }
             };
 
             var response = context.Response;
