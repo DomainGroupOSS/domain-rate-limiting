@@ -166,7 +166,7 @@ namespace Domain.RateLimiting.Redis
         {
             return await GetOldestRequestTimestampInTicks(setupGetOldestRequestTimestampInTicks,
                        violatedCacheKey, utcNowTicks).ConfigureAwait(false) +
-                   GetTicksPerUnit(violatedCacheKey.allowedConsumptionRate) - utcNowTicks;
+                   GetTicksPerUnit(violatedCacheKey.AllowedConsumptionRate) - utcNowTicks;
         }
 
         private async Task ExecuteTransactionAsync(ITransaction redisTransaction)

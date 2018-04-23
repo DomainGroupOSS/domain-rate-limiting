@@ -62,7 +62,7 @@ namespace Domain.RateLimiting.Redis
             cacheKeys.Add(cacheKey);
             
             var sortedSetRemoveRangeByScoreAsync = redisTransaction.SortedSetRemoveRangeByScoreAsync(
-                cacheKeyString, 0, utcNowTicks - GetTicksPerUnit(cacheKey.allowedConsumptionRate));
+                cacheKeyString, 0, utcNowTicks - GetTicksPerUnit(cacheKey.AllowedConsumptionRate));
 
             var sortedSetAddAsync = redisTransaction.SortedSetAddAsync(cacheKeyString, Guid.NewGuid().ToString(), utcNowTicks);
             var numberOfRequestsInWindowAsyncList = redisTransaction.SortedSetLengthAsync(cacheKeyString);

@@ -159,7 +159,7 @@ namespace Domain.RateLimiting.Samples.Owin
                             request.RouteTemplate,
                             operationClass,
                             cost,
-                            $"{policy.Name}:{result.CacheKey.allowedConsumptionRate}");
+                            $"{policy.Name}:{result.CacheKey.AllowedConsumptionRate}");
                     }
                     else if (result.State == ResultState.ThrottledButCompensationFailed)
                     {
@@ -171,7 +171,7 @@ namespace Domain.RateLimiting.Samples.Owin
                             request.RouteTemplate,
                             operationClass,
                             cost,
-                            $"{policy.Name}:{result.CacheKey.allowedConsumptionRate}");
+                            $"{policy.Name}:{result.CacheKey.AllowedConsumptionRate}");
                     }
                     else if (result.State == ResultState.LimitApplicationFailed)
                     {

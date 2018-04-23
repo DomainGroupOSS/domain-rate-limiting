@@ -36,7 +36,7 @@ namespace Domain.RateLimiting.WebApi
             var successheaders = new Dictionary<string, string>()
             {
                 {RateLimitHeaders.TokensRemaining, result.TokensRemaining.ToString()},
-                {RateLimitHeaders.Limit, result.CacheKey.allowedConsumptionRate.ToString() }
+                {RateLimitHeaders.Limit, result.CacheKey.AllowedConsumptionRate.ToString() }
             };
 
             var response = context.Response;

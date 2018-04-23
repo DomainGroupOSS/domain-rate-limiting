@@ -69,7 +69,7 @@ namespace Domain.RateLimiting.WebApi
                     }
                     ////////////////////////////////
                     var clientDecision = await OnPostLimit?.Invoke(rateLimitingRequest, policy, rateLimitingResult, actionContext);
-                    await RevertIfRequired(rateLimitingResult, context, request, clientDecision);
+                    await RevertIfRequired(rateLimitingResult, context, request, policy, clientDecision);
 
                     if (clientDecision == Decision.REVERTSUCCESSCOST)
                     {
@@ -85,7 +85,7 @@ namespace Domain.RateLimiting.WebApi
                                 new Func<HttpActionExecutedContext, Task>(async (httpActionExecutedContext) =>
                                 {
                                     var decision = await PostOperationDecisionFuncAsync?.Invoke(rateLimitingRequest, policy, rateLimitingResult, httpActionExecutedContext);
-                                    await RevertIfRequired(rateLimitingResult, context, request, decision);
+                                    await RevertIfRequired(rateLimitingResult, context, request, policy, decision);
                                 }));
                         }
 
@@ -106,18 +106,19 @@ namespace Domain.RateLimiting.WebApi
         }
 
         private async Task RevertIfRequired(RateLimitingResult rateLimitingResult, HttpActionContext context,
-            RateLimitingRequest request, Decision decision)
+            RateLimitingRequest request, RateLimitPolicy policy, Decision decision)
         {
             if (decision == Decision.REVERTSUCCESSCOST && rateLimitingResult.State == ResultState.Success)
                 await _rateLimiter.LimitRequestAsync(request,
                     () => RateLimitingFilter.GetCustomAttributes(context),
                     context.Request.Headers.Host,
-                    onPostLimitFuncAsync: async (rateLimitingRequest, policy, rateLimitingRevertResult) =>
+                    getPolicyFuncAsync: _=> Task.FromResult(policy),
+                    onPostLimitFuncAsync: async (rateLimitingRequest, postPolicy, rateLimitingRevertResult) =>
                     {
                         if(rateLimitingRevertResult.State == ResultState.Success)
                             context.Request.Properties["RateLimitingResult"] = rateLimitingRevertResult;
 
-                        await OnPostLimitRevert?.Invoke(request, policy, rateLimitingRevertResult, context);
+                        await OnPostLimitRevert?.Invoke(request, postPolicy, rateLimitingRevertResult, context);
                     },
                     revert: true);
         }

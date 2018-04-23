@@ -64,7 +64,7 @@ namespace Domain.RateLimiting.Core
 
 
             RetryAfter = _dateTimeUtcNow.Add(Expiration).ToString("R");
-            allowedConsumptionRate = allowedCallRate;
+            AllowedConsumptionRate = allowedCallRate;
             _getSuffix = getSuffix ?? (_ => string.Empty); 
         }
 
@@ -81,17 +81,17 @@ namespace Domain.RateLimiting.Core
         /// <summary>
         /// The unit associated with the rate limit value
         /// </summary>
-        public RateLimitUnit Unit => allowedConsumptionRate.Unit;
+        public RateLimitUnit Unit => AllowedConsumptionRate.Unit;
 
         /// <summary>
         /// The request limit
         /// </summary>
-        public int Limit => allowedConsumptionRate.Limit;
+        public int Limit => AllowedConsumptionRate.Limit;
 
         /// <summary>
         /// The rate limiting policy for this key
         /// </summary>
-        public readonly AllowedConsumptionRate allowedConsumptionRate;
+        public readonly AllowedConsumptionRate AllowedConsumptionRate;
         
         /// <summary>
         /// Returns a string that represents the current object.

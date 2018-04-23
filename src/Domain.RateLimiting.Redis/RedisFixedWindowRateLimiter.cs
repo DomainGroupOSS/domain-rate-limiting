@@ -104,7 +104,7 @@ namespace Domain.RateLimiting.Redis
 
         protected override Task<long> GetOldestRequestTimestampInTicks(Task<SortedSetEntry[]> task, RateLimitCacheKey cacheKey, long utcNowTicks)
         {
-            return Task.FromResult(Trim(utcNowTicks, cacheKey.allowedConsumptionRate));
+            return Task.FromResult(Trim(utcNowTicks, cacheKey.AllowedConsumptionRate));
         }
 
         public long Trim(long dateTimeInTicks, AllowedConsumptionRate allowedCallRate)
