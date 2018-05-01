@@ -1,3 +1,5 @@
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg?style=flat-square)](https://opensource.org/licenses/Apache-2.0)
+
 # Introduction
 
 At its heart the idea of Rate Limiting is basically putting an upper limit on the number
@@ -6,7 +8,9 @@ api endpoints within a certain time interval. So in essence it is about
 setting the allowed call rates on our api endpoints whether at a
 indivdual or more general level thereby trying to ensure a fair
 distribution of our system resources and preventing any one client or
-user from abusing the system.
+user from abusing the system. 
+
+You can read more about the concepts here in http://tech.domain.com.au/2017/11/protect-your-api-resources-with-rate-limiting/
 
 The libraries in this repo provide distributed implementations of rate limiting using Redis for both the fixed and sliding window algorithms. Also they
 allow multiple call rates to be specified for four different time units of seconds, minutes, hours and
