@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <package >
   <metadata>
-    <id>Domain.RateLimiting.WebApi.Experimental</id>
-    <version>3.0.1-alpha</version>
-    <title>Domain.RateLimiting.WebApi.Experimental</title>
+    <id>Domain.RateLimiting.WebApi</id>
+    <version>4.0.1-alpha</version>
+    <title>Domain.RateLimiting.WebApi</title>
     <authors>kazi.zahir</authors>
     <owners>Domain Group</owners>
     <iconUrl>http://www.domain.com.au/content/files/99x99.png</iconUrl>
@@ -12,7 +12,7 @@
     <copyright>Copyright 2017</copyright>
     <tags>webapi, filters, ratelimiting, rate limiting, throttling, API throttling, request throttling</tags>
     <dependencies>
-      <dependency id="Domain.RateLimiting.Core.Experimental" version="3.0.1-alpha" />
+      <dependency id="Domain.RateLimiting.Core" version="4.0.1-alpha" />
       <dependency id="Microsoft.AspNet.WebApi.Core" version="5.2.3" />
     </dependencies>
   </metadata>
