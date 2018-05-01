@@ -9,34 +9,41 @@ using Domain.RateLimiting.Core;
 
 namespace Domain.RateLimiting.WebApi
 {
-    public class RateLimitingPostActionFilter : ActionFilterAttribute
+    internal class RateLimitingPostActionFilter : ActionFilterAttribute
     {
+        private readonly string _filterId;
+
+        public RateLimitingPostActionFilter(string filterId)
+        {
+            _filterId = filterId;
+        }
+
         public override async Task OnActionExecutedAsync(HttpActionExecutedContext actionExecutedContext, CancellationToken cancellationToken)
         {
-            if (actionExecutedContext.Request.Properties.ContainsKey("PostActionFilterFuncAsync"))
+            if (actionExecutedContext.Request.Properties.ContainsKey($"PostActionFilterFuncAsync_{_filterId}"))
             {
-                var func = actionExecutedContext.Request.Properties["PostActionFilterFuncAsync"]
+                var func = actionExecutedContext.Request.Properties[$"PostActionFilterFuncAsync_{_filterId}"]
                     as Func<HttpActionExecutedContext, Task>;
 
                 await func?.Invoke(actionExecutedContext);
             }
 
-            if (actionExecutedContext.Request.Properties.ContainsKey("RateLimitingResult"))
+            if (actionExecutedContext.Request.Properties.ContainsKey($"RateLimitingResult_{_filterId}"))
                 AddUpdateRateLimitingSuccessHeaders(actionExecutedContext,
-                    (RateLimitingResult)actionExecutedContext.Request.Properties["RateLimitingResult"]);
+                    (RateLimitingResult)actionExecutedContext.Request.Properties[$"RateLimitingResult_{_filterId}"]);
 
             await base.OnActionExecutedAsync(actionExecutedContext, cancellationToken);
         }
 
         private static void AddUpdateRateLimitingSuccessHeaders(HttpActionExecutedContext context, RateLimitingResult result)
         {
-            if (result.State == ResultState.LimitApplicationFailed)
+            if (result.State == ResultState.LimitApplicationFailed || result.State == ResultState.NotApplicable)
                 return;
 
             var successheaders = new Dictionary<string, string>()
             {
                 {RateLimitHeaders.TokensRemaining, result.TokensRemaining.ToString()},
-                {RateLimitHeaders.Limit, result.CacheKey.AllowedConsumptionRate.ToString() }
+                {RateLimitHeaders.Limit, result.CacheKey.AllowedConsumptionRate?.ToString() }
             };
 
             var response = context.Response;

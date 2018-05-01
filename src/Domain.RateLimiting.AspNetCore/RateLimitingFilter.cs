@@ -22,13 +22,13 @@ namespace Domain.RateLimiting.AspNetCore
     {
         private readonly IRateLimiter _rateLimiter;
 
-        private Func<RateLimitingRequest, AuthorizationFilterContext, Task<RateLimitPolicy>> GetPolicyAsyncFunc { get; }
+        private Func<RateLimitingRequest, AuthorizationFilterContext, Task<RateLimitPolicy>> GetPolicyFuncAsync { get; }
 
         public RateLimitingFilter(IRateLimiter rateLimiter,
-             Func<RateLimitingRequest, AuthorizationFilterContext, Task<RateLimitPolicy>> getPolicyAsyncFunc = null)
+             Func<RateLimitingRequest, AuthorizationFilterContext, Task<RateLimitPolicy>> getPolicyFuncAsync = null)
         {
             _rateLimiter = rateLimiter ?? throw new ArgumentNullException(nameof(rateLimiter));
-            GetPolicyAsyncFunc = getPolicyAsyncFunc;
+            GetPolicyFuncAsync = getPolicyFuncAsync;
         }
 
         private static void AddUpdateRateLimitingSuccessHeaders(HttpContext context, RateLimitingResult result)
@@ -114,16 +114,10 @@ namespace Domain.RateLimiting.AspNetCore
                         await Task.FromResult<object>(null);
                     }
                 },
-                //async (request, policy, rateLimitingResult) =>
-                //{
-                //    TooManyRequests(actionContext, rateLimitingResult, policy.Name);
-                //    await Task.FromResult<object>(null);
-                //}, 
-                //null,
-                async (rlr) =>
+                getPolicyFuncAsync: GetPolicyFuncAsync != null ? new Func<RateLimitingRequest, Task<RateLimitPolicy>>(async (rlr) =>
                 {
-                    return await GetPolicyAsyncFunc(rlr, actionContext);
-                }).ConfigureAwait(false);
+                    return await GetPolicyFuncAsync.Invoke(rlr, actionContext);
+                }) : null).ConfigureAwait(false);
         }
     }
 }

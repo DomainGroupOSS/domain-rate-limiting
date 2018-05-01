@@ -134,7 +134,8 @@ namespace Domain.RateLimiting.Redis
                 }
                 catch
                 {
-                    throttleState = ResultState.ThrottledButCompensationFailed;
+                    if(!_countThrottledRequests)
+                        throttleState = ResultState.ThrottledButCompensationFailed;
                 }
 
                 var rateLimitingResult = new RateLimitingResult(throttleState,

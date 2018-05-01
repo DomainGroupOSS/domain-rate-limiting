@@ -3,9 +3,9 @@
   <PropertyGroup>
     <TargetFramework>netstandard1.6</TargetFramework>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <AssemblyVersion>1.0.0.1</AssemblyVersion>
-    <FileVersion>1.0.0.1</FileVersion>
-    <Version>1.0.1-alpha</Version>
+    <AssemblyVersion>3.0.0.1</AssemblyVersion>
+    <FileVersion>3.0.0.1</FileVersion>
+    <Version>3.0.1-alpha</Version>
     <Authors>Kazi Zahir</Authors>
     <Company>Domain</Company>
     <Description>Contains the rate limiting action filter which works with Domain.RateLimiting.Core</Description>

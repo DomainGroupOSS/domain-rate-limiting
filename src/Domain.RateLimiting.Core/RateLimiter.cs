@@ -31,7 +31,7 @@ namespace Domain.RateLimiting.Core
 
             var rateLimitingPolicy = await getPolicyAsync(rateLimitingRequest).ConfigureAwait(false);
 
-            if (rateLimitingPolicy == null)
+            if (rateLimitingPolicy == null || rateLimitingPolicy.CostPerCall == 0)
             {
                 await onPostLimitFuncAsync?.Invoke(rateLimitingRequest, rateLimitingPolicy, new RateLimitingResult(ResultState.NotApplicable));
                 return;

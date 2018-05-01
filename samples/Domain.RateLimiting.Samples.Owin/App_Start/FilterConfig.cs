@@ -38,6 +38,7 @@ namespace Domain.RateLimiting.Samples.Owin
     {
         public Task<RateLimitPolicy> GetPolicyAsync(RateLimitingRequest rateLimitingRequest, HttpActionContext actionContext)
         {
+            //return Task.FromResult<RateLimitPolicy>(null);
 
             var clientId = rateLimitingRequest.ClaimsPrincipal?.Claims.FirstOrDefault(c => c.Type == "client_id");
 
@@ -51,7 +52,7 @@ namespace Domain.RateLimiting.Samples.Owin
             }
 
             //if (string.IsNullOrWhiteSpace(clientId?.Value)) return null;
-            
+
             if (operationClass == "F")
             {
                 return Task.FromResult(new RateLimitPolicy("Test_Client_01::ClassF",
@@ -100,7 +101,7 @@ namespace Domain.RateLimiting.Samples.Owin
                     {
                         //logger.LogWarning("Rate limiting circuit closed")
                     }),
-                countThrottledRequests:true
+                countThrottledRequests: false
             );
 
             #endregion
@@ -125,9 +126,19 @@ namespace Domain.RateLimiting.Samples.Owin
 
             var policyProvider = new ClientQuotaPolicyProvider();
 
+            filters.Add(new RateLimitingFilter(new RateLimiter(rateLimitCacheProvider, null), filters,
+                getPolicyFuncAsync:(rlr, context) => Task.FromResult(new RateLimitPolicy("Test_Client_01",
+                new List<AllowedConsumptionRate>()
+                {
+                    new AllowedConsumptionRate(1000, RateLimitUnit.PerHour)
+                }, name: "Quota_BilledHigher")
+                { CostPerCall = 1 })));
+
             filters.Add(new RateLimitingFilter(
 
                 new RateLimiter(rateLimitCacheProvider, policyProvider),
+
+                filters,
 
                 onPostLimit: async (request, policy, result, actionContext) =>
                 {
@@ -215,7 +226,7 @@ namespace Domain.RateLimiting.Samples.Owin
                           operationClass,
                           -policy.CostPerCall);
                     }
-                    else if(result.State == ResultState.LimitApplicationFailed)
+                    else if (result.State == ResultState.LimitApplicationFailed)
                     {
                         auditLogger.Information(
                           "Result {Result}: Limit Cost Reverting failed for client {ClientId} and endpoint {Endpoint} with route {RouteTemplate} which is Class {Class} with Cost {Cost}",
@@ -226,22 +237,18 @@ namespace Domain.RateLimiting.Samples.Owin
                           operationClass,
                           -policy.CostPerCall);
                     }
+                },
+
+                postOperationDecisionFuncAsync: async (request, policy, result, actionExecutedContext) =>
+                {
+                    if (actionExecutedContext.Exception != null || (int)actionExecutedContext.Response.StatusCode >= 400)
+                        return Decision.REVERTSUCCESSCOST;
 
                     return Decision.OK;
                 },
 
-                 postOperationDecisionFuncAsync: async (request, policy, result, actionExecutedContext) =>
-                 {
-                     if (actionExecutedContext.Exception != null || (int)actionExecutedContext.Response.StatusCode >= 400)
-                         return Decision.REVERTSUCCESSCOST;
-
-                     return Decision.OK;
-                 },
-
                 getPolicyFuncAsync: policyProvider.GetPolicyAsync,
                 simulationMode: false));
-
-            filters.Add(new RateLimitingPostActionFilter());
         }
 
         private static void ConfigureRateLimitingSettings(RedisRateLimiterSettings redisRateLimiterSettings)

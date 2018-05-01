@@ -72,7 +72,10 @@ namespace Domain.RateLimiting.Core
                 await _circuitLock.WaitAsync();
 
                 if (_circuitIsOpen)
+                {
+                    _circuitLock.Release();
                     return defaultResult;
+                }
 
                 if (_consecutiveFaultsCount == 0)
                     _faultWindowOpenTime = DateTime.Now;

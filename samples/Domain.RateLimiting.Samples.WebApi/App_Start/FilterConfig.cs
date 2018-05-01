@@ -77,8 +77,7 @@ namespace Domain.RateLimiting.Samples.WebApi
             #endregion
 
             filters.Add(new RateLimitingFilter(new 
-                RateLimiter(rateLimitCacheProvider, globalRateLimitingClientPolicyManager)));
-            filters.Add(new RateLimitingPostActionFilter());
+                RateLimiter(rateLimitCacheProvider, globalRateLimitingClientPolicyManager), filters));
         }
 
         private static void ConfigureRateLimitingSettings(RedisRateLimiterSettings redisRateLimiterSettings)
