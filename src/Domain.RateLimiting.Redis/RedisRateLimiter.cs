@@ -21,8 +21,8 @@ namespace Domain.RateLimiting.Redis
         protected RedisRateLimiter(string redisEndpoint,
             Action<Exception> onException = null,
             Action<RateLimitingResult> onThrottled = null,
-            int connectionTimeout = 2000,
-            int syncTimeout = 1000,
+            int connectionTimeoutInMilliseconds = 2000,
+            int syncTimeoutInMilliseconds = 1000,
             bool countThrottledRequests = false,
             ICircuitBreaker circuitBreaker = null,
             IClock clock = null,
@@ -38,7 +38,7 @@ namespace Domain.RateLimiting.Redis
                 new DefaultCircuitBreaker(3, 10000, 300);
 
             if(connectToRedisFunc == null)
-                SetupConnectionConfiguration(redisEndpoint, connectionTimeout, syncTimeout);
+                SetupConnectionConfiguration(redisEndpoint, connectionTimeoutInMilliseconds, syncTimeoutInMilliseconds);
 
             //SetupCircuitBreaker(faultThreshholdPerWindowDuration, faultWindowDurationInMilliseconds, circuitOpenDurationInSecs, onException, onCircuitOpened, onCircuitClosed);
             ConnectToRedis(onException).GetAwaiter();

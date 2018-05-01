@@ -91,6 +91,10 @@ namespace Domain.RateLimiting.Samples.Owin
 
             var rateLimitCacheProvider = new RedisFixedWindowRateLimiter(
                 redisRateLimiterSettings.RateLimitRedisCacheConnectionString,
+                onException: (ex) => 
+                {
+
+                },
                 circuitBreaker: new DefaultCircuitBreaker(redisRateLimiterSettings.FaultThreshholdPerWindowDuration,
                     redisRateLimiterSettings.FaultWindowDurationInMilliseconds, redisRateLimiterSettings.CircuitOpenIntervalInSecs,
                     onCircuitOpened: () =>
@@ -101,6 +105,7 @@ namespace Domain.RateLimiting.Samples.Owin
                     {
                         //logger.LogWarning("Rate limiting circuit closed")
                     }),
+                
                 countThrottledRequests: false
             );
 
@@ -249,10 +254,10 @@ namespace Domain.RateLimiting.Samples.Owin
                 ConfigurationManager.AppSettings["RedisRateLimiterSettings:RateLimitRedisCacheConnectionString"];
             redisRateLimiterSettings.CircuitOpenIntervalInSecs =
                 Int32.Parse(ConfigurationManager.AppSettings["RedisRateLimiterSettings:CircuitOpenIntervalInSecs"]);
-            redisRateLimiterSettings.ConnectionTimeout =
-                Int32.Parse(ConfigurationManager.AppSettings["RedisRateLimiterSettings:ConnectionTimeout"]);
-            redisRateLimiterSettings.SyncTimeout =
-                Int32.Parse(ConfigurationManager.AppSettings["RedisRateLimiterSettings:SyncTimeout"]);
+            redisRateLimiterSettings.ConnectionTimeoutInMilliseconds =
+                Int32.Parse(ConfigurationManager.AppSettings["RedisRateLimiterSettings:ConnectionTimeoutInMilliseconds"]);
+            redisRateLimiterSettings.SyncTimeoutInMilliseconds =
+                Int32.Parse(ConfigurationManager.AppSettings["RedisRateLimiterSettings:SyncTimeoutInMilliseconds"]);
             redisRateLimiterSettings.FaultThreshholdPerWindowDuration =
                 Int32.Parse(ConfigurationManager.AppSettings["RedisRateLimiterSettings:FaultThreshholdPerWindowDuration"]);
             redisRateLimiterSettings.CountThrottledRequests =

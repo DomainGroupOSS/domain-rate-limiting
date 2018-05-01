@@ -25,9 +25,9 @@ namespace Domain.RateLimiting.Redis
 
         public int CircuitOpenIntervalInSecs { get; set; }
 
-        public int ConnectionTimeout { get; set; }
+        public int ConnectionTimeoutInMilliseconds { get; set; }
 
-        public int SyncTimeout { get; set; }
+        public int SyncTimeoutInMilliseconds { get; set; }
         
         public bool CountThrottledRequests { get; set; }
     }
