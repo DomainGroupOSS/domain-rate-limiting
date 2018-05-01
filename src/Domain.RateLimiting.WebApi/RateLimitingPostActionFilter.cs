@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Web.Http.Controllers;
@@ -46,23 +48,22 @@ namespace Domain.RateLimiting.WebApi
                 {RateLimitHeaders.Limit, result.CacheKey.AllowedConsumptionRate?.ToString() }
             };
 
-            var response = context.Response;
-            if (response == null)
-                return;
+            if (context.Response == null)
+                context.Response = context.Request.CreateErrorResponse(HttpStatusCode.InternalServerError, context.Exception);
 
             foreach (var successheader in successheaders.Keys)
             {
-                if (response.Headers.Contains(successheader))
+                if (context.Response.Headers.Contains(successheader))
                 {
                     // KAZI revisit
-                    var successHeaderValues = response.Headers.GetValues(successheader)?.ToList() ?? new List<string>();
+                    var successHeaderValues = context.Response.Headers.GetValues(successheader)?.ToList() ?? new List<string>();
                     successHeaderValues.Add(successheaders[successheader]);
                     context.Response.Headers.Remove(successheader);
-                    response.Headers.Add(successheader, successHeaderValues);
+                    context.Response.Headers.Add(successheader, successHeaderValues);
                 }
                 else
                 {
-                    response.Headers.Add(successheader, new string[] { successheaders[successheader] });
+                    context.Response.Headers.Add(successheader, new string[] { successheaders[successheader] });
                 }
             }
         }

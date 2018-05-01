@@ -69,7 +69,7 @@ namespace Domain.RateLimiting.Samples.Owin
                 {
                     //new AllowedConsumptionRate(200, RateLimitUnit.PerCustomPeriod,
                     //    new LimitPeriod(new DateTime(2018,3,23,0,0,0,DateTimeKind.Utc), 600, true)),
-                    new AllowedConsumptionRate(200, RateLimitUnit.PerMinute)
+                    new AllowedConsumptionRate(200, RateLimitUnit.PerHour)
                 }, name: "Quota_Billed")
             { CostPerCall = cost });
         }

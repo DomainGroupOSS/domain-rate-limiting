@@ -29,7 +29,7 @@ namespace Domain.RateLimiting.Samples.Owin.Controllers
         public IHttpActionResult Get(int id, int subid, int testid)
         {
             throw new System.Exception("Test");
-            return Content( System.Net.HttpStatusCode.InternalServerError, "value from sub test");
+            //return Content( System.Net.HttpStatusCode.BadRequest, "value from sub test");
         }
 
         [HttpGet]
