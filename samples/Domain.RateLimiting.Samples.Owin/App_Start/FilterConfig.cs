@@ -126,14 +126,6 @@ namespace Domain.RateLimiting.Samples.Owin
 
             var policyProvider = new ClientQuotaPolicyProvider();
 
-            filters.Add(new RateLimitingFilter(new RateLimiter(rateLimitCacheProvider, null), filters,
-                getPolicyFuncAsync:(rlr, context) => Task.FromResult(new RateLimitPolicy("Test_Client_01",
-                new List<AllowedConsumptionRate>()
-                {
-                    new AllowedConsumptionRate(1000, RateLimitUnit.PerHour)
-                }, name: "Quota_BilledHigher")
-                { CostPerCall = 1 })));
-
             filters.Add(new RateLimitingFilter(
 
                 new RateLimiter(rateLimitCacheProvider, policyProvider),
