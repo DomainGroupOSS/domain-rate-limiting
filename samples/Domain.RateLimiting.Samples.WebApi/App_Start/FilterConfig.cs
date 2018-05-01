@@ -86,10 +86,10 @@ namespace Domain.RateLimiting.Samples.WebApi
                 ConfigurationManager.AppSettings["RedisRateLimiterSettings:RateLimitRedisCacheConnectionString"];
             redisRateLimiterSettings.CircuitOpenIntervalInSecs =
                 Int32.Parse(ConfigurationManager.AppSettings["RedisRateLimiterSettings:CircuitOpenIntervalInSecs"]);
-            redisRateLimiterSettings.ConnectionTimeout =
-                Int32.Parse(ConfigurationManager.AppSettings["RedisRateLimiterSettings:ConnectionTimeout"]);
-            redisRateLimiterSettings.SyncTimeout =
-                Int32.Parse(ConfigurationManager.AppSettings["RedisRateLimiterSettings:SyncTimeout"]);
+            redisRateLimiterSettings.ConnectionTimeoutInMilliseconds =
+                Int32.Parse(ConfigurationManager.AppSettings["RedisRateLimiterSettings:ConnectionTimeoutInMilliseconds"]);
+            redisRateLimiterSettings.SyncTimeoutInMilliseconds =
+                Int32.Parse(ConfigurationManager.AppSettings["RedisRateLimiterSettings:SyncTimeoutInMilliseconds"]);
             redisRateLimiterSettings.FaultThreshholdPerWindowDuration =
                 Int32.Parse(ConfigurationManager.AppSettings["RedisRateLimiterSettings:FaultThreshholdPerWindowDuration"]);
             redisRateLimiterSettings.CountThrottledRequests =
