@@ -89,6 +89,10 @@ namespace Domain.RateLimiting.Redis
         protected override async Task<long> GetOldestRequestTimestampInTicks(Task<SortedSetEntry[]> task, RateLimitCacheKey cacheKey, long utcNowTicks)
         {
             var t = await task.ConfigureAwait(false);
+
+            if (t == null || t.Length == 0)
+                return utcNowTicks - GetTicksPerUnit(cacheKey.AllowedConsumptionRate);
+
             return (long)t[0].Score;
         }
     }

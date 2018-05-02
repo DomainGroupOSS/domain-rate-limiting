@@ -3,9 +3,9 @@
   <PropertyGroup>
     <TargetFrameworks>netstandard1.5;net452</TargetFrameworks>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <Version>4.0.1-alpha</Version>
-    <AssemblyVersion>4.0.0.1</AssemblyVersion>
-    <FileVersion>4.0.0.1</FileVersion>
+    <Version>4.0.2-alpha</Version>
+    <AssemblyVersion>4.0.0.2</AssemblyVersion>
+    <FileVersion>4.0.0.2</FileVersion>
     <Company>Domain</Company>
     <Authors>Kazi Zahir</Authors>
     <Description>provides a distributed Redis implementation of the IRateLimitingCacheProvider from the Domain.RateLimiting.Core package meaning that it can be used from multiple servers which is more suiting to real production environments. This is the package that keeps track of the call count per time window and gives a go or no go based on the number of calls made so far. Currently it provides implementations for both Fixed Window and the more accurate and burst free Sliding Window algorithms. You can use
