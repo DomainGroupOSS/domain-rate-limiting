@@ -93,10 +93,14 @@ namespace Domain.RateLimiting.Samples.Owin
                 redisRateLimiterSettings.RateLimitRedisCacheConnectionString,
                 onException: (ex) => 
                 {
-
+                    //_logger.LogError("Error connecting to Redis")
                 },
                 circuitBreaker: new DefaultCircuitBreaker(redisRateLimiterSettings.FaultThreshholdPerWindowDuration,
                     redisRateLimiterSettings.FaultWindowDurationInMilliseconds, redisRateLimiterSettings.CircuitOpenIntervalInSecs,
+                    onCircuitException:(ex)=>
+                    {
+                        //_logger.LogError("Rate limiting circuit error")
+                    },
                     onCircuitOpened: () =>
                     {
                         //_logger.LogWarning("Rate limiting circuit opened")
@@ -260,6 +264,8 @@ namespace Domain.RateLimiting.Samples.Owin
                 Int32.Parse(ConfigurationManager.AppSettings["RedisRateLimiterSettings:SyncTimeoutInMilliseconds"]);
             redisRateLimiterSettings.FaultThreshholdPerWindowDuration =
                 Int32.Parse(ConfigurationManager.AppSettings["RedisRateLimiterSettings:FaultThreshholdPerWindowDuration"]);
+            redisRateLimiterSettings.FaultWindowDurationInMilliseconds =
+                Int32.Parse(ConfigurationManager.AppSettings["RedisRateLimiterSettings:FaultWindowDurationInMilliseconds"]);
             redisRateLimiterSettings.CountThrottledRequests =
                 Boolean.Parse(ConfigurationManager.AppSettings["RedisRateLimiterSettings:CountThrottledRequests"]);
         }

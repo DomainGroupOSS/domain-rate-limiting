@@ -92,6 +92,8 @@ namespace Domain.RateLimiting.Samples.WebApi
                 Int32.Parse(ConfigurationManager.AppSettings["RedisRateLimiterSettings:SyncTimeoutInMilliseconds"]);
             redisRateLimiterSettings.FaultThreshholdPerWindowDuration =
                 Int32.Parse(ConfigurationManager.AppSettings["RedisRateLimiterSettings:FaultThreshholdPerWindowDuration"]);
+            redisRateLimiterSettings.FaultWindowDurationInMilliseconds =
+                Int32.Parse(ConfigurationManager.AppSettings["RedisRateLimiterSettings:FaultWindowDurationInMilliseconds"]);
             redisRateLimiterSettings.CountThrottledRequests =
                 Boolean.Parse(ConfigurationManager.AppSettings["RedisRateLimiterSettings:CountThrottledRequests"]);
         }

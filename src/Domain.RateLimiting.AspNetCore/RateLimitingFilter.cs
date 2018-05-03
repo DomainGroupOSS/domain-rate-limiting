@@ -116,7 +116,7 @@ namespace Domain.RateLimiting.AspNetCore
                 },
                 getPolicyFuncAsync: GetPolicyFuncAsync != null ? new Func<RateLimitingRequest, Task<RateLimitPolicy>>(async (rlr) =>
                 {
-                    return await GetPolicyFuncAsync.Invoke(rlr, actionContext);
+                    return await GetPolicyFuncAsync.Invoke(rlr, actionContext).ConfigureAwait(false);
                 }) : null).ConfigureAwait(false);
         }
     }

@@ -56,8 +56,8 @@ namespace Domain.RateLimiting.Redis
 
         private async Task ConnectToRedis(Action<Exception> onException)
         {
-            _redisConnection = _connectToRedisFunc != null ? await _connectToRedisFunc.Invoke() :
-                               await ConnectionMultiplexer.ConnectAsync(_redisConfigurationOptions);
+            _redisConnection = _connectToRedisFunc != null ? await _connectToRedisFunc.Invoke().ConfigureAwait(false) :
+                               await ConnectionMultiplexer.ConnectAsync(_redisConfigurationOptions).ConfigureAwait(false);
 
             if (_redisConnection == null || !_redisConnection.IsConnected)
             {
@@ -140,13 +140,13 @@ namespace Domain.RateLimiting.Redis
 
                 var rateLimitingResult = new RateLimitingResult(throttleState,
                     await GetWaitingIntervalInTicks(setupGetOldestRequestTimestampInTicks,
-                        violatedCacheKey, utcNowTicks), violatedCacheKey, 0);
+                        violatedCacheKey, utcNowTicks).ConfigureAwait(false), violatedCacheKey, 0);
 
                 _onThrottled?.Invoke(rateLimitingResult);
 
                 return rateLimitingResult;
 
-            }, new RateLimitingResult(ResultState.LimitApplicationFailed));
+            }, new RateLimitingResult(ResultState.LimitApplicationFailed)).ConfigureAwait(false);
         }
 
         public Task<RateLimitingResult> LimitRequestAsync(RateLimitCacheKey cacheKey)
@@ -158,7 +158,7 @@ namespace Domain.RateLimiting.Redis
         public async Task<RateLimitingResult> LimitRequestAsync(string requestId, string method, string host, string routeTemplate,
             IList<AllowedConsumptionRate> rateLimitPolicies)
         {
-            return await LimitRequestAsync(requestId, method, host, routeTemplate, rateLimitPolicies, 1);
+            return await LimitRequestAsync(requestId, method, host, routeTemplate, rateLimitPolicies, 1).ConfigureAwait(false);
         }
 
         private async Task<long> GetWaitingIntervalInTicks(Task<SortedSetEntry[]> setupGetOldestRequestTimestampInTicks,
@@ -177,7 +177,7 @@ namespace Domain.RateLimiting.Redis
 
             if (!redisTransactionTask.IsCompleted ||
                 redisTransactionTask.IsFaulted ||
-                !await redisTransactionTask)
+                !await redisTransactionTask.ConfigureAwait(false))
             {
                 throw new Exception("Redis transaction did not succeed", redisTransactionTask.Exception);
             }

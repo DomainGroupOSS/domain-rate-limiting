@@ -63,12 +63,12 @@ namespace Domain.RateLimiting.WebApi
                 {
                     context.Request.Properties.Add($"RateLimitingResult_{_filterId}", rateLimitingResult);
 
-                    var clientDecision = OnPostLimit != null ? await OnPostLimit.Invoke(rateLimitingRequest, policy, rateLimitingResult, actionContext) : Decision.OK;
-                    var reverted = await RevertIfRequired(rateLimitingResult, context, request, policy, clientDecision);
+                    var clientDecision = OnPostLimit != null ? await OnPostLimit.Invoke(rateLimitingRequest, policy, rateLimitingResult, actionContext).ConfigureAwait(false) : Decision.OK;
+                    var reverted = await RevertIfRequired(rateLimitingResult, context, request, policy, clientDecision).ConfigureAwait(false);
 
                     if (reverted)
                     {
-                        await base.OnAuthorizationAsync(context, cancellationToken);
+                        await base.OnAuthorizationAsync(context, cancellationToken).ConfigureAwait(false);
                         return;
                     }
 
@@ -80,23 +80,23 @@ namespace Domain.RateLimiting.WebApi
                                 new Func<HttpActionExecutedContext, Task>(async (httpActionExecutedContext) =>
                                 {
                                     var decision = 
-                                        await PostOperationDecisionFuncAsync.Invoke(rateLimitingRequest, policy, rateLimitingResult, httpActionExecutedContext);
+                                        await PostOperationDecisionFuncAsync.Invoke(rateLimitingRequest, policy, rateLimitingResult, httpActionExecutedContext).ConfigureAwait(false);
 
-                                    await RevertIfRequired(rateLimitingResult, context, request, policy, decision);
+                                    await RevertIfRequired(rateLimitingResult, context, request, policy, decision).ConfigureAwait(false);
                                 }));
                         }
 
-                        await base.OnAuthorizationAsync(context, cancellationToken);
+                        await base.OnAuthorizationAsync(context, cancellationToken).ConfigureAwait(false);
                     }
                     else if ((rateLimitingResult.State == ResultState.Throttled || rateLimitingResult.State == ResultState.ThrottledButCompensationFailed) 
                         && !SimulationMode)
                     {
-                        await TooManyRequests(context, rateLimitingResult, policy.Name);
+                        await TooManyRequests(context, rateLimitingResult, policy.Name).ConfigureAwait(false);
                     }
                 },
                 getPolicyFuncAsync: GetPolicyFuncAsync != null ? new Func<RateLimitingRequest, Task<RateLimitPolicy>>(async (rlr) =>
                 {
-                    return await GetPolicyFuncAsync.Invoke(rlr, actionContext);
+                    return await GetPolicyFuncAsync.Invoke(rlr, actionContext).ConfigureAwait(false);
                 }) : null
             ).ConfigureAwait(false);
         }
@@ -115,9 +115,10 @@ namespace Domain.RateLimiting.WebApi
                         if (rateLimitingRevertResult.State == ResultState.Success)
                             context.Request.Properties[$"RateLimitingResult_{_filterId}"] = rateLimitingRevertResult;
 
-                        await OnPostLimitRevert?.Invoke(request, postPolicy, rateLimitingRevertResult, context);
+                        if(OnPostLimitRevert != null)
+                            await OnPostLimitRevert.Invoke(request, postPolicy, rateLimitingRevertResult, context).ConfigureAwait(false);
                     },
-                    revert: true);
+                    revert: true).ConfigureAwait(false);
 
                 return await Task.FromResult(true);                    
             }

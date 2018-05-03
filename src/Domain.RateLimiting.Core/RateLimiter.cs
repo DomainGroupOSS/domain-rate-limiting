@@ -33,7 +33,9 @@ namespace Domain.RateLimiting.Core
 
             if (rateLimitingPolicy == null || rateLimitingPolicy.CostPerCall == 0)
             {
-                await onPostLimitFuncAsync?.Invoke(rateLimitingRequest, rateLimitingPolicy, new RateLimitingResult(ResultState.NotApplicable));
+                if(onPostLimitFuncAsync != null)
+                    await onPostLimitFuncAsync.Invoke(rateLimitingRequest, rateLimitingPolicy, new RateLimitingResult(ResultState.NotApplicable)).ConfigureAwait(false);
+
                 return;
             }
 
@@ -56,7 +58,9 @@ namespace Domain.RateLimiting.Core
 
             if (allowedCallRates == null || !Enumerable.Any<AllowedConsumptionRate>(allowedCallRates))
             {
-                await onPostLimitFuncAsync?.Invoke(rateLimitingRequest, rateLimitingPolicy, new RateLimitingResult(ResultState.NotApplicable));
+                if(onPostLimitFuncAsync != null)
+                    await onPostLimitFuncAsync.Invoke(rateLimitingRequest, rateLimitingPolicy, new RateLimitingResult(ResultState.NotApplicable)).ConfigureAwait(false);
+
                 return;
             }
             
@@ -64,7 +68,8 @@ namespace Domain.RateLimiting.Core
                 host, routeTemplate, allowedCallRates, 
                 revert ? -rateLimitingPolicy.CostPerCall : rateLimitingPolicy.CostPerCall).ConfigureAwait(false);
 
-            await onPostLimitFuncAsync?.Invoke(rateLimitingRequest, rateLimitingPolicy, rateLimitingResult);
+            if (onPostLimitFuncAsync != null)
+                await onPostLimitFuncAsync.Invoke(rateLimitingRequest, rateLimitingPolicy, rateLimitingResult).ConfigureAwait(false);
         }
 
 

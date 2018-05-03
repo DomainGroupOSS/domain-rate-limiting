@@ -27,14 +27,15 @@ namespace Domain.RateLimiting.WebApi
                 var func = actionExecutedContext.Request.Properties[$"PostActionFilterFuncAsync_{_filterId}"]
                     as Func<HttpActionExecutedContext, Task>;
 
-                await func?.Invoke(actionExecutedContext);
+                if(func != null)
+                    await func.Invoke(actionExecutedContext).ConfigureAwait(false);
             }
 
             if (actionExecutedContext.Request.Properties.ContainsKey($"RateLimitingResult_{_filterId}"))
                 AddUpdateRateLimitingSuccessHeaders(actionExecutedContext,
                     (RateLimitingResult)actionExecutedContext.Request.Properties[$"RateLimitingResult_{_filterId}"]);
 
-            await base.OnActionExecutedAsync(actionExecutedContext, cancellationToken);
+            await base.OnActionExecutedAsync(actionExecutedContext, cancellationToken).ConfigureAwait(false);
         }
 
         private static void AddUpdateRateLimitingSuccessHeaders(HttpActionExecutedContext context, RateLimitingResult result)

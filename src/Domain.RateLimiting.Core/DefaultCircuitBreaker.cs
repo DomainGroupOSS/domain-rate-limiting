@@ -46,16 +46,25 @@ namespace Domain.RateLimiting.Core
                     return defaultResult;
                 }
 
-                await _circuitLock.WaitAsync();
+                await _circuitLock.WaitAsync().ConfigureAwait(false);
 
-                if (_circuitIsOpen)
+                try
                 {
-                    _consecutiveFaultsCount = 0;
-                    _circuitIsOpen = false;
-                    _onCircuitClosed?.Invoke();
+                    if (_circuitIsOpen)
+                    {
+                        _consecutiveFaultsCount = 0;
+                        _circuitIsOpen = false;
+                        _onCircuitClosed?.Invoke();
+                    }
                 }
-
-                _circuitLock.Release();
+                catch
+                {
+                    throw;
+                }
+                finally
+                {
+                    _circuitLock.Release();
+                }
             }
 
             try
@@ -69,37 +78,44 @@ namespace Domain.RateLimiting.Core
                 if (_circuitIsOpen)
                     return defaultResult;
 
-                await _circuitLock.WaitAsync();
+                await _circuitLock.WaitAsync().ConfigureAwait(false);
 
-                if (_circuitIsOpen)
+                try
+                {
+                    if (_circuitIsOpen)
+                    {
+                        return defaultResult;
+                    }
+
+                    if (_consecutiveFaultsCount == 0)
+                        _faultWindowOpenTime = DateTime.Now;
+
+                    _consecutiveFaultsCount++;
+                    if (_consecutiveFaultsCount <= _faultThreshholdPerWindowDuration)
+                    {
+                        return defaultResult;
+                    }
+
+                    if (DateTime.Now.Subtract(_faultWindowOpenTime).TotalMilliseconds <= _faultWindowDurationInMilliseconds)
+                    {
+                        _circuitOpenTime = DateTime.Now;
+                        _circuitIsOpen = true;
+                        _onCircuitOpened?.Invoke();
+                    }
+                    else
+                    {
+                        _consecutiveFaultsCount = 1;
+                        _faultWindowOpenTime = DateTime.Now;
+                    }
+                }
+                catch
+                {
+                    throw;
+                }
+                finally
                 {
                     _circuitLock.Release();
-                    return defaultResult;
                 }
-
-                if (_consecutiveFaultsCount == 0)
-                    _faultWindowOpenTime = DateTime.Now;
-
-                _consecutiveFaultsCount++;
-                if (_consecutiveFaultsCount <= _faultThreshholdPerWindowDuration)
-                {
-                    _circuitLock.Release();
-                    return defaultResult;
-                }
-
-                if (DateTime.Now.Subtract(_faultWindowOpenTime).TotalMilliseconds <= _faultWindowDurationInMilliseconds)
-                {
-                    _circuitOpenTime = DateTime.Now;
-                    _circuitIsOpen = true;
-                    _onCircuitOpened?.Invoke();
-                }
-                else
-                {
-                    _consecutiveFaultsCount = 1;
-                    _faultWindowOpenTime = DateTime.Now;
-                }
-
-                _circuitLock.Release();
             }
 
             return defaultResult;
