@@ -69,7 +69,7 @@ namespace Domain.RateLimiting.Samples.Owin
                 {
                     //new AllowedConsumptionRate(200, RateLimitUnit.PerCustomPeriod,
                     //    new LimitPeriod(new DateTime(2018,3,23,0,0,0,DateTimeKind.Utc), 600, true)),
-                    new AllowedConsumptionRate(200, RateLimitUnit.PerHour)
+                    new AllowedConsumptionRate(2, RateLimitUnit.PerMinute, 100)
                 }, name: "Quota_Billed")
             { CostPerCall = cost });
         }
@@ -89,7 +89,7 @@ namespace Domain.RateLimiting.Samples.Owin
 
             ConfigureRateLimitingSettings(redisRateLimiterSettings);
 
-            var rateLimitCacheProvider = new RedisFixedWindowRateLimiter(
+            var rateLimitCacheProvider = new RedisLeakyBucketLimiter(
                 redisRateLimiterSettings.RateLimitRedisCacheConnectionString,
                 onException: (ex) => 
                 {

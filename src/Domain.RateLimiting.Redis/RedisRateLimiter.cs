@@ -99,7 +99,7 @@ namespace Domain.RateLimiting.Redis
                 {
                     var cacheKey = cacheKeys[i];
 
-                    var callsRemaining = cacheKey.Limit -
+                    var callsRemaining = (cacheKey.AllowedConsumptionRate.MaxBurst != 0 ? cacheKey.AllowedConsumptionRate.MaxBurst : cacheKey.Limit) -
                             await numberOfRequestsMadePerAllowedCallRateAsync[i].ConfigureAwait(false);
 
                     if (minCallsRemaining > callsRemaining)

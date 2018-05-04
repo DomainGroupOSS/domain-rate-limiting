@@ -29,6 +29,11 @@ namespace Domain.RateLimiting.Core
             Period = period;
         }
 
+        public AllowedConsumptionRate(int limit, RateLimitUnit unit, int maxBurst) : this(limit, unit)
+        {
+            MaxBurst = maxBurst;
+        }
+
         /// <summary>
         /// Gets the limit.
         /// </summary>
@@ -42,6 +47,7 @@ namespace Domain.RateLimiting.Core
         public RateLimitUnit Unit { get; }
         
         public LimitPeriod Period { get; }
+        public int MaxBurst { get; }
 
         public override string ToString()
         {
