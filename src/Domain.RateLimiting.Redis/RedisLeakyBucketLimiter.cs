@@ -8,6 +8,27 @@ namespace Domain.RateLimiting.Redis
 {
     public class RedisLeakyBucketLimiter : RedisRateLimiter
     {
+        private const string _luaScript = 
+            "local utcNowTicks = ARGV[1]; " +
+            "local raPerInterval = ARGV[2]; " +
+            "local riInTicks = ARGV[3]; " +
+            "local ttl = ARGV[4]; " +
+            "local h = { 'lu', utcNowTicks, 't', 0 }; " +
+            "if redis.call('HEXISTS', KEYS[1], 'lu') == 1 then " +
+            "   h = redis.call('HGETALL', KEYS[1]); " +
+            "end " +
+            "local lrtInTicks = h[2]; " +
+            "local ri = math.floor((utcNowTicks - lrtInTicks) / riInTicks); " +
+            "local leakage = raPerInterval * ri; " +
+            "local nT = h[4] - leakage; " +
+            "if nT < 0 then " +
+            "   nT = 0; " +
+            "end " +
+            "h[2] = lrtInTicks + ri * riInTicks; " +
+            "h[4] = nT; " +
+            "redis.call('HMSET', KEYS[1], h[1], h[2], h[3], h[4]); " +
+            "redis.call('EXPIRE', KEYS[1], ttl);";
+
         private static readonly IDictionary<RateLimitUnit, Func<AllowedConsumptionRate, Func<DateTime, string>>> RateLimitTypeCacheKeyFormatMapping =
             new Dictionary<RateLimitUnit, Func<AllowedConsumptionRate, Func<DateTime, string>>>
         {
@@ -61,12 +82,11 @@ namespace Domain.RateLimiting.Redis
 
             var cacheKeyString = cacheKey.ToString();
             cacheKeys.Add(cacheKey);
-
-            var luaScript = $"local utcNowTicks = ARGV[1]; local raPerInterval = ARGV[2]; local riInTicks = ARGV[3]; local ttl = ARGV[4]; local h = {{ 'lu', utcNowTicks, 't', 0 }}; if redis.call('HEXISTS', KEYS[1], 'lu') == 1 then h = redis.call('HGETALL', KEYS[1]); end local lrtInTicks = h[2]; local ri = math.floor((utcNowTicks - lrtInTicks) / riInTicks); local leakage = raPerInterval * ri; local nT = h[4] - leakage; if nT < 0 then nT = 0; end h[2] = lrtInTicks + ri * riInTicks; h[4] = nT; redis.call('HMSET', KEYS[1], h[1], h[2], h[3], h[4]); redis.call('EXPIRE', KEYS[1], ttl);";
             
             var ttlInSeconds = allowedConsumptionRate.MaxBurst / allowedConsumptionRate.Limit * (long)allowedConsumptionRate.Unit / TimeSpan.TicksPerSecond + 120;
+            
 
-            var scriptResultTask = redisTransaction.ScriptEvaluateAsync(luaScript, 
+            var scriptResultTask = redisTransaction.ScriptEvaluateAsync(_luaScript, 
                 new RedisKey[] { cacheKeyString }, 
                 new RedisValue[] { utcNowTicks, allowedConsumptionRate.Limit, (long)allowedConsumptionRate.Unit, ttlInSeconds });
             
