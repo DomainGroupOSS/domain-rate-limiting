@@ -6,27 +6,27 @@ using Domain.RateLimiting.Core;
 
 namespace Domain.RateLimiting.Redis
 {
-    public class RedisLeakyBucketLimiter : RedisRateLimiter
+    public class RedisLeakyBucketRateLimiter : RedisRateLimiter
     {
         private const String _luaScript =
             "local key = @key;" +
             "local utcNowTicks = @utcNowTicks; " +
-            "local raPerInterval = @refillAmountPerInterval; " +
-            "local riInTicks = @refillIntervalInTicks; " +
+            "local leakageAmountPerInterval = @leakageAmountPerInterval; " +
+            "local leakageIntervalInTicks = @leakageIntervalInTicks; " +
             "local ttl = @ttl; " +
             "local h = { 'lu', utcNowTicks, 't', 0 }; " +
             "if redis.call('HEXISTS', key, 'lu') == 1 then " +
             "   h = redis.call('HGETALL', key); " +
             "end " +
-            "local lrtInTicks = h[2]; " +
-            "local ri = math.floor((utcNowTicks - lrtInTicks) / riInTicks); " +
-            "local leakage = raPerInterval * ri; " +
-            "local nT = h[4] - leakage; " +
-            "if nT < 0 then " +
-            "   nT = 0; " +
+            "local lastLeakageTimestampInTicks = h[2]; " +
+            "local leakageIntervalsSinceLastLeakage = math.floor((utcNowTicks - lastLeakageTimestampInTicks) / leakageIntervalInTicks); " +
+            "local leakage = leakageAmountPerInterval * leakageIntervalsSinceLastLeakage; " +
+            "local tokensRemaining = h[4] - leakage; " +
+            "if tokensRemaining < 0 then " +
+            "   tokensRemaining = 0; " +
             "end " +
-            "h[2] = lrtInTicks + ri * riInTicks; " +
-            "h[4] = nT; " +
+            "h[2] = lastLeakageTimestampInTicks + leakageIntervalsSinceLastLeakage * leakageIntervalInTicks; " +
+            "h[4] = tokensRemaining; " +
             "redis.call('HMSET', key, h[1], h[2], h[3], h[4]); " +
             "redis.call('EXPIRE', key, ttl);";
 
@@ -47,7 +47,7 @@ namespace Domain.RateLimiting.Redis
 
         private readonly LoadedLuaScript _loadedLuaScript;
 
-        public RedisLeakyBucketLimiter(
+        public RedisLeakyBucketRateLimiter(
             string redisEndpoint,
             Action<Exception> onException = null,
             Action<RateLimitingResult> onThrottled = null,
@@ -68,7 +68,9 @@ namespace Domain.RateLimiting.Redis
                 connectToRedisFunc)
         {
             var prepared = LuaScript.Prepare(_luaScript);
-            _loadedLuaScript = prepared.Load(_redisConnection.GetServer(_redisConnection.GetDatabase().IdentifyEndpoint()));
+            _loadedLuaScript = prepared.Load(
+                _redisConnection.GetServer(
+                    _redisConnection.GetDatabase().IdentifyEndpoint()));
         }
 
         protected override Task<long> GetNumberOfRequestsAsync(
@@ -96,8 +98,8 @@ namespace Domain.RateLimiting.Redis
                 {
                     key = (RedisKey)cacheKeyString,
                     utcNowTicks = utcNowTicks,
-                    refillAmountPerInterval = allowedConsumptionRate.Limit,
-                    refillIntervalInTicks = (long)allowedConsumptionRate.Unit,
+                    leakageAmountPerInterval = allowedConsumptionRate.Limit,
+                    leakageIntervalInTicks = (long)allowedConsumptionRate.Unit,
                     ttl = ttlInSeconds
                 });
 

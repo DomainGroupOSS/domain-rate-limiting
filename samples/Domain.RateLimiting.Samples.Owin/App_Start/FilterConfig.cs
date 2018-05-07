@@ -89,7 +89,7 @@ namespace Domain.RateLimiting.Samples.Owin
 
             ConfigureRateLimitingSettings(redisRateLimiterSettings);
 
-            var rateLimitCacheProvider = new RedisLeakyBucketLimiter(
+            var rateLimitCacheProvider = new RedisLeakyBucketRateLimiter(
                 redisRateLimiterSettings.RateLimitRedisCacheConnectionString,
                 onException: (ex) => 
                 {
