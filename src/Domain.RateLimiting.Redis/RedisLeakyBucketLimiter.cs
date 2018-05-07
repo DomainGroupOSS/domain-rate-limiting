@@ -8,14 +8,15 @@ namespace Domain.RateLimiting.Redis
 {
     public class RedisLeakyBucketLimiter : RedisRateLimiter
     {
-        private const string _luaScript = 
-            "local utcNowTicks = ARGV[1]; " +
-            "local raPerInterval = ARGV[2]; " +
-            "local riInTicks = ARGV[3]; " +
-            "local ttl = ARGV[4]; " +
+        private const String _luaScript =
+            "local key = @key;" +
+            "local utcNowTicks = @utcNowTicks; " +
+            "local raPerInterval = @refillAmountPerInterval; " +
+            "local riInTicks = @refillIntervalInTicks; " +
+            "local ttl = @ttl; " +
             "local h = { 'lu', utcNowTicks, 't', 0 }; " +
-            "if redis.call('HEXISTS', KEYS[1], 'lu') == 1 then " +
-            "   h = redis.call('HGETALL', KEYS[1]); " +
+            "if redis.call('HEXISTS', key, 'lu') == 1 then " +
+            "   h = redis.call('HGETALL', key); " +
             "end " +
             "local lrtInTicks = h[2]; " +
             "local ri = math.floor((utcNowTicks - lrtInTicks) / riInTicks); " +
@@ -26,8 +27,8 @@ namespace Domain.RateLimiting.Redis
             "end " +
             "h[2] = lrtInTicks + ri * riInTicks; " +
             "h[4] = nT; " +
-            "redis.call('HMSET', KEYS[1], h[1], h[2], h[3], h[4]); " +
-            "redis.call('EXPIRE', KEYS[1], ttl);";
+            "redis.call('HMSET', key, h[1], h[2], h[3], h[4]); " +
+            "redis.call('EXPIRE', key, ttl);";
 
         private static readonly IDictionary<RateLimitUnit, Func<AllowedConsumptionRate, Func<DateTime, string>>> RateLimitTypeCacheKeyFormatMapping =
             new Dictionary<RateLimitUnit, Func<AllowedConsumptionRate, Func<DateTime, string>>>
@@ -41,39 +42,44 @@ namespace Domain.RateLimiting.Redis
                     return $"{allowedCallRate.Period.StartDateTimeUtc.ToString("yyyyMMddHHmmss")}::{allowedCallRate.Period.Duration.TotalSeconds}";
                 }
             }
-       };
+        };
+
+
+        private readonly LoadedLuaScript _loadedLuaScript;
 
         public RedisLeakyBucketLimiter(
-            string redisEndpoint, 
-            Action<Exception> onException = null, 
-            Action<RateLimitingResult> onThrottled = null, 
-            int connectionTimeoutInMilliseconds = 2000, 
-            int syncTimeoutInMilliseconds = 1000, 
-            bool countThrottledRequests = false, 
-            ICircuitBreaker circuitBreaker = null, 
-            IClock clock = null, 
-            Func<Task<IConnectionMultiplexer>> connectToRedisFunc = null) : 
-            base(redisEndpoint, 
-                onException, 
-                onThrottled, 
-                connectionTimeoutInMilliseconds, 
-                syncTimeoutInMilliseconds, 
-                countThrottledRequests, 
-                circuitBreaker, 
-                clock, 
+            string redisEndpoint,
+            Action<Exception> onException = null,
+            Action<RateLimitingResult> onThrottled = null,
+            int connectionTimeoutInMilliseconds = 2000,
+            int syncTimeoutInMilliseconds = 1000,
+            bool countThrottledRequests = false,
+            ICircuitBreaker circuitBreaker = null,
+            IClock clock = null,
+            Func<Task<IConnectionMultiplexer>> connectToRedisFunc = null) :
+            base(redisEndpoint,
+                onException,
+                onThrottled,
+                connectionTimeoutInMilliseconds,
+                syncTimeoutInMilliseconds,
+                countThrottledRequests,
+                circuitBreaker,
+                clock,
                 connectToRedisFunc)
         {
+            var prepared = LuaScript.Prepare(_luaScript);
+            _loadedLuaScript = prepared.Load(_redisConnection.GetServer(_redisConnection.GetDatabase().IdentifyEndpoint()));
         }
 
         protected override Task<long> GetNumberOfRequestsAsync(
-            string requestId, 
-            string method, 
-            string host, 
-            string routeTemplate, 
-            AllowedConsumptionRate allowedConsumptionRate, 
-            IList<RateLimitCacheKey> cacheKeys, 
-            ITransaction redisTransaction, 
-            long utcNowTicks, 
+            string requestId,
+            string method,
+            string host,
+            string routeTemplate,
+            AllowedConsumptionRate allowedConsumptionRate,
+            IList<RateLimitCacheKey> cacheKeys,
+            ITransaction redisTransaction,
+            long utcNowTicks,
             int costPerCall = 1)
         {
             RateLimitCacheKey cacheKey =
@@ -82,27 +88,32 @@ namespace Domain.RateLimiting.Redis
 
             var cacheKeyString = cacheKey.ToString();
             cacheKeys.Add(cacheKey);
-            
+
             var ttlInSeconds = allowedConsumptionRate.MaxBurst / allowedConsumptionRate.Limit * (long)allowedConsumptionRate.Unit / TimeSpan.TicksPerSecond + 120;
-            
 
-            var scriptResultTask = redisTransaction.ScriptEvaluateAsync(_luaScript, 
-                new RedisKey[] { cacheKeyString }, 
-                new RedisValue[] { utcNowTicks, allowedConsumptionRate.Limit, (long)allowedConsumptionRate.Unit, ttlInSeconds });
-            
+            var scriptResultTask = redisTransaction.ScriptEvaluateAsync(_loadedLuaScript,
+                new
+                {
+                    key = (RedisKey)cacheKeyString,
+                    utcNowTicks = utcNowTicks,
+                    refillAmountPerInterval = allowedConsumptionRate.Limit,
+                    refillIntervalInTicks = (long)allowedConsumptionRate.Unit,
+                    ttl = ttlInSeconds
+                });
+
             return redisTransaction.HashIncrementAsync(cacheKeyString, "t");
-            
+
         }
 
-        protected override Task<long> GetOldestRequestTimestampInTicks(Task<SortedSetEntry[]> task, RateLimitCacheKey cacheKey, long utcNowTicks)
+        protected override Func<long> GetOldestRequestTimestampInTicksFunc(ITransaction postViolationTransaction, RateLimitCacheKey cacheKey, long utcNowTicks)
         {
-            return Task.FromResult(utcNowTicks - (long)cacheKey.Unit);
-        }
+            var task = postViolationTransaction.HashGetAsync(cacheKey.ToString(), "lu");
 
-        protected override Task<SortedSetEntry[]> SetupGetOldestRequestTimestampInTicks(ITransaction postViolationTransaction, RateLimitCacheKey cacheKey, long utcNowTicks)
-        {
-            // do nothing
-            return new Task<SortedSetEntry[]>(() => null);
+            return () =>
+            {
+                task.Result.TryParse(out double value);
+                return (long)value;
+            };
         }
 
         protected override void UndoUnsuccessfulRequestCount(ITransaction postViolationTransaction, RateLimitCacheKey cacheKey, long utcNowTicks, int costPerCall = 1)

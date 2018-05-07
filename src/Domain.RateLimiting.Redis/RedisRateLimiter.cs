@@ -9,8 +9,8 @@ namespace Domain.RateLimiting.Redis
 {
     public abstract class RedisRateLimiter : IRateLimitingCacheProvider
     {
-        private IConnectionMultiplexer _redisConnection;
-        private ConfigurationOptions _redisConfigurationOptions;
+        protected IConnectionMultiplexer _redisConnection;
+        protected ConfigurationOptions _redisConfigurationOptions;
 
         private readonly ICircuitBreaker _circuitBreakerPolicy;
         private readonly Action<RateLimitingResult> _onThrottled;
@@ -41,7 +41,7 @@ namespace Domain.RateLimiting.Redis
                 SetupConnectionConfiguration(redisEndpoint, connectionTimeoutInMilliseconds, syncTimeoutInMilliseconds);
 
             //SetupCircuitBreaker(faultThreshholdPerWindowDuration, faultWindowDurationInMilliseconds, circuitOpenDurationInSecs, onException, onCircuitOpened, onCircuitClosed);
-            ConnectToRedis(onException).GetAwaiter();
+            ConnectToRedis(onException);
         }
 
         private void SetupConnectionConfiguration(string redisEndpoint, int connectionTimeout, int syncTimeout)
@@ -54,10 +54,10 @@ namespace Domain.RateLimiting.Redis
             _redisConfigurationOptions.AbortOnConnectFail = false;
         }
 
-        private async Task ConnectToRedis(Action<Exception> onException)
+        private void ConnectToRedis(Action<Exception> onException)
         {
-            _redisConnection = _connectToRedisFunc != null ? await _connectToRedisFunc.Invoke().ConfigureAwait(false) :
-                               await ConnectionMultiplexer.ConnectAsync(_redisConfigurationOptions).ConfigureAwait(false);
+            _redisConnection = _connectToRedisFunc != null ? _connectToRedisFunc.Invoke().Result :
+                               ConnectionMultiplexer.ConnectAsync(_redisConfigurationOptions).Result;
 
             if (_redisConnection == null || !_redisConnection.IsConnected)
             {
@@ -122,8 +122,8 @@ namespace Domain.RateLimiting.Redis
 
                 var violatedCacheKey = violatedCacheKeys.Last().Value;
 
-                var setupGetOldestRequestTimestampInTicks =
-                    SetupGetOldestRequestTimestampInTicks(postViolationTransaction,
+                var getOldestRequestTimestampInTicksFunc =
+                    GetOldestRequestTimestampInTicksFunc(postViolationTransaction,
                         violatedCacheKey, utcNowTicks);
 
                 var throttleState = ResultState.Throttled;
@@ -139,8 +139,8 @@ namespace Domain.RateLimiting.Redis
                 }
 
                 var rateLimitingResult = new RateLimitingResult(throttleState,
-                    await GetWaitingIntervalInTicks(setupGetOldestRequestTimestampInTicks,
-                        violatedCacheKey, utcNowTicks).ConfigureAwait(false), violatedCacheKey, 0);
+                        GetWaitingIntervalInTicks(getOldestRequestTimestampInTicksFunc,
+                        violatedCacheKey, utcNowTicks), violatedCacheKey, 0);
 
                 _onThrottled?.Invoke(rateLimitingResult);
 
@@ -161,12 +161,11 @@ namespace Domain.RateLimiting.Redis
             return await LimitRequestAsync(requestId, method, host, routeTemplate, rateLimitPolicies, 1).ConfigureAwait(false);
         }
 
-        private async Task<long> GetWaitingIntervalInTicks(Task<SortedSetEntry[]> setupGetOldestRequestTimestampInTicks,
+        private long GetWaitingIntervalInTicks(Func<long> getOldestRequestTimestampInTicksFunc,
             RateLimitCacheKey violatedCacheKey,
             long utcNowTicks)
         {
-            return await GetOldestRequestTimestampInTicks(setupGetOldestRequestTimestampInTicks,
-                       violatedCacheKey, utcNowTicks).ConfigureAwait(false) +
+            return getOldestRequestTimestampInTicksFunc() +
                    GetTicksPerUnit(violatedCacheKey.AllowedConsumptionRate) - utcNowTicks;
         }
 
@@ -221,13 +220,8 @@ namespace Domain.RateLimiting.Redis
             RateLimitCacheKey cacheKey,
             long utcNowTicks, int costPerCall = 1);
 
-        protected abstract Task<SortedSetEntry[]> SetupGetOldestRequestTimestampInTicks(
-            ITransaction postViolationTransaction,
-            RateLimitCacheKey cacheKey,
-            long utcNowTicks);
-
-        protected abstract Task<long> GetOldestRequestTimestampInTicks(
-            Task<SortedSetEntry[]> task, RateLimitCacheKey cacheKey,
+        protected abstract Func<long> GetOldestRequestTimestampInTicksFunc(
+            ITransaction postViolationTransaction, RateLimitCacheKey cacheKey,
             long utcNowTicks);
     }
 }

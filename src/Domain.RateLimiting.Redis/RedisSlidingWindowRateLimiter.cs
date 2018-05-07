@@ -80,20 +80,19 @@ namespace Domain.RateLimiting.Redis
             var adjust = postViolationTransaction.SortedSetRemoveRangeByRankAsync(cacheKey.ToString(), -1, -1);
         }
 
-        protected override Task<SortedSetEntry[]> SetupGetOldestRequestTimestampInTicks(ITransaction postViolationTransaction,
+        protected override Func<long> GetOldestRequestTimestampInTicksFunc(ITransaction postViolationTransaction, 
             RateLimitCacheKey cacheKey, long utcNowTicks)
         {
-            return postViolationTransaction.SortedSetRangeByRankWithScoresAsync(cacheKey.ToString(), 0, 0);
-        }
+            var task = postViolationTransaction.SortedSetRangeByRankWithScoresAsync(cacheKey.ToString(), 0, 0);
+            return () =>
+            {
+                var sortedSetEntries = task.Result;
 
-        protected override async Task<long> GetOldestRequestTimestampInTicks(Task<SortedSetEntry[]> task, RateLimitCacheKey cacheKey, long utcNowTicks)
-        {
-            var t = await task.ConfigureAwait(false);
+                if (sortedSetEntries == null || sortedSetEntries.Length == 0)
+                    return utcNowTicks - GetTicksPerUnit(cacheKey.AllowedConsumptionRate);
 
-            if (t == null || t.Length == 0)
-                return utcNowTicks - GetTicksPerUnit(cacheKey.AllowedConsumptionRate);
-
-            return (long)t[0].Score;
+                return (long)sortedSetEntries[0].Score;
+            };
         }
     }
 }

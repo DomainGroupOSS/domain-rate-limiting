@@ -97,21 +97,14 @@ namespace Domain.RateLimiting.Redis
             postViolationTransaction.StringDecrementAsync(cacheKey.ToString(), costPerCall);
         }
 
-        protected override Task<SortedSetEntry[]> SetupGetOldestRequestTimestampInTicks(ITransaction postViolationTransaction,
-            RateLimitCacheKey cacheKey, long utcNowTicks)
-        {
-            // do nothing
-            return new Task<SortedSetEntry[]>(() => null);
-        }
-
-        protected override Task<long> GetOldestRequestTimestampInTicks(Task<SortedSetEntry[]> task, RateLimitCacheKey cacheKey, long utcNowTicks)
-        {
-            return Task.FromResult(Trim(utcNowTicks, cacheKey.AllowedConsumptionRate));
-        }
-
         public long Trim(long dateTimeInTicks, AllowedConsumptionRate allowedCallRate)
         {
             return dateTimeInTicks - (dateTimeInTicks % GetTicksPerUnit(allowedCallRate));
+        }
+
+        protected override Func<long> GetOldestRequestTimestampInTicksFunc(ITransaction postViolationTransaction, RateLimitCacheKey cacheKey, long utcNowTicks)
+        {
+            return () => Trim(utcNowTicks, cacheKey.AllowedConsumptionRate);
         }
     }
 }
