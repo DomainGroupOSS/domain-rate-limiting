@@ -13,7 +13,7 @@ namespace Domain.RateLimiting.Samples.ConsoleCore
         public static void Main(string[] args)
         {
             IRateLimitingCacheProvider rateLimiter =
-                new RedisSlidingWindowRateLimiter("localhost");
+                new SlidingTimeWindowRateLimiter("localhost");
             
             var policies = new List<RateLimitPolicy>() {
                 new RateLimitPolicy("test_client_throttle_1",

@@ -67,9 +67,9 @@ namespace Domain.RateLimiting.Samples.Owin
             return Task.FromResult(new RateLimitPolicy("Test_Client_01",
                 new List<AllowedConsumptionRate>()
                 {
-                    //new AllowedConsumptionRate(200, RateLimitUnit.PerCustomPeriod,
-                    //    new LimitPeriod(new DateTime(2018,3,23,0,0,0,DateTimeKind.Utc), 600, true)),
-                    new AllowedConsumptionRate(2, RateLimitUnit.PerMinute, 100)
+                    new AllowedConsumptionRate(20, RateLimitUnit.PerCustomPeriod,
+                        new LimitPeriod(new DateTime(2018,3,23,0,0,0,DateTimeKind.Utc), 600, true), 100),
+                        //new AllowedConsumptionRate(2, RateLimitUnit.PerMinute)
                 }, name: "Quota_Billed")
             { CostPerCall = cost });
         }
@@ -89,7 +89,7 @@ namespace Domain.RateLimiting.Samples.Owin
 
             ConfigureRateLimitingSettings(redisRateLimiterSettings);
 
-            var rateLimitCacheProvider = new RedisLeakyBucketRateLimiter(
+            var rateLimitCacheProvider = new LeakyBucketRateLimiter(
                 redisRateLimiterSettings.RateLimitRedisCacheConnectionString,
                 onException: (ex) => 
                 {

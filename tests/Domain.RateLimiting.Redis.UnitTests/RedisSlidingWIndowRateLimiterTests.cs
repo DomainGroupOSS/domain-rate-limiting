@@ -76,7 +76,7 @@ namespace Domain.RateLimiting.Redis.UnitTests
             connectionMultiplexerMock.Setup(connection => connection.IsConnected).Returns(true);
             connectionMultiplexerMock.Setup(connection => connection.GetDatabase(-1, null)).Returns(dbMock.Object);
 
-            var rateLimiter = new RedisSlidingWindowRateLimiter("http://localhost",
+            var rateLimiter = new SlidingTimeWindowRateLimiter("http://localhost",
                 clock: clockMock.Object,
                 connectToRedisFunc: async () => await Task.FromResult(connectionMultiplexerMock.Object), 
                 countThrottledRequests: true);

@@ -10,7 +10,7 @@ namespace Domain.RateLimiting.Redis
     /// Redis implementation for storing and expiring request rate limit values using a sliding window expiry policy which
     /// avoids the problems of occasional bursts at interval boundaries
     /// </summary>
-    public class RedisSlidingWindowRateLimiter : RedisRateLimiter
+    public class SlidingTimeWindowRateLimiter : RedisRateLimiter
     {
         private static readonly IDictionary<RateLimitUnit, Func<AllowedConsumptionRate, Func<DateTime, string>>> RateLimitTypeCacheKeyFormatMapping =
             new Dictionary<RateLimitUnit, Func<AllowedConsumptionRate, Func<DateTime, string>>>
@@ -22,12 +22,12 @@ namespace Domain.RateLimiting.Redis
             {RateLimitUnit.PerCustomPeriod, allowedCallRate => _ =>
                 {
                     //return $"{allowedCallRate.Period.StartDateTimeUtc.ToString("yyyyMMddHHmmss")}::{allowedCallRate.Period.Duration.TotalSeconds}";
-                    throw new NotSupportedException("Custom Period is NOT currently supported by the sliding window rate limiter. Consider using the Fixed Window rate limiter.");
+                    throw new NotSupportedException("Custom Period is NOT currently supported by the sliding time window rate limiter. Consider using the SteppingTimeWindowRateLimiter.");
                 }
             }
        };
 
-        public RedisSlidingWindowRateLimiter(string redisEndpoint,
+        public SlidingTimeWindowRateLimiter(string redisEndpoint,
             Action<Exception> onException = null,
             Action<RateLimitingResult> onThrottled = null,
             int connectionTimeoutInMilliseconds = 2000,

@@ -130,7 +130,7 @@ namespace Domain.RateLimiting.Samples.AspNetCore
             var redisRateLimiterSettings = new RedisRateLimiterSettings();
             Configuration.GetSection(nameof(RedisRateLimiterSettings)).Bind(redisRateLimiterSettings);
 
-            var rateLimitCacheProvider = new RedisSlidingWindowRateLimiter(
+            var rateLimitCacheProvider = new SlidingTimeWindowRateLimiter(
                 redisRateLimiterSettings.RateLimitRedisCacheConnectionString,
                 (exp) => _logger.LogError("Error in rate limiting",
                     exp),

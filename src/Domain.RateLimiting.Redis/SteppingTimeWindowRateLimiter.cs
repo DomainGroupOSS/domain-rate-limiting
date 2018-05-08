@@ -11,7 +11,7 @@ namespace Domain.RateLimiting.Redis
     /// <summary>
     /// Redis implementation for storing and expiring request rate limit values
     /// </summary>
-    public class RedisFixedWindowRateLimiter : RedisRateLimiter
+    public class SteppingTimeWindowRateLimiter : RedisRateLimiter
     {
         private static readonly IDictionary<RateLimitUnit, Func<AllowedConsumptionRate, Func<DateTime, string>>> RateLimitTypeCacheKeyFormatMapping =
             new Dictionary<RateLimitUnit, Func<AllowedConsumptionRate, Func<DateTime, string>>>
@@ -41,7 +41,7 @@ namespace Domain.RateLimiting.Redis
 
         public Func<string, string, string, string, Task<int>> CostFunction { get; }
 
-        public RedisFixedWindowRateLimiter(string redisEndpoint,
+        public SteppingTimeWindowRateLimiter(string redisEndpoint,
             Action<Exception> onException = null,
             Action<RateLimitingResult> onThrottled = null,
             int connectionTimeoutInMilliseconds = 2000,

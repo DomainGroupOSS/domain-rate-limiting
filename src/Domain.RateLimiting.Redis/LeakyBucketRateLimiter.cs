@@ -6,7 +6,7 @@ using Domain.RateLimiting.Core;
 
 namespace Domain.RateLimiting.Redis
 {
-    public class RedisLeakyBucketRateLimiter : RedisRateLimiter
+    public class LeakyBucketRateLimiter : RedisRateLimiter
     {
         private const String _luaScript =
             "local key = @key;" +
@@ -47,7 +47,7 @@ namespace Domain.RateLimiting.Redis
 
         private readonly LoadedLuaScript _loadedLuaScript;
 
-        public RedisLeakyBucketRateLimiter(
+        public LeakyBucketRateLimiter(
             string redisEndpoint,
             Action<Exception> onException = null,
             Action<RateLimitingResult> onThrottled = null,
@@ -99,7 +99,7 @@ namespace Domain.RateLimiting.Redis
                     key = (RedisKey)cacheKeyString,
                     utcNowTicks = utcNowTicks,
                     leakageAmountPerInterval = allowedConsumptionRate.Limit,
-                    leakageIntervalInTicks = (long)allowedConsumptionRate.Unit,
+                    leakageIntervalInTicks = GetTicksPerUnit(allowedConsumptionRate),
                     ttl = ttlInSeconds
                 });
 
