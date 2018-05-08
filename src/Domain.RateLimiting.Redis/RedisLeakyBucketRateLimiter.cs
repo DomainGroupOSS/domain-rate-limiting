@@ -103,7 +103,7 @@ namespace Domain.RateLimiting.Redis
                     ttl = ttlInSeconds
                 });
 
-            return redisTransaction.HashIncrementAsync(cacheKeyString, "t");
+            return redisTransaction.HashIncrementAsync(cacheKeyString, "t", costPerCall);
 
         }
 
