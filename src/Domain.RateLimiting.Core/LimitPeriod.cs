@@ -14,5 +14,11 @@ namespace Domain.RateLimiting.Core
             Duration = new TimeSpan(0, 0, durationInSecs);
             Repeating = repeating;
         }
+
+        public LimitPeriod(int durationInSecs)
+        {
+            Duration = new TimeSpan(0, 0, durationInSecs);
+            Repeating = true;
+        }
     }
 }

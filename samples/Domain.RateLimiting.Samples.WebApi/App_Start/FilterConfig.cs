@@ -54,7 +54,7 @@ namespace Domain.RateLimiting.Samples.WebApi
 
             ConfigureRateLimitingSettings(redisRateLimiterSettings);
 
-            var rateLimitCacheProvider = new RedisSlidingWindowRateLimiter(
+            var rateLimitCacheProvider = new SlidingTimeWindowRateLimiter(
                 redisRateLimiterSettings.RateLimitRedisCacheConnectionString,
                 onThrottled: (rateLimitingResult) =>
                 {

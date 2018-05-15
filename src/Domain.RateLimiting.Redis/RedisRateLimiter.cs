@@ -78,12 +78,22 @@ namespace Domain.RateLimiting.Redis
                 var redisDb = _redisConnection.GetDatabase();
                 var redisTransaction = redisDb.CreateTransaction();
                 var utcNowTicks = _clock?.GetCurrentUtcTimeInTicks() ?? DateTime.UtcNow.Ticks;
-                IList<Task<long>> numberOfRequestsMadePerAllowedCallRateAsync = new List<Task<long>>();
+                IList<Func<long>> numberOfRequestsMadePerAllowedCallRateAsync = new List<Func<long>>();
 
                 IList<RateLimitCacheKey> cacheKeys = new List<RateLimitCacheKey>();
 
                 foreach (var allowedCallRate in allowedCallRates)
                 {
+                    if (allowedCallRate.Unit == RateLimitUnit.PerCustomPeriod)
+                    {
+                        var dateTimeNowUtc = new DateTime(utcNowTicks, DateTimeKind.Utc);
+                        GetDateRange(allowedCallRate, dateTimeNowUtc, out DateTime fromUtc, out DateTime toUtc);
+                        if (!(dateTimeNowUtc >= fromUtc && dateTimeNowUtc <= toUtc))
+                        {
+                            return new RateLimitingResult(ResultState.NotApplicable);
+                        }
+                    }
+
                     numberOfRequestsMadePerAllowedCallRateAsync.Add(
                         GetNumberOfRequestsAsync(requestId, method, host, routeTemplate, allowedCallRate, cacheKeys,
                             redisTransaction, utcNowTicks, costPerCall));
@@ -100,7 +110,7 @@ namespace Domain.RateLimiting.Redis
                     var cacheKey = cacheKeys[i];
 
                     var callsRemaining = (cacheKey.AllowedConsumptionRate.MaxBurst != 0 ? cacheKey.AllowedConsumptionRate.MaxBurst : cacheKey.Limit) -
-                            await numberOfRequestsMadePerAllowedCallRateAsync[i].ConfigureAwait(false);
+                            numberOfRequestsMadePerAllowedCallRateAsync[i]();
 
                     if (minCallsRemaining > callsRemaining)
                     {
@@ -197,6 +207,17 @@ namespace Domain.RateLimiting.Redis
                             (long)allowedCallRate.Unit : allowedCallRate.Period.Duration.Ticks;
         }
 
+        protected static void GetDateRange(AllowedConsumptionRate allowedCallRate, DateTime dateTimeUtc, out DateTime fromUtc, out DateTime toUtc)
+        {
+            var periodUnits = allowedCallRate.Period.Repeating ?
+                                    Math.Floor(dateTimeUtc.Subtract(allowedCallRate.Period.StartDateTimeUtc).TotalHours
+                                    / allowedCallRate.Period.Duration.TotalHours) : 0;
+
+            fromUtc = allowedCallRate.Period.StartDateTimeUtc.Add(
+                new TimeSpan(allowedCallRate.Period.Duration.Ticks * Convert.ToInt64(periodUnits)));
+            toUtc = fromUtc.Add(allowedCallRate.Period.Duration);
+        }
+
         /// <summary>
         /// Rate limits a request using to cache key provided
         /// </summary>
@@ -204,7 +225,7 @@ namespace Domain.RateLimiting.Redis
         /// <returns></returns>
 
 
-        protected abstract Task<long> GetNumberOfRequestsAsync(
+        protected abstract Func<long> GetNumberOfRequestsAsync(
             string requestId,
             string method,
             string host,

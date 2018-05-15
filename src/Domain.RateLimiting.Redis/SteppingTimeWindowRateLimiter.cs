@@ -27,20 +27,7 @@ namespace Domain.RateLimiting.Redis
                 }
             }
         };
-
-        private static void GetDateRange(AllowedConsumptionRate allowedCallRate, DateTime dateTimeUtc, out DateTime fromUtc, out DateTime toUtc)
-        {
-            var periodUnits = allowedCallRate.Period.Repeating ?
-                                    Math.Floor(dateTimeUtc.Subtract(allowedCallRate.Period.StartDateTimeUtc).TotalHours
-                                    / allowedCallRate.Period.Duration.TotalHours) : 0;
-
-            fromUtc = allowedCallRate.Period.StartDateTimeUtc.Add(
-                new TimeSpan(Convert.ToInt32(allowedCallRate.Period.Duration.TotalHours * periodUnits), 0, 0));
-            toUtc = fromUtc.Add(allowedCallRate.Period.Duration);
-        }
-
-        public Func<string, string, string, string, Task<int>> CostFunction { get; }
-
+        
         public SteppingTimeWindowRateLimiter(string redisEndpoint,
             Action<Exception> onException = null,
             Action<RateLimitingResult> onThrottled = null,
@@ -61,7 +48,7 @@ namespace Domain.RateLimiting.Redis
         {
         }
 
-        protected override Task<long> GetNumberOfRequestsAsync(string requestId, string method, string host,
+        protected override Func<long> GetNumberOfRequestsAsync(string requestId, string method, string host,
             string routeTemplate,
             AllowedConsumptionRate allowedCallRate,
             IList<RateLimitCacheKey> cacheKeys,
@@ -73,22 +60,10 @@ namespace Domain.RateLimiting.Redis
 
             var cacheKeyString = cacheKey.ToString();
             cacheKeys.Add(cacheKey);
-
-            if (allowedCallRate.Unit == RateLimitUnit.PerCustomPeriod)
-            {
-                var dateTimeNowUtc = new DateTime(utcNowTicks, DateTimeKind.Utc);
-                GetDateRange(allowedCallRate, dateTimeNowUtc, out DateTime fromUtc, out DateTime toUtc);
-                if (!(dateTimeNowUtc >= fromUtc && dateTimeNowUtc <= toUtc))
-                {
-                    var task = redisTransaction.StringIncrementAsync($"{cacheKeyString}_OFP", allowedCallRate.Limit  + costPerCall);
-                    redisTransaction.KeyExpireAsync($"{cacheKeyString}_OFP", new TimeSpan(0, 0, 10));
-                    return task;
-                }
-            }
-           
+            
             var incrTask = redisTransaction.StringIncrementAsync(cacheKeyString, costPerCall);
             redisTransaction.KeyExpireAsync(cacheKeyString, cacheKey.Expiration);
-            return incrTask;
+            return () => incrTask.Result;
         }
 
         protected override void UndoUnsuccessfulRequestCount(ITransaction postViolationTransaction, RateLimitCacheKey cacheKey, long utcNowTicks, 

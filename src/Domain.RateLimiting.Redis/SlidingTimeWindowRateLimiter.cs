@@ -21,8 +21,8 @@ namespace Domain.RateLimiting.Redis
             {RateLimitUnit.PerDay, allowedCallrate => _ => RateLimitUnit.PerDay.ToString()},
             {RateLimitUnit.PerCustomPeriod, allowedCallRate => _ =>
                 {
-                    //return $"{allowedCallRate.Period.StartDateTimeUtc.ToString("yyyyMMddHHmmss")}::{allowedCallRate.Period.Duration.TotalSeconds}";
-                    throw new NotSupportedException("Custom Period is NOT currently supported by the sliding time window rate limiter. Consider using the SteppingTimeWindowRateLimiter.");
+                    return $"{allowedCallRate.Period.StartDateTimeUtc.ToString("yyyyMMddHHmmss")}::{allowedCallRate.Period.Duration.TotalSeconds}";
+                    //throw new NotSupportedException("Custom Period is NOT currently supported by the sliding time window rate limiter. Consider using the SteppingTimeWindowRateLimiter.");
                 }
             }
        };
@@ -47,7 +47,7 @@ namespace Domain.RateLimiting.Redis
         {
         }
 
-        protected override Task<long> GetNumberOfRequestsAsync(string requestId, string method, string host, string routeTemplate,
+        protected override Func<long> GetNumberOfRequestsAsync(string requestId, string method, string host, string routeTemplate,
              AllowedConsumptionRate allowedCallRate, IList<RateLimitCacheKey> cacheKeys, 
              ITransaction redisTransaction, long utcNowTicks, int costPerCall = 1)
         {
@@ -69,7 +69,7 @@ namespace Domain.RateLimiting.Redis
             var expireTask = redisTransaction.KeyExpireAsync(cacheKeyString,
                 cacheKey.Expiration.Add(new TimeSpan(0, 1, 0)));
 
-            return numberOfRequestsInWindowAsyncList;
+            return () => numberOfRequestsInWindowAsyncList.Result;
         }
 
         protected override void UndoUnsuccessfulRequestCount(ITransaction postViolationTransaction, RateLimitCacheKey cacheKey, long now, int costPerCall = 1)

@@ -24,7 +24,7 @@ namespace Domain.RateLimiting.Core
             Unit = unit;
         }
         
-        public AllowedConsumptionRate(int limit, RateLimitUnit unit, LimitPeriod period):this(limit, unit)
+        public AllowedConsumptionRate(int limit, LimitPeriod period):this(limit, RateLimitUnit.PerCustomPeriod)
         {
             Period = period;
         }
@@ -34,7 +34,7 @@ namespace Domain.RateLimiting.Core
             MaxBurst = maxBurst;
         }
 
-        public AllowedConsumptionRate(int limit, RateLimitUnit unit, LimitPeriod period, int maxBurst) : this(limit, unit, maxBurst)
+        public AllowedConsumptionRate(int limit, LimitPeriod period, int maxBurst) : this(limit, RateLimitUnit.PerCustomPeriod, maxBurst)
         {
             Period = period;
         }
@@ -56,7 +56,8 @@ namespace Domain.RateLimiting.Core
 
         public override string ToString()
         {
-            return $"{Limit} tokens {Unit}";
+            var durationInTicks = Unit != RateLimitUnit.PerCustomPeriod ? ((long)Unit) : Period.Duration.Ticks;
+            return $"{Limit} tokens per { durationInTicks / TimeSpan.TicksPerSecond  } seconds";
         }
 
         public override bool Equals(object obj)

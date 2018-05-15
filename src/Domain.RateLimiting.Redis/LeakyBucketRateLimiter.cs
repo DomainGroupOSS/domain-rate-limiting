@@ -9,26 +9,22 @@ namespace Domain.RateLimiting.Redis
     public class LeakyBucketRateLimiter : RedisRateLimiter
     {
         private const String _luaScript =
-            "local key = @key;" +
-            "local utcNowTicks = @utcNowTicks; " +
-            "local leakageAmountPerInterval = @leakageAmountPerInterval; " +
-            "local leakageIntervalInTicks = @leakageIntervalInTicks; " +
-            "local ttl = @ttl; " +
-            "local h = { 'lu', utcNowTicks, 't', 0 }; " +
-            "if redis.call('HEXISTS', key, 'lu') == 1 then " +
-            "   h = redis.call('HGETALL', key); " +
+            "local h = { 'lu', @utcNowTicks, 't', 0 }; " +
+            "if redis.call('HEXISTS', @key, 'lu') == 1 then " +
+            "   h = redis.call('HGETALL', @key); " +
             "end " +
             "local lastLeakageTimestampInTicks = h[2]; " +
-            "local leakageIntervalsSinceLastLeakage = math.floor((utcNowTicks - lastLeakageTimestampInTicks) / leakageIntervalInTicks); " +
-            "local leakage = leakageAmountPerInterval * leakageIntervalsSinceLastLeakage; " +
-            "local tokensRemaining = h[4] - leakage; " +
+            "local leakageIntervalsSinceLastLeakage = math.floor((@utcNowTicks - lastLeakageTimestampInTicks) / @leakageIntervalInTicks); " +
+            "local leakage = @leakageAmountPerInterval * leakageIntervalsSinceLastLeakage; " +
+            "local tokensRemaining = h[4] + @costPerCall - leakage; " +
             "if tokensRemaining < 0 then " +
             "   tokensRemaining = 0; " +
             "end " +
-            "h[2] = lastLeakageTimestampInTicks + leakageIntervalsSinceLastLeakage * leakageIntervalInTicks; " +
+            "h[2] = lastLeakageTimestampInTicks + leakageIntervalsSinceLastLeakage * @leakageIntervalInTicks; " +
             "h[4] = tokensRemaining; " +
-            "redis.call('HMSET', key, h[1], h[2], h[3], h[4]); " +
-            "redis.call('EXPIRE', key, ttl);";
+            "redis.call('HMSET', @key, h[1], h[2], h[3], h[4]); " +
+            "redis.call('EXPIRE', @key, @ttl); " +
+            "return tokensRemaining;";
 
         private static readonly IDictionary<RateLimitUnit, Func<AllowedConsumptionRate, Func<DateTime, string>>> RateLimitTypeCacheKeyFormatMapping =
             new Dictionary<RateLimitUnit, Func<AllowedConsumptionRate, Func<DateTime, string>>>
@@ -73,7 +69,7 @@ namespace Domain.RateLimiting.Redis
                     _redisConnection.GetDatabase().IdentifyEndpoint()));
         }
 
-        protected override Task<long> GetNumberOfRequestsAsync(
+        protected override Func<long> GetNumberOfRequestsAsync(
             string requestId,
             string method,
             string host,
@@ -100,11 +96,14 @@ namespace Domain.RateLimiting.Redis
                     utcNowTicks = utcNowTicks,
                     leakageAmountPerInterval = allowedConsumptionRate.Limit,
                     leakageIntervalInTicks = GetTicksPerUnit(allowedConsumptionRate),
+                    costPerCall = costPerCall,
                     ttl = ttlInSeconds
                 });
 
-            return redisTransaction.HashIncrementAsync(cacheKeyString, "t", costPerCall);
-
+            return () => 
+            {
+                return Convert.ToInt64(scriptResultTask.Result.ToString());
+            };
         }
 
         protected override Func<long> GetOldestRequestTimestampInTicksFunc(ITransaction postViolationTransaction, RateLimitCacheKey cacheKey, long utcNowTicks)
