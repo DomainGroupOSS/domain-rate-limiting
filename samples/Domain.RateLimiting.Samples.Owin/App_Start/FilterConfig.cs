@@ -67,8 +67,8 @@ namespace Domain.RateLimiting.Samples.Owin
             return Task.FromResult(new RateLimitPolicy("Test_Client_01",
                 new List<AllowedConsumptionRate>()
                 {
-                    new AllowedConsumptionRate(20, 
-                        new LimitPeriod(120)),
+                    new AllowedConsumptionRate(20,
+                        new LimitPeriod(new DateTime(2018,5,15,8,18,0),120,true))
                         //new AllowedConsumptionRate(2, RateLimitUnit.PerMinute)
                 }, name: "Quota_Billed")
             { CostPerCall = cost });

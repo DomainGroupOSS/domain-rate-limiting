@@ -213,8 +213,10 @@ namespace Domain.RateLimiting.Redis
                                     Math.Floor(dateTimeUtc.Subtract(allowedCallRate.Period.StartDateTimeUtc).TotalHours
                                     / allowedCallRate.Period.Duration.TotalHours) : 0;
 
-            fromUtc = allowedCallRate.Period.StartDateTimeUtc.Add(
-                new TimeSpan(allowedCallRate.Period.Duration.Ticks * Convert.ToInt64(periodUnits)));
+            fromUtc = periodUnits > 0 ? allowedCallRate.Period.StartDateTimeUtc.Add(
+                new TimeSpan(allowedCallRate.Period.Duration.Ticks * Convert.ToInt64(periodUnits))) : 
+                allowedCallRate.Period.StartDateTimeUtc;
+
             toUtc = fromUtc.Add(allowedCallRate.Period.Duration);
         }
 
