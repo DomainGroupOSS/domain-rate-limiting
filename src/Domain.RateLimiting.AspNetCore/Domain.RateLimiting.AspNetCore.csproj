@@ -3,11 +3,11 @@
   <PropertyGroup>
     <TargetFramework>netstandard1.6</TargetFramework>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <AssemblyVersion>4.0.0.3</AssemblyVersion>
-    <FileVersion>4.0.0.3</FileVersion>
-    <Version>4.0.3-alpha</Version>
+    <AssemblyVersion>5.0.0.1</AssemblyVersion>
+    <FileVersion>5.0.0.1</FileVersion>
+    <Version>5.0.1-alpha</Version>
     <Authors>Kazi Zahir</Authors>
-    <Company>Domain</Company>
+    <Company>Domain Group</Company>
     <Description>Contains the rate limiting action filter which works with Domain.RateLimiting.Core</Description>
     <PackageIconUrl>http://www.domain.com.au/content/files/99x99.png</PackageIconUrl>
     <RepositoryUrl>https://github.com/DomainGroupOSS/domain-rate-limiting.git</RepositoryUrl>

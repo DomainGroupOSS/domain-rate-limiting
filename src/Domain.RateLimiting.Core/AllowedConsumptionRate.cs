@@ -31,6 +31,9 @@ namespace Domain.RateLimiting.Core
 
         public AllowedConsumptionRate(int limit, RateLimitUnit unit, int maxBurst) : this(limit, unit)
         {
+            if (maxBurst <= 0)
+                throw new ArgumentOutOfRangeException($"{nameof(maxBurst)} has to be greater than 0");
+
             MaxBurst = maxBurst;
         }
 

@@ -52,7 +52,10 @@ namespace Domain.RateLimiting.Redis
              ITransaction redisTransaction, long utcNowTicks, int costPerCall = 1)
         {
             if (costPerCall != 1)
-                throw new ArgumentOutOfRangeException("Only cost of value 1 is currently supported by the sliding window rate limiter");
+                throw new ArgumentOutOfRangeException("Only cost of value 1 is currently supported by the sliding time window rate limiter");
+
+            if(allowedCallRate.MaxBurst != 0)
+                throw new NotSupportedException("MaxBurst is not supported by the sliding time window rate limiter. Please consider using the leaky bucket rate limiter.");
 
             var cacheKey =
                 new RateLimitCacheKey(requestId, method, host, routeTemplate, allowedCallRate,

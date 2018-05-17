@@ -68,7 +68,7 @@ namespace Domain.RateLimiting.Samples.Owin
                 new List<AllowedConsumptionRate>()
                 {
                     new AllowedConsumptionRate(20,
-                        new LimitPeriod(new DateTime(2018,5,15,8,18,0),120,true))
+                        new LimitPeriod(120),100)
                         //new AllowedConsumptionRate(2, RateLimitUnit.PerMinute)
                 }, name: "Quota_Billed")
             { CostPerCall = cost });
@@ -89,7 +89,7 @@ namespace Domain.RateLimiting.Samples.Owin
 
             ConfigureRateLimitingSettings(redisRateLimiterSettings);
 
-            var rateLimitCacheProvider = new SlidingTimeWindowRateLimiter(
+            var rateLimitCacheProvider = new LeakyBucketRateLimiter(
                 redisRateLimiterSettings.RateLimitRedisCacheConnectionString,
                 onException: (ex) => 
                 {

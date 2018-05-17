@@ -12,7 +12,13 @@ user from abusing the system.
 
 You can read more about the concepts here in http://tech.domain.com.au/2017/11/protect-your-api-resources-with-rate-limiting/
 
-The libraries in this repo provide distributed implementations of rate limiting using Redis for both the fixed and sliding window algorithms. Also they
+The libraries in this repo provide distributed implementations of rate limiting using Redis for the following algorithms:
+
+* SteppingTimeWindow
+* SlidingTimeWindow
+* LeakyBucket
+
+Also they
 allow multiple call rates to be specified for four different time units of seconds, minutes, hours and
 days allowing a single endpoint to be limited at multiple levels like allowing 60 calls per min but no
 more than 100 calls per hour.

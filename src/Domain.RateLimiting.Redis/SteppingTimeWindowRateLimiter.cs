@@ -54,6 +54,9 @@ namespace Domain.RateLimiting.Redis
             IList<RateLimitCacheKey> cacheKeys,
             ITransaction redisTransaction, long utcNowTicks, int costPerCall = 1)
         {
+            if (allowedCallRate.MaxBurst != 0)
+                throw new NotSupportedException("MaxBurst is not supported by the sliding time window rate limiter. Please consider using the leaky bucket rate limiter.");
+
             RateLimitCacheKey cacheKey =
                new RateLimitCacheKey(requestId, method, host, routeTemplate, allowedCallRate,
                RateLimitTypeCacheKeyFormatMapping[allowedCallRate.Unit].Invoke(allowedCallRate));
