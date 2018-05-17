@@ -21,7 +21,8 @@ The libraries in this repo provide distributed implementations of rate limiting 
 Also they
 allow multiple call rates to be specified for four different time units of seconds, minutes, hours and
 days allowing a single endpoint to be limited at multiple levels like allowing 60 calls per min but no
-more than 100 calls per hour.
+more than 100 calls per hour. Also you can also define your own custom period if you need more flexibility 
+like allowing 60 calls every 10 seconds.
 
 Both WebApi and AspnetCore versions are included.
 
