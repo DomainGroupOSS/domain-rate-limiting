@@ -50,13 +50,12 @@ namespace Domain.RateLimiting.WebApi
             };
 
             if (context.Response == null)
-                context.Response = context.Request.CreateErrorResponse(HttpStatusCode.InternalServerError, context.Exception);
+                return;
 
             foreach (var successheader in successheaders.Keys)
             {
                 if (context.Response.Headers.Contains(successheader))
                 {
-                    // KAZI revisit
                     var successHeaderValues = context.Response.Headers.GetValues(successheader)?.ToList() ?? new List<string>();
                     successHeaderValues.Add(successheaders[successheader]);
                     context.Response.Headers.Remove(successheader);
