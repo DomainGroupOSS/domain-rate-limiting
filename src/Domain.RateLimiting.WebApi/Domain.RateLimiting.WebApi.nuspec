@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>Domain.RateLimiting.WebApi</id>
-    <version>5.0.2-alpha</version>
+    <version>5.0.3-alpha</version>
     <title>Domain.RateLimiting.WebApi</title>
     <authors>kazi.zahir</authors>
     <owners>Domain Group</owners>
@@ -12,7 +12,7 @@
     <copyright>Copyright 2017</copyright>
     <tags>webapi, filters, ratelimiting, rate limiting, throttling, API throttling, request throttling</tags>
     <dependencies>
-      <dependency id="Domain.RateLimiting.Core" version="5.0.1-alpha" />
+      <dependency id="Domain.RateLimiting.Core" version="5.0.3-alpha" />
       <dependency id="Microsoft.AspNet.WebApi.Core" version="5.2.3" />
     </dependencies>
   </metadata>
