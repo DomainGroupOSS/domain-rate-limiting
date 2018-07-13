@@ -167,5 +167,36 @@ namespace Domain.RateLimiting.Core.UnitTests
 
             //Assert.Equal("Policy_01", violatedPolicyName);
         }
+
+        [Fact]
+        public async void ShouldApplySuccessForZeroCostCall()
+        {
+            var policyProviderMock = new Mock<IRateLimitingPolicyProvider>();
+
+            var rateLimitPolicy = new RateLimitPolicy("testclient_01",
+                "/api/values", "GET", _allowedCallRates, name: "Policy_01")
+            { CostPerCall = 0 };
+
+            policyProviderMock.Setup(provider => provider.GetPolicyAsync(_rateLimitingRequest))
+                .ReturnsAsync(rateLimitPolicy);
+
+            var rateLimitingCacheProviderMock = new Mock<IRateLimitingCacheProvider>();
+            var rateLimitingResult = new RateLimitingResult(ResultState.Success, 1000,
+                default(RateLimitCacheKey), 0);
+
+            rateLimitingCacheProviderMock.Setup(provider => provider.LimitRequestAsync(
+                    "testclient_01", "GET",
+                    "localhost", "/api/values", _allowedCallRates, 0))
+                .ReturnsAsync(rateLimitingResult);
+
+            var rateLimiter = new RateLimiter(rateLimitingCacheProviderMock.Object,
+                policyProviderMock.Object);
+
+            var result = await LimitRequestAync(rateLimiter);
+
+            AssertAndVerify(policyProviderMock, rateLimitingCacheProviderMock, (true, false, false), result);
+
+            //Assert.Equal("Policy_01", violatedPolicyName);
+        }
     }
 }

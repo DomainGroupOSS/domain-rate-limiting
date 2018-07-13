@@ -26,12 +26,12 @@ namespace Domain.RateLimiting.Core
         {
             if (_policyProvider == null && getPolicyFuncAsync == null)
                 throw new ArgumentNullException("There are no valid policy providers");
-
+            
             var getPolicyAsync = getPolicyFuncAsync ??  _policyProvider.GetPolicyAsync;
 
             var rateLimitingPolicy = await getPolicyAsync(rateLimitingRequest).ConfigureAwait(false);
 
-            if (rateLimitingPolicy == null || rateLimitingPolicy.CostPerCall == 0)
+            if (rateLimitingPolicy == null)
             {
                 if(onPostLimitFuncAsync != null)
                     await onPostLimitFuncAsync.Invoke(rateLimitingRequest, rateLimitingPolicy, new RateLimitingResult(ResultState.NotApplicable)).ConfigureAwait(false);
