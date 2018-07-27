@@ -3,9 +3,9 @@
   <PropertyGroup>
     <TargetFrameworks>netstandard1.5;net452</TargetFrameworks>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <Version>5.0.3-alpha</Version>
-    <AssemblyVersion>5.0.0.3</AssemblyVersion>
-    <FileVersion>5.0.0.3</FileVersion>
+    <Version>5.0.4-alpha</Version>
+    <AssemblyVersion>5.0.0.4</AssemblyVersion>
+    <FileVersion>5.0.0.4</FileVersion>
     <Company>Domain</Company>
     <Authors>Kazi Zahir</Authors>
     <Description>provides a distributed Redis implementation of the IRateLimitingCacheProvider from the Domain.RateLimiting.Core package meaning that it can be used from multiple servers which is more suiting to real production environments. This is the package that keeps track of the call count per time window and gives a go or no go based on the number of calls made so far. The libraries in this repo provide distributed implementations of rate limiting using Redis for the following algorithms:
