@@ -53,23 +53,23 @@ namespace Domain.RateLimiting.Samples.Owin
 
             //if (string.IsNullOrWhiteSpace(clientId?.Value)) return null;
 
-            if (operationClass == "F")
-            {
-                return Task.FromResult(new RateLimitPolicy("Test_Client_01::ClassF",
-                new List<AllowedConsumptionRate>()
-                {
-                    new AllowedConsumptionRate(100, RateLimitUnit.PerMinute)
-                }, name: "QuotaFree_SafetyPolicy"));
-            }
+            //if (operationClass == "F")
+            //{
+            //    return Task.FromResult(new RateLimitPolicy("Test_Client_01::ClassF",
+            //    new List<AllowedConsumptionRate>()
+            //    {
+            //        new AllowedConsumptionRate(100, RateLimitUnit.PerMinute)
+            //    }, name: "QuotaFree_SafetyPolicy"));
+            //}
 
             var cost = CallClassification.CostPerClass[operationClass];
 
             return Task.FromResult(new RateLimitPolicy("Test_Client_01",
                 new List<AllowedConsumptionRate>()
                 {
-                    new AllowedConsumptionRate(20,
-                        new LimitPeriod(120),100)
-                        //new AllowedConsumptionRate(2, RateLimitUnit.PerMinute)
+                    //new AllowedConsumptionRate(20,
+                    //    new LimitPeriod(120),100)
+                        new AllowedConsumptionRate(2, RateLimitUnit.PerMinute)
                 }, name: "Quota_Billed")
             { CostPerCall = cost });
         }
@@ -110,11 +110,11 @@ namespace Domain.RateLimiting.Samples.Owin
                         //logger.LogWarning("Rate limiting circuit closed")
                     }),
                 
-                countThrottledRequests: false
+                countThrottledRequests: true
             );
 
             #endregion
-
+            
             var configSettings = new DomainElasticSearchLoggingOptions()
             {
                 Enabled = true,
@@ -137,7 +137,7 @@ namespace Domain.RateLimiting.Samples.Owin
 
             filters.Add(new RateLimitingFilter(
 
-                new RateLimiter(rateLimitCacheProvider, policyProvider),
+                new RateLimiter(rateLimitCacheProvider, new RateLimitingPolicyManager(policyProvider)),
 
                 filters,
 
@@ -248,7 +248,7 @@ namespace Domain.RateLimiting.Samples.Owin
                     return Decision.OK;
                 },
 
-                getPolicyFuncAsync: policyProvider.GetPolicyAsync,
+                //getPolicyFuncAsync: policyProvider.GetPolicyAsync,
                 simulationMode: false));
         }
 
