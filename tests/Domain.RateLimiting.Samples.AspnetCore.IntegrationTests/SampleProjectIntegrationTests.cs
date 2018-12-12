@@ -45,7 +45,7 @@ namespace Domain.RateLimiting.Samples.AspnetCore.IntegrationTests
                 Assert.Equal(true, response.Headers.Contains("X-RateLimit-Remaining"));
                 Assert.Equal(true, response.Headers.Contains("X-RateLimit-Limit"));
                 Assert.Equal(i.ToString(), response.Headers.GetValues("X-RateLimit-Remaining").First());
-                Assert.Equal("5 calls PerMinute", response.Headers.GetValues("X-RateLimit-Limit").First());
+                Assert.Equal("5 tokens per 60 seconds", response.Headers.GetValues("X-RateLimit-Limit").First());
                 Assert.Equal(false, response.Headers.Contains("X-RateLimit-VPolicyName"));
                 Assert.Equal(false, response.Headers.Contains("X-RateLimit-VPolicyRate"));
                 Assert.Equal("value", await response.Content.ReadAsStringAsync());
@@ -62,7 +62,7 @@ namespace Domain.RateLimiting.Samples.AspnetCore.IntegrationTests
             Assert.Equal(true, response.Headers.Contains("X-RateLimit-VPolicyName"));
             Assert.Equal(true, response.Headers.Contains("X-RateLimit-VCallRate"));
             Assert.Equal("StaticPolicy_0", response.Headers.GetValues("X-RateLimit-VPolicyName").First());
-            Assert.Equal("5 calls PerMinute", response.Headers.GetValues("X-RateLimit-VCallRate").First());
+            Assert.Equal("5 tokens per 60 seconds", response.Headers.GetValues("X-RateLimit-VCallRate").First());
         }
         
         [Fact(Skip = "You need to have redis installed before running this test")]
